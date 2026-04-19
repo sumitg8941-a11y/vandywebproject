@@ -10,7 +10,7 @@ const offerSchema = new mongoose.Schema({
     dislikes: { type: Number, default: 0 },
     totalTimeSeconds: { type: Number, default: 0 }, // Time spent on this offer
     maxPagesViewed: { type: Number, default: 0 }, // Farthest page reached
-    image: { type: String, required: true },
+    image: { type: String, default: '' },
     badge: { type: String, trim: true },
     isSponsored: { type: Boolean, default: false }, // Ad Integration: Highlights and pins to the top
     externalAdLink: { type: String, default: '' }, // If it's a 3rd party Ad, clicking it takes them here

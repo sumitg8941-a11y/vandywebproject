@@ -120,8 +120,9 @@ const admin = {
                     <label>Country Name:</label><br>
                     <input type="text" id="new-country-name" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="e.g., Kuwait">
                     
-                    <label>Image URL:</label><br>
-                    <input type="text" id="new-country-image" style="width:100%; padding:8px; margin-bottom:15px;" placeholder="https://...">
+                    <label>Upload Cover Image (Optional):</label><br>
+                    <input type="file" id="new-country-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
+                    <input type="text" id="new-country-image" style="width:100%; padding:8px; margin-bottom:15px;" placeholder="OR provide Image URL (e.g. https://...)">
                     
                     <button class="action-btn" onclick="admin.saveCountry()">Save Country</button>
                     <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('add-country-form').style.display='none'">Cancel</button>
@@ -138,10 +139,12 @@ const admin = {
     saveCountry: async function() {
         const id = document.getElementById('new-country-id').value.toLowerCase();
         const name = document.getElementById('new-country-name').value;
-        const image = document.getElementById('new-country-image').value;
+        let image = document.getElementById('new-country-image').value;
+        const imageFile = document.getElementById('new-country-image-file').files[0];
         
-        if(id && name && image) {
+        if(id && name) {
             try {
+                if (imageFile) image = await this.uploadFile(imageFile);
                 await api.addCountry({ id, name, image });
                 alert('Country securely saved to MongoDB permanently!');
                 this.showTab('countries'); 
@@ -149,7 +152,7 @@ const admin = {
                 alert('Error saving country to the database. Ensure server is running.');
             }
         } else {
-            alert('Please fill in all fields before saving.');
+            alert('Please fill in all required fields before saving.');
         }
     },
 
@@ -191,8 +194,9 @@ const admin = {
                         ${countryOptions}
                     </select>
                     
-                    <label>Image URL:</label><br>
-                    <input type="text" id="new-city-image" style="width:100%; padding:8px; margin-bottom:15px;">
+                    <label>Upload Cover Image (Optional):</label><br>
+                    <input type="file" id="new-city-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
+                    <input type="text" id="new-city-image" style="width:100%; padding:8px; margin-bottom:15px;" placeholder="OR provide Image URL">
                     
                     <button class="action-btn" onclick="admin.saveCity()">Save City</button>
                     <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('add-city-form').style.display='none'">Cancel</button>
@@ -206,12 +210,17 @@ const admin = {
         const id = document.getElementById('new-city-id').value.toLowerCase();
         const name = document.getElementById('new-city-name').value;
         const countryId = document.getElementById('new-city-country').value;
-        const image = document.getElementById('new-city-image').value;
+        let image = document.getElementById('new-city-image').value;
+        const imageFile = document.getElementById('new-city-image-file').files[0];
         
-        if(id && name && countryId && image) {
-            try { await api.addCity({ id, name, countryId, image }); alert('City saved!'); this.showTab('cities'); } 
+        if(id && name && countryId) {
+            try { 
+                if (imageFile) image = await this.uploadFile(imageFile);
+                await api.addCity({ id, name, countryId, image }); 
+                alert('City saved!'); this.showTab('cities'); 
+            } 
             catch(e) { alert('Error saving to database.'); }
-        } else { alert('Fill all fields'); }
+        } else { alert('Please fill all required fields'); }
     },
 
     renderRetailers: async function() {
@@ -232,7 +241,11 @@ const admin = {
                 <input type="text" id="new-ret-name" placeholder="Retailer Name" style="width:100%; padding:8px; margin-bottom:10px;">
                 <input type="url" id="new-ret-web" placeholder="Official Website URL (Optional)" style="width:100%; padding:8px; margin-bottom:10px;">
                 <select id="new-ret-city" style="width:100%; padding:8px; margin-bottom:10px;">${cityOptions}</select>
-                <input type="text" id="new-ret-image" placeholder="Image URL" style="width:100%; padding:8px; margin-bottom:15px;">
+                
+                <label style="font-weight: bold; font-size: 0.9em;">Upload Logo/Image (Optional):</label><br>
+                <input type="file" id="new-ret-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
+                <input type="text" id="new-ret-image" placeholder="OR provide Image URL" style="width:100%; padding:8px; margin-bottom:15px;">
+                
                 <button class="action-btn" onclick="admin.saveRetailer()">Save Retailer</button>
             </div>
             <table class="admin-table"><thead><tr><th>ID</th><th>Name</th><th>City Code</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
@@ -244,11 +257,17 @@ const admin = {
         const name = document.getElementById('new-ret-name').value;
         const websiteUrl = document.getElementById('new-ret-web').value;
         const cityId = document.getElementById('new-ret-city').value;
-        const image = document.getElementById('new-ret-image').value;
-        if(id && name && cityId && image) {
-            try { await api.addRetailer({ id, name, websiteUrl, cityId, image }); alert('Retailer saved!'); this.showTab('retailers'); } 
+        let image = document.getElementById('new-ret-image').value;
+        const imageFile = document.getElementById('new-ret-image-file').files[0];
+        
+        if(id && name && cityId) {
+            try { 
+                if (imageFile) image = await this.uploadFile(imageFile);
+                await api.addRetailer({ id, name, websiteUrl, cityId, image }); 
+                alert('Retailer saved!'); this.showTab('retailers'); 
+            } 
             catch(e) { alert('Error: ' + e.message); }
-        } else { alert('Fill all fields'); }
+        } else { alert('Please fill all required fields'); }
     },
 
     renderOffers: async function() {
@@ -276,7 +295,7 @@ const admin = {
                     <input type="file" id="new-off-pdf-file" accept="application/pdf" style="width:100%; padding:8px; margin-bottom:5px;">
                     <input type="text" id="new-off-pdf" placeholder="OR provide PDF URL (e.g. https://...)" style="width:100%; padding:8px; margin-bottom:15px;">
                     
-                    <label style="font-weight: bold; font-size: 0.9em;">Upload Cover Image (Required):</label>
+                    <label style="font-weight: bold; font-size: 0.9em;">Upload Cover Image (Optional):</label>
                     <input type="file" id="new-off-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
                     <input type="text" id="new-off-image" placeholder="OR provide Image URL (e.g. https://...)" style="width:100%; padding:8px; margin-bottom:15px;">
                     
@@ -324,12 +343,12 @@ const admin = {
             if (pdfFile) pdfUrl = await this.uploadFile(pdfFile);
             if (imageFile) image = await this.uploadFile(imageFile);
             
-            if(id && title && date && retailerId && image) {
+            if(id && title && date && retailerId) {
                 await api.addOffer({ id, title, date, retailerId, pdfUrl, image, badge }); 
                 alert('Offer saved successfully!'); 
                 this.showTab('offers'); 
             } else {
-                alert('Please fill all required fields and provide a cover image.');
+                alert('Please fill all required fields.');
             }
         } catch(e) {
             alert('Error saving offer: ' + e.message);
