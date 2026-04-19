@@ -100,7 +100,7 @@ const admin = {
                 <td><img src="${c.image}" width="50" style="border-radius:4px;"></td>
                 <td>
                     <button class="action-btn" onclick="alert('Edit feature coming soon!')">Edit</button>
-                    <button class="action-btn" style="background:#e74c3c;" onclick="alert('Delete feature coming soon!')">Delete</button>
+                    <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteCountry('${c.id}')">Delete</button>
                 </td>
             </tr>
         `).join('');
@@ -163,7 +163,8 @@ const admin = {
                 <td>${c.name}</td>
                 <td>${c.countryId.toUpperCase()}</td>
                 <td>
-                    <button class="action-btn">Edit</button>
+                    <button class="action-btn" onclick="alert('Edit feature coming soon!')">Edit</button>
+                    <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteCity('${c.id}')">Delete</button>
                 </td>
             </tr>
         `).join('');
@@ -217,7 +218,7 @@ const admin = {
         const retailers = await api.getAllRetailers();
         const cities = await api.getAllCities();
         
-        let rows = retailers.map(r => `<tr><td>${r.id.toUpperCase()}</td><td>${r.name}</td><td>${r.cityId.toUpperCase()}</td><td><button class="action-btn">Edit</button></td></tr>`).join('');
+        let rows = retailers.map(r => `<tr><td>${r.id.toUpperCase()}</td><td>${r.name}</td><td>${r.cityId.toUpperCase()}</td><td><button class="action-btn" onclick="alert('Edit feature coming soon!')">Edit</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteRetailer('${r.id}')">Delete</button></td></tr>`).join('');
         let cityOptions = cities.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
         return `
@@ -254,7 +255,7 @@ const admin = {
         const offers = await api.getAllOffers();
         const retailers = await api.getAllRetailers();
         
-        let rows = offers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${new Date(o.date).toISOString().split('T')[0]}</td><td><button class="action-btn">Edit</button></td></tr>`).join('');
+        let rows = offers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${new Date(o.date).toISOString().split('T')[0]}</td><td><button class="action-btn" onclick="alert('Edit feature coming soon!')">Edit</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
         let retailerOptions = retailers.map(r => `<option value="${r.id}">${r.name} (${r.cityId})</option>`).join('');
 
         return `
@@ -385,6 +386,38 @@ const admin = {
 
             return `<h2>User Feedback</h2><table class="admin-table" style="margin-top:15px;"><thead><tr><th style="width:15%;">Date</th><th style="width:25%;">User</th><th>Message</th></tr></thead><tbody>${rows || '<tr><td colspan="3" style="text-align:center;">No feedback yet.</td></tr>'}</tbody></table>`;
         } catch(e) { return `<p style="color:red;">Error loading feedback. Ensure server is running.</p>`; }
+    },
+
+    deleteCountry: async function(id) {
+        if(!confirm('Are you sure you want to delete this country?')) return;
+        try {
+            await fetch(`/api/countries/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } });
+            this.showTab('countries');
+        } catch(e) { alert('Error deleting country'); }
+    },
+
+    deleteCity: async function(id) {
+        if(!confirm('Are you sure you want to delete this city?')) return;
+        try {
+            await fetch(`/api/cities/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } });
+            this.showTab('cities');
+        } catch(e) { alert('Error deleting city'); }
+    },
+
+    deleteRetailer: async function(id) {
+        if(!confirm('Are you sure you want to delete this retailer?')) return;
+        try {
+            await fetch(`/api/retailers/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } });
+            this.showTab('retailers');
+        } catch(e) { alert('Error deleting retailer'); }
+    },
+
+    deleteOffer: async function(id) {
+        if(!confirm('Are you sure you want to delete this offer?')) return;
+        try {
+            await fetch(`/api/offers/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } });
+            this.showTab('offers');
+        } catch(e) { alert('Error deleting offer'); }
     }
 };
 

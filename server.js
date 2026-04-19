@@ -198,8 +198,21 @@ app.get('/api/search', async (req, res) => {
         
         const regex = new RegExp(query, 'i'); // Case-insensitive search
         
+        // Find matching retailers
         const retailers = await Retailer.find({ name: regex });
-        const offers = await Offer.find({ $or: [{ title: regex }, { badge: regex }] });
+        
+        // Get the IDs of the matched retailers
+        const retailerIds = retailers.map(r => r.id);
+        
+        // Find offers matching the title, badge, coupon code, OR belonging to the matched retailers
+        const offers = await Offer.find({ 
+            $or: [
+                { title: regex }, 
+                { badge: regex },
+                { couponCode: regex },
+                { retailerId: { $in: retailerIds } }
+            ] 
+        });
         
         res.json({ retailers, offers });
     } catch (err) {
@@ -388,6 +401,46 @@ app.post('/api/offers', verifyAdmin, async (req, res) => {
         res.status(201).json(newOffer);
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+});
+
+// Admin: Delete Country securely
+app.delete('/api/countries/:id', verifyAdmin, async (req, res) => {
+    try {
+        await Country.findOneAndDelete({ id: req.params.id.toLowerCase() });
+        res.json({ message: 'Country deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Delete City securely
+app.delete('/api/cities/:id', verifyAdmin, async (req, res) => {
+    try {
+        await City.findOneAndDelete({ id: req.params.id.toLowerCase() });
+        res.json({ message: 'City deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Delete Retailer securely
+app.delete('/api/retailers/:id', verifyAdmin, async (req, res) => {
+    try {
+        await Retailer.findOneAndDelete({ id: req.params.id.toLowerCase() });
+        res.json({ message: 'Retailer deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Delete Offer securely
+app.delete('/api/offers/:id', verifyAdmin, async (req, res) => {
+    try {
+        await Offer.findOneAndDelete({ id: req.params.id.toLowerCase() });
+        res.json({ message: 'Offer deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
