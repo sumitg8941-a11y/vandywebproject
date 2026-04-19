@@ -128,6 +128,24 @@ app.get('/api/offer/:id', async (req, res) => {
     }
 });
 
+// Offer Feedback (Like)
+app.post('/api/offer/:id/like', async (req, res) => {
+    try {
+        const offer = await Offer.findOneAndUpdate({ id: req.params.id.toLowerCase() }, { $inc: { likes: 1 } }, { new: true });
+        if (!offer) return res.status(404).json({ error: 'Offer not found' });
+        res.json({ likes: offer.likes, dislikes: offer.dislikes });
+    } catch (err) { res.status(500).json({ error: 'Failed to update' }); }
+});
+
+// Offer Feedback (Dislike)
+app.post('/api/offer/:id/dislike', async (req, res) => {
+    try {
+        const offer = await Offer.findOneAndUpdate({ id: req.params.id.toLowerCase() }, { $inc: { dislikes: 1 } }, { new: true });
+        if (!offer) return res.status(404).json({ error: 'Offer not found' });
+        res.json({ likes: offer.likes, dislikes: offer.dislikes });
+    } catch (err) { res.status(500).json({ error: 'Failed to update' }); }
+});
+
 // Tracking Redirect for outbound traffic
 app.get('/api/redirect/offer/:id', async (req, res) => {
     try {

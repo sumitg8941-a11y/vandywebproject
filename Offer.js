@@ -6,6 +6,8 @@ const offerSchema = new mongoose.Schema({
     date: { type: Date, required: true },
     pdfUrl: { type: String, default: '#' },
     clicks: { type: Number, default: 0 },
+    likes: { type: Number, default: 0 },
+    dislikes: { type: Number, default: 0 },
     totalTimeSeconds: { type: Number, default: 0 }, // Time spent on this offer
     maxPagesViewed: { type: Number, default: 0 }, // Farthest page reached
     image: { type: String, required: true },
