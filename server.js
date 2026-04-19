@@ -404,6 +404,17 @@ app.post('/api/offers', verifyAdmin, async (req, res) => {
     }
 });
 
+// Admin: Update existing Offer securely
+app.put('/api/offers/:id', verifyAdmin, async (req, res) => {
+    try {
+        const updatedOffer = await Offer.findOneAndUpdate({ id: req.params.id.toLowerCase() }, req.body, { new: true });
+        if (!updatedOffer) return res.status(404).json({ error: 'Offer not found' });
+        res.json(updatedOffer);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
 // Admin: Delete Country securely
 app.delete('/api/countries/:id', verifyAdmin, async (req, res) => {
     try {

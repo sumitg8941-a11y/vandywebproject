@@ -274,13 +274,13 @@ const admin = {
         const offers = await api.getAllOffers();
         const retailers = await api.getAllRetailers();
         
-        let rows = offers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${new Date(o.date).toISOString().split('T')[0]}</td><td><button class="action-btn" onclick="alert('Edit feature coming soon!')">Edit</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
+        let rows = offers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${new Date(o.date).toISOString().split('T')[0]}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
         let retailerOptions = retailers.map(r => `<option value="${r.id}">${r.name} (${r.cityId})</option>`).join('');
 
         return `
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h2>Offers & PDFs</h2>
-                <button class="action-btn" style="background:#27ae60;" onclick="document.getElementById('upload-form').style.display='block'">+ Add New Offer</button>
+                <button class="action-btn" style="background:#27ae60;" onclick="admin.showAddOfferForm()">+ Add New Offer</button>
             </div>
             
             <div id="upload-form" style="display:none; background:#f9f9f9; padding:20px; border-radius:8px; margin-top:15px; border:1px solid #ddd;">
@@ -322,6 +322,48 @@ const admin = {
         return data.url;
     },
 
+    showAddOfferForm: function() {
+        document.getElementById('upload-form').style.display = 'block';
+        document.getElementById('new-off-id').readOnly = false;
+        document.getElementById('new-off-id').value = '';
+        document.getElementById('new-off-title').value = '';
+        document.getElementById('new-off-date').value = '';
+        document.getElementById('new-off-badge').value = '';
+        document.getElementById('new-off-pdf').value = '';
+        document.getElementById('new-off-image').value = '';
+        
+        const btn = document.getElementById('save-offer-btn');
+        if(btn) {
+            btn.removeAttribute('data-edit-id');
+            btn.innerText = 'Save Offer';
+        }
+        document.querySelector('#upload-form h3').innerText = 'Add New Offer';
+    },
+
+    editOffer: async function(id) {
+        try {
+            const res = await fetch('/api/offer/' + id);
+            if (!res.ok) throw new Error('Offer not found');
+            const offer = await res.json();
+
+            document.getElementById('upload-form').style.display = 'block';
+            document.getElementById('new-off-id').value = offer.id || offer._id;
+            document.getElementById('new-off-id').readOnly = true;
+            document.getElementById('new-off-title').value = offer.title || '';
+            document.getElementById('new-off-date').value = offer.date ? new Date(offer.date).toISOString().split('T')[0] : '';
+            document.getElementById('new-off-retailer').value = offer.retailerId || '';
+            document.getElementById('new-off-badge').value = offer.badge || '';
+            document.getElementById('new-off-pdf').value = (offer.pdfUrl && offer.pdfUrl !== '#') ? offer.pdfUrl : '';
+            document.getElementById('new-off-image').value = offer.image || '';
+
+            const saveBtn = document.getElementById('save-offer-btn');
+            saveBtn.innerText = 'Update Offer';
+            saveBtn.setAttribute('data-edit-id', offer.id || offer._id);
+            document.querySelector('#upload-form h3').innerText = 'Edit Offer';
+            window.scrollTo(0, 0);
+        } catch(e) { alert('Error loading offer details.'); }
+    },
+
     saveOffer: async function() {
         const id = document.getElementById('new-off-id').value.toLowerCase();
         const title = document.getElementById('new-off-title').value;
@@ -336,7 +378,8 @@ const admin = {
         const imageFile = document.getElementById('new-off-image-file').files[0];
         const btn = document.getElementById('save-offer-btn');
 
-        btn.innerText = 'Uploading...';
+        const editId = btn.getAttribute('data-edit-id');
+        btn.innerText = editId ? 'Updating...' : 'Uploading...';
         btn.disabled = true;
 
         try {
@@ -344,8 +387,19 @@ const admin = {
             if (imageFile) image = await this.uploadFile(imageFile);
             
             if(id && title && date && retailerId) {
-                await api.addOffer({ id, title, date, retailerId, pdfUrl, image, badge }); 
-                alert('Offer saved successfully!'); 
+                const payload = { id, title, date, retailerId, pdfUrl, image, badge };
+                if (editId) {
+                    const res = await fetch(`/api/offers/${editId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('Failed to update offer');
+                } else {
+                    await api.addOffer(payload); 
+                }
+                
+                alert(editId ? 'Offer updated successfully!' : 'Offer saved successfully!'); 
                 this.showTab('offers'); 
             } else {
                 alert('Please fill all required fields.');
@@ -354,7 +408,7 @@ const admin = {
             alert('Error saving offer: ' + e.message);
         } finally {
             if (btn) {
-                btn.innerText = 'Save Offer';
+                btn.innerText = editId ? 'Update Offer' : 'Save Offer';
                 btn.disabled = false;
             }
         }
