@@ -19,12 +19,12 @@ export default async function CitiesPage({ params }: { params: { countryId: stri
   return (
     <div>
       {/* Hero Banner Section */}
-      <div className="bg-blue-600 text-white text-center py-20 px-4 shadow-inner">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-md">Choose Your City</h1>
-        <p className="text-lg md:text-xl mb-8 opacity-90">Find the best local deals and offers near you.</p>
+      <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white text-center py-20 px-4 shadow-md">
+        <h1 className="text-4xl md:text-5xl font-black mb-4 drop-shadow-md uppercase tracking-tight">Choose Your City</h1>
+        <p className="text-xl md:text-2xl mb-8 font-medium opacity-95 drop-shadow-sm">Find the best local deals and offers near you.</p>
         <div className="flex justify-center mt-6">
           <Link href="/">
-            <button className="bg-white text-blue-600 px-6 py-2 rounded-md font-bold hover:bg-gray-100 transition">
+            <button className="bg-yellow-400 text-gray-900 px-6 py-2 rounded-md font-bold hover:bg-yellow-500 transition shadow-sm">
               &larr; Back to Countries
             </button>
           </Link>

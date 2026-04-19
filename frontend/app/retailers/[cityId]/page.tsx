@@ -18,13 +18,12 @@ export default async function RetailersPage({ params }: { params: { cityId: stri
   return (
     <div>
       {/* Hero Banner Section */}
-      <div className="bg-red-600 text-white text-center py-20 px-4 shadow-inner">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-md">Shop Top Retailers</h1>
-        <p className="text-lg md:text-xl mb-8 opacity-90">Find the latest catalogs and offers from your favorite brands.</p>
+      <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white text-center py-20 px-4 shadow-md">
+        <h1 className="text-4xl md:text-5xl font-black mb-4 drop-shadow-md uppercase tracking-tight">Shop Top Retailers</h1>
+        <p className="text-xl md:text-2xl mb-8 font-medium opacity-95 drop-shadow-sm">Find the latest catalogs and offers from your favorite brands.</p>
         <div className="flex justify-center mt-6">
-          {/* We use router.back() or link to home, simple fallback here */}
           <Link href="/">
-            <button className="bg-white text-red-600 px-6 py-2 rounded-md font-bold hover:bg-gray-100 transition">
+            <button className="bg-yellow-400 text-gray-900 px-6 py-2 rounded-md font-bold hover:bg-yellow-500 transition shadow-sm">
               &larr; Back to Regions
             </button>
           </Link>

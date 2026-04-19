@@ -79,7 +79,7 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
         <Link href={`/retailers/${offer.retailerId}`} className="text-gray-600 hover:text-gray-900 font-semibold transition">
           <i className="fa-solid fa-arrow-left mr-2"></i> Back to Retailer
         </Link>
-        <div className="font-bold text-green-600 hidden sm:block">DealNamaa Specials</div>
+        <div className="font-black text-red-600 tracking-tight hidden sm:block">HOT DEAL <i className="fa-solid fa-fire text-orange-500"></i></div>
       </div>
 
       <div className="max-w-5xl mx-auto mt-8 px-4">
@@ -111,7 +111,7 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
               href={`${apiBaseUrl}/api/redirect/offer/${offer.id || offer._id}`} 
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center bg-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg md:text-xl shadow-md hover:bg-blue-700 hover:scale-105 transition-all w-full justify-center"
+              className="inline-flex items-center bg-yellow-400 text-gray-900 px-8 py-4 rounded-xl font-extrabold text-lg md:text-xl shadow-lg hover:bg-yellow-500 hover:scale-105 transition-all w-full justify-center border border-yellow-500"
             >
               View Full Catalog <i className="fa-solid fa-arrow-up-right-from-square ml-3"></i>
             </a>

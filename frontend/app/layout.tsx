@@ -29,13 +29,13 @@ export default function RootLayout({
         
         {/* Global Navigation Header */}
         <header className="flex justify-between items-center p-4 bg-white shadow-sm border-b">
-          <div className="text-2xl font-bold text-green-600">
-            <i className="fa-solid fa-tags"></i> DealNamaa
+          <div className="text-3xl font-black text-red-600 tracking-tight">
+            <i className="fa-solid fa-tags text-yellow-500 mr-1"></i> DealNamaa
           </div>
           <nav className="hidden md:flex space-x-6">
-            <a href="/" className="hover:text-green-600 font-semibold transition">Home</a>
-            <a href="#" className="hover:text-green-600 font-semibold transition">Retailers</a>
-            <a href="#" className="hover:text-green-600 font-semibold transition">Coupons</a>
+            <a href="/" className="hover:text-red-600 font-bold transition">Home</a>
+            <a href="#" className="hover:text-red-600 font-bold transition">Retailers</a>
+            <a href="#" className="hover:text-red-600 font-bold transition">Coupons</a>
           </nav>
         </header>
         
