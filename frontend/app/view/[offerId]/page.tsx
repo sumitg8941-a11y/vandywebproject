@@ -76,7 +76,7 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
     <div className="bg-gray-50 min-h-screen pb-12">
       {/* Top Nav */}
       <div className="bg-white shadow-sm border-b py-4 px-6 flex justify-between items-center sticky top-0 z-50">
-        <Link href={`/retailers/${offer.retailerId}`} className="text-gray-600 hover:text-gray-900 font-semibold transition">
+        <Link href={`/offers/${offer.retailerId}`} className="text-gray-600 hover:text-gray-900 font-semibold transition">
           <i className="fa-solid fa-arrow-left mr-2"></i> Back to Retailer
         </Link>
         <div className="font-black text-red-600 tracking-tight hidden sm:block">HOT DEAL <i className="fa-solid fa-fire text-orange-500"></i></div>
