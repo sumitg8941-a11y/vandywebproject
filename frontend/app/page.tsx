@@ -1,90 +1,84 @@
+"use client";
+
+import { useState } from 'react';
 import Link from 'next/link';
 
-async function getSearchResults(query: string) {
-  try {
-    const res = await fetch(`http://127.0.0.1:3000/api/search?q=${encodeURIComponent(query)}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch search results');
-    return res.json();
-  } catch (error) {
-    return { retailers: [], offers: [] };
-  }
-}
+export default function FeedbackPage() {
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
 
-export default async function SearchPage({ searchParams }: { searchParams: { q?: string } }) {
-  const resolvedParams = await Promise.resolve(searchParams);
-  const query = resolvedParams.q || '';
-  const { retailers, offers } = await getSearchResults(query);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('submitting');
+
+    const apiBaseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : 'http://127.0.0.1:3000';
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) throw new Error('Failed to submit feedback');
+      
+      setStatus('success');
+      setFormData({ name: '', email: '', message: '' });
+    } catch (error) {
+      setStatus('error');
+    }
+  };
 
   return (
     <div>
-      {/* Hero Banner */}
-      <div className="bg-gray-800 text-white text-center py-12 px-4 shadow-inner">
-        <h1 className="text-3xl md:text-4xl font-bold mb-4 drop-shadow-md">Search Results</h1>
-        <p className="text-lg opacity-90">Showing results for "{query}"</p>
-        <div className="flex justify-center mt-6">
-          <Link href="/">
-            <button className="bg-white text-gray-800 px-6 py-2 rounded-md font-bold hover:bg-gray-100 transition">
-              &larr; Back to Home
-            </button>
-          </Link>
-        </div>
+      <div className="bg-green-600 text-white text-center py-12 px-4 shadow-inner">
+        <h1 className="text-3xl md:text-4xl font-bold mb-4 drop-shadow-md">We Value Your Feedback</h1>
+        <p className="text-lg opacity-90">Help us improve DealNamaa by sharing your thoughts.</p>
       </div>
 
-      <div className="max-w-6xl mx-auto p-6 mt-8">
-        {retailers.length === 0 && offers.length === 0 ? (
-          <div className="text-center p-10 bg-yellow-100 text-yellow-800 rounded-lg">
-            <h2 className="text-2xl font-bold"><i className="fa-solid fa-magnifying-glass"></i> No Results Found</h2>
-            <p>We couldn't find any retailers or offers matching "{query}".</p>
+      <div className="max-w-2xl mx-auto p-6 mt-8 mb-12">
+        {status === 'success' ? (
+          <div className="bg-green-100 text-green-800 p-8 rounded-lg text-center shadow-md border border-green-200">
+            <i className="fa-solid fa-circle-check text-4xl mb-4"></i>
+            <h2 className="text-2xl font-bold mb-2">Thank You!</h2>
+            <p className="mb-6">Your feedback has been successfully submitted and will be reviewed by our team.</p>
+            <Link href="/">
+              <button className="bg-green-600 text-white px-6 py-2 rounded-md font-bold hover:bg-green-700 transition">
+                Return to Home
+              </button>
+            </Link>
           </div>
         ) : (
-          <div className="space-y-12">
-            {/* Retailers Results */}
-            {retailers.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Retailers</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                  {retailers.map((r: any) => (
-                    <Link href={`/offers/${r.id || r._id}`} key={r.id || r._id}>
-                      <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-100 group">
-                        <div className="overflow-hidden h-32">
-                          <img src={r.logo || r.image} alt={r.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
-                        </div>
-                        <div className="p-3 text-center border-t border-gray-100">
-                          <h3 className="text-lg font-bold text-gray-800">{r.name}</h3>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+          <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+            {status === 'error' && (
+              <div className="bg-red-100 text-red-700 p-4 rounded-md mb-6 text-sm font-semibold">
+                <i className="fa-solid fa-triangle-exclamation mr-2"></i> There was an error submitting your feedback. Please try again.
               </div>
             )}
-
-            {/* Offers Results */}
-            {offers.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Offers & Flyers</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {offers.map((o: any) => (
-                    <Link href={`/view/${o.id || o._id}`} key={o.id || o._id}>
-                      <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-100 group relative">
-                        {o.badge && (
-                          <div className="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-md z-10">
-                            {o.badge}
-                          </div>
-                        )}
-                        <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
-                          <img src={o.image} alt={o.title} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
-                        </div>
-                        <div className="p-4 border-t border-gray-100">
-                          <h3 className="text-lg font-bold text-gray-800 truncate mb-1">{o.title}</h3>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+            
+            <div className="mb-6">
+              <label htmlFor="name" className="block text-gray-700 font-bold mb-2">Your Name</label>
+              <input type="text" id="name" name="name" required value={formData.name} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="John Doe" />
+            </div>
+            
+            <div className="mb-6">
+              <label htmlFor="email" className="block text-gray-700 font-bold mb-2">Email Address</label>
+              <input type="email" id="email" name="email" required value={formData.email} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="john@example.com" />
+            </div>
+            
+            <div className="mb-6">
+              <label htmlFor="message" className="block text-gray-700 font-bold mb-2">Your Message</label>
+              <textarea id="message" name="message" required value={formData.message} onChange={handleChange} rows={5} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Tell us what you love or what we can improve..."></textarea>
+            </div>
+            
+            <button type="submit" disabled={status === 'submitting'} className={`w-full bg-gray-900 text-white font-bold py-3 rounded-md transition ${status === 'submitting' ? 'opacity-70 cursor-not-allowed' : 'hover:bg-gray-800'}`}>
+              {status === 'submitting' ? 'Submitting...' : 'Submit Feedback'}
+            </button>
+          </form>
         )}
       </div>
     </div>
