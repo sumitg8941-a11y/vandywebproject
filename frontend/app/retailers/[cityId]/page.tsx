@@ -1,0 +1,62 @@
+import Link from 'next/link';
+
+// Fetch retailers from your Node.js Backend API
+async function getRetailers(cityId: string) {
+  try {
+    const res = await fetch(`http://localhost:3000/api/retailers/${cityId}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch retailers');
+    return res.json();
+  } catch (error) {
+    return [];
+  }
+}
+
+export default async function RetailersPage({ params }: { params: { cityId: string } }) {
+  const resolvedParams = await Promise.resolve(params);
+  const retailers = await getRetailers(resolvedParams.cityId);
+
+  return (
+    <div>
+      {/* Hero Banner Section */}
+      <div className="bg-red-600 text-white text-center py-20 px-4 shadow-inner">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-md">Shop Top Retailers</h1>
+        <p className="text-lg md:text-xl mb-8 opacity-90">Find the latest catalogs and offers from your favorite brands.</p>
+        <div className="flex justify-center mt-6">
+          {/* We use router.back() or link to home, simple fallback here */}
+          <Link href="/">
+            <button className="bg-white text-red-600 px-6 py-2 rounded-md font-bold hover:bg-gray-100 transition">
+              &larr; Back to Regions
+            </button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Retailers Grid */}
+      <div className="max-w-6xl mx-auto p-6 mt-8">
+        <h2 className="text-3xl font-bold mb-8 text-gray-800 border-b pb-2">Retailers in this City</h2>
+        
+        {retailers.length === 0 ? (
+          <div className="text-center p-10 bg-yellow-100 text-yellow-800 rounded-lg">
+            <h2 className="text-2xl font-bold"><i className="fa-solid fa-triangle-exclamation"></i> No Retailers Found</h2>
+            <p>We couldn't find any retailers for this city. Please check back later.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {retailers.map((r: any) => (
+              <Link href={`/offers/${r.id || r._id}`} key={r.id || r._id}>
+                <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-100 group">
+                  <div className="overflow-hidden h-32">
+                    <img src={r.logo || r.image} alt={r.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                  <div className="p-3 text-center border-t border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-800">{r.name}</h3>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
