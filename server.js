@@ -236,16 +236,6 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
-// Admin: Get all feedback
-app.get('/api/admin/feedback', verifyAdmin, async (req, res) => {
-    try {
-        const feedback = await Feedback.find().sort({ date: -1 });
-        res.json(feedback);
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch feedback' });
-    }
-});
-
 // ==========================================
 // 📊 API ENDPOINTS (TRACKING / ANALYTICS)
 // ==========================================
@@ -300,6 +290,16 @@ const verifyAdmin = (req, res, next) => {
         res.status(401).json({ error: 'Invalid Token' });
     }
 };
+
+// Admin: Get all feedback
+app.get('/api/admin/feedback', verifyAdmin, async (req, res) => {
+    try {
+        const feedback = await Feedback.find().sort({ date: -1 });
+        res.json(feedback);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch feedback' });
+    }
+});
 
 // ==========================================
 // 📝 API ENDPOINTS (WRITE OPERATIONS & UPLOADS)
