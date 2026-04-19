@@ -3,7 +3,7 @@ import Link from 'next/link';
 // Fetch data from your Node.js Backend API
 async function getCountries() {
   try {
-    const res = await fetch('http://localhost:3000/api/countries', { cache: 'no-store' });
+    const res = await fetch('http://127.0.0.1:3000/api/countries', { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch countries');
     return res.json();
   } catch (error) {

@@ -11,9 +11,11 @@ export default function ViewOfferPage({ params }: { params: Promise<{ offerId: s
   const startTimeRef = useRef(Date.now());
   const maxPageRef = useRef(1); // Optional: If we want to track scroll depth within PDF later
 
+  const apiBaseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : 'http://127.0.0.1:3000';
+
   useEffect(() => {
     // Fetch offer details
-    fetch(`http://localhost:3000/api/offer/${offerId}`)
+    fetch(`${apiBaseUrl}/api/offer/${offerId}`)
       .then(res => res.json())
       .then(data => {
         if (!data.error) setOffer(data);
@@ -26,7 +28,7 @@ export default function ViewOfferPage({ params }: { params: Promise<{ offerId: s
       const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
       
       // Ping the server to save the stat. Use keepalive so it works on unmount
-      fetch(`http://localhost:3000/api/track/offer-stats/${offerId}`, {
+      fetch(`${apiBaseUrl}/api/track/offer-stats/${offerId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ duration: durationSeconds, maxPage: maxPageRef.current }),
@@ -70,7 +72,7 @@ export default function ViewOfferPage({ params }: { params: Promise<{ offerId: s
               </div>
             )}
             <a 
-              href={`http://localhost:3000/api/redirect/offer/${offer.id || offer._id}`} 
+            href={`${apiBaseUrl}/api/redirect/offer/${offer.id || offer._id}`} 
               target="_blank"
               rel="noopener noreferrer"
               className="bg-blue-600 text-white px-6 py-2 rounded-md font-bold shadow hover:bg-blue-700 transition flex items-center"
