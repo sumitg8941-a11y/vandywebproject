@@ -1,85 +1,132 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 
-export default function FeedbackPage() {
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+export default function OfferView({ params }: { params: { offerId: string } }) {
+  const [offerId, setOfferId] = useState<string>('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  // Safely grab the ID from the URL parameters
+  useEffect(() => {
+    Promise.resolve(params).then(p => setOfferId(p.offerId));
+  }, [params]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus('submitting');
+  const [offer, setOffer] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const startTimeRef = useRef(Date.now());
+  const maxPageRef = useRef(1);
 
-    const apiBaseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : 'http://127.0.0.1:3000';
+  const apiBaseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : 'http://127.0.0.1:3000';
 
-    try {
-      const res = await fetch(`${apiBaseUrl}/api/feedback`, {
+  useEffect(() => {
+    if (!offerId) return;
+
+    // Fetch offer details
+    fetch(`${apiBaseUrl}/api/offer/${offerId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error) setOffer(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+
+    // Track time spent viewing the offer when the user leaves
+    return () => {
+      const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      fetch(`${apiBaseUrl}/api/track/offer-stats/${offerId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+        body: JSON.stringify({ duration: durationSeconds, maxPage: maxPageRef.current }),
+        keepalive: true
+      }).catch(err => console.error(err));
+    };
+  }, [offerId, apiBaseUrl]);
 
-      if (!res.ok) throw new Error('Failed to submit feedback');
-      
-      setStatus('success');
-      setFormData({ name: '', email: '', message: '' });
+  const handleFeedback = async (type: 'like' | 'dislike') => {
+    if (feedbackGiven || !offer) return;
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/offer/${offerId}/${type}`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setOffer({ ...offer, likes: data.likes, dislikes: data.dislikes });
+        setFeedbackGiven(true);
+      }
     } catch (error) {
-      setStatus('error');
+      console.error('Failed to submit feedback');
     }
   };
 
+  if (!offerId || loading) {
+    return <div className="min-h-screen flex items-center justify-center text-xl font-bold">Loading Offer Details...</div>;
+  }
+
+  if (!offer) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center px-4">
+        <i className="fa-solid fa-triangle-exclamation text-6xl text-red-500 mb-4"></i>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Offer Not Found</h1>
+        <p className="text-gray-600 mb-6">This offer might have expired or been removed.</p>
+        <Link href="/"><button className="bg-gray-900 text-white px-6 py-2 rounded-md font-bold hover:bg-gray-800 transition">Return Home</button></Link>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <div className="bg-green-600 text-white text-center py-12 px-4 shadow-inner">
-        <h1 className="text-3xl md:text-4xl font-bold mb-4 drop-shadow-md">We Value Your Feedback</h1>
-        <p className="text-lg opacity-90">Help us improve DealNamaa by sharing your thoughts.</p>
+    <div className="bg-gray-50 min-h-screen pb-12">
+      {/* Top Nav */}
+      <div className="bg-white shadow-sm border-b py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+        <Link href={`/retailers/${offer.retailerId}`} className="text-gray-600 hover:text-gray-900 font-semibold transition">
+          <i className="fa-solid fa-arrow-left mr-2"></i> Back to Retailer
+        </Link>
+        <div className="font-bold text-green-600 hidden sm:block">DealNamaa Specials</div>
       </div>
 
-      <div className="max-w-2xl mx-auto p-6 mt-8 mb-12">
-        {status === 'success' ? (
-          <div className="bg-green-100 text-green-800 p-8 rounded-lg text-center shadow-md border border-green-200">
-            <i className="fa-solid fa-circle-check text-4xl mb-4"></i>
-            <h2 className="text-2xl font-bold mb-2">Thank You!</h2>
-            <p className="mb-6">Your feedback has been successfully submitted and will be reviewed by our team.</p>
-            <Link href="/">
-              <button className="bg-green-600 text-white px-6 py-2 rounded-md font-bold hover:bg-green-700 transition">
-                Return to Home
+      <div className="max-w-5xl mx-auto mt-8 px-4">
+        {/* Offer Header Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-center md:items-start mb-8 relative overflow-hidden">
+          <div className="flex-1 w-full">
+            {offer.badge && (
+              <span className="inline-block bg-red-100 text-red-700 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider mb-4 border border-red-200 shadow-sm">
+                {offer.badge}
+              </span>
+            )}
+            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">{offer.title}</h1>
+            <p className="text-gray-600 font-medium text-lg"><i className="fa-regular fa-calendar mr-2"></i> Valid from: {new Date(offer.date).toLocaleDateString()}</p>
+            
+            {/* Like / Dislike Feedback Buttons */}
+            <div className="mt-6 flex flex-wrap items-center gap-4 text-sm font-semibold">
+              <span className="text-gray-500">Did this help you?</span>
+              <button onClick={() => handleFeedback('like')} disabled={feedbackGiven} className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition ${feedbackGiven ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-50 hover:border-green-300'} text-green-600 border-green-200`}>
+                <i className="fa-regular fa-thumbs-up"></i> <span>Yes ({offer.likes || 0})</span>
               </button>
-            </Link>
+              <button onClick={() => handleFeedback('dislike')} disabled={feedbackGiven} className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition ${feedbackGiven ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-50 hover:border-red-300'} text-red-600 border-red-200`}>
+                <i className="fa-regular fa-thumbs-down"></i> <span>No ({offer.dislikes || 0})</span>
+              </button>
+            </div>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-            {status === 'error' && (
-              <div className="bg-red-100 text-red-700 p-4 rounded-md mb-6 text-sm font-semibold">
-                <i className="fa-solid fa-triangle-exclamation mr-2"></i> There was an error submitting your feedback. Please try again.
+          
+          <div className="flex-shrink-0 flex flex-col items-center w-full md:w-auto">
+             <a 
+              href={`${apiBaseUrl}/api/redirect/offer/${offer.id || offer._id}`} 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center bg-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg md:text-xl shadow-md hover:bg-blue-700 hover:scale-105 transition-all w-full justify-center"
+            >
+              View Full Catalog <i className="fa-solid fa-arrow-up-right-from-square ml-3"></i>
+            </a>
+            {offer.couponCode && (
+              <div className="mt-4 bg-gray-100 text-gray-800 px-4 py-2 rounded border border-dashed border-gray-400 font-mono text-center w-full text-lg">
+                Code: <strong>{offer.couponCode}</strong>
               </div>
             )}
-            
-            <div className="mb-6">
-              <label htmlFor="name" className="block text-gray-700 font-bold mb-2">Your Name</label>
-              <input type="text" id="name" name="name" required value={formData.name} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="John Doe" />
-            </div>
-            
-            <div className="mb-6">
-              <label htmlFor="email" className="block text-gray-700 font-bold mb-2">Email Address</label>
-              <input type="email" id="email" name="email" required value={formData.email} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="john@example.com" />
-            </div>
-            
-            <div className="mb-6">
-              <label htmlFor="message" className="block text-gray-700 font-bold mb-2">Your Message</label>
-              <textarea id="message" name="message" required value={formData.message} onChange={handleChange} rows={5} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Tell us what you love or what we can improve..."></textarea>
-            </div>
-            
-            <button type="submit" disabled={status === 'submitting'} className={`w-full bg-gray-900 text-white font-bold py-3 rounded-md transition ${status === 'submitting' ? 'opacity-70 cursor-not-allowed' : 'hover:bg-gray-800'}`}>
-              {status === 'submitting' ? 'Submitting...' : 'Submit Feedback'}
-            </button>
-          </form>
-        )}
+          </div>
+        </div>
+
+        {/* Flyer Image Preview */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 md:p-8 flex justify-center">
+          <img src={offer.image} alt={offer.title} className="max-w-full h-auto rounded-xl shadow-sm border border-gray-50" />
+        </div>
       </div>
     </div>
   );
