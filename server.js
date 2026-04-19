@@ -171,7 +171,24 @@ app.get('/api/offers/:retailerId', async (req, res) => {
     }
 });
 
-// 5. Admin: Get all cities for the dashboard
+// 5. Global Search API
+app.get('/api/search', async (req, res) => {
+    try {
+        const query = req.query.q;
+        if (!query) return res.json({ retailers: [], offers: [] });
+        
+        const regex = new RegExp(query, 'i'); // Case-insensitive search
+        
+        const retailers = await Retailer.find({ name: regex });
+        const offers = await Offer.find({ $or: [{ title: regex }, { badge: regex }] });
+        
+        res.json({ retailers, offers });
+    } catch (err) {
+        res.status(500).json({ error: 'Search failed' });
+    }
+});
+
+// Admin: Get all cities for the dashboard
 app.get('/api/cities', async (req, res) => {
     try {
         const cities = await City.find();
