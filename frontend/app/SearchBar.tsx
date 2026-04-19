@@ -1,25 +1,9 @@
-"use client";
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-
 export default function SearchBar() {
-  const [query, setQuery] = useState('');
-  const router = useRouter();
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query)}`);
-    }
-  };
-
   return (
-    <form onSubmit={handleSearch} className="flex justify-center max-w-3xl mx-auto shadow-2xl rounded-lg overflow-hidden border-4 border-white/20">
+    <form action="/search" method="GET" className="flex justify-center max-w-3xl mx-auto shadow-2xl rounded-lg overflow-hidden border-4 border-white/20">
       <input 
         type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        name="q"
         placeholder="Search for electronics, groceries, fashion..." 
         className="w-full p-4 text-black outline-none text-lg font-medium"
         required 
