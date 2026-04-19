@@ -9,6 +9,18 @@ const admin = {
         }
         document.getElementById('login-modal').style.display = 'none';
         this.showTab('countries');
+        
+        // Dynamically add the Feedback tab to the sidebar if it doesn't exist
+        setTimeout(() => {
+            const firstTab = document.querySelector('.tab-btn');
+            if (firstTab && firstTab.parentNode && !document.querySelector('[onclick*="feedback"]')) {
+                const btn = document.createElement('button');
+                btn.className = 'tab-btn';
+                btn.setAttribute('onclick', "admin.showTab('feedback', event)");
+                btn.innerHTML = '📝 Feedback';
+                firstTab.parentNode.appendChild(btn);
+            }
+        }, 500);
     },
 
     login: async function() {
@@ -68,6 +80,9 @@ const admin = {
                     break;
                 case 'stats':
                     html = await this.renderStats();
+                    break;
+                case 'feedback':
+                    html = await this.renderFeedback();
                     break;
             }
             this.contentDiv.innerHTML = html;
@@ -350,6 +365,26 @@ const admin = {
                 </div>
             `;
         } catch(e) { return `<p>Error loading stats</p>`; }
+    },
+
+    renderFeedback: async function() {
+        try {
+            const res = await fetch('/api/admin/feedback', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+            });
+            if (!res.ok) throw new Error('Failed to fetch feedback');
+            const feedbackList = await res.json();
+            
+            let rows = feedbackList.map(f => `
+                <tr>
+                    <td>${new Date(f.date).toLocaleDateString()}</td>
+                    <td><b>${f.name}</b><br><small style="color:#7f8c8d;">${f.email}</small></td>
+                    <td><div style="max-height:100px; overflow-y:auto; padding:8px; background:#f9f9f9; border:1px solid #ddd; border-radius:4px; font-style:italic;">"${f.message}"</div></td>
+                </tr>
+            `).join('');
+
+            return `<h2>User Feedback</h2><table class="admin-table" style="margin-top:15px;"><thead><tr><th style="width:15%;">Date</th><th style="width:25%;">User</th><th>Message</th></tr></thead><tbody>${rows || '<tr><td colspan="3" style="text-align:center;">No feedback yet.</td></tr>'}</tbody></table>`;
+        } catch(e) { return `<p style="color:red;">Error loading feedback. Ensure server is running.</p>`; }
     }
 };
 

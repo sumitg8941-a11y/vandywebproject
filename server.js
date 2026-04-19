@@ -53,6 +53,7 @@ const City = require('./City');
 const Retailer = require('./Retailer');
 const Offer = require('./Offer');
 const SiteStat = require('./SiteStat');
+const Feedback = require('./Feedback');
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'secure', message: 'DealNamaa API is running safely!' });
@@ -235,6 +236,16 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
+// Admin: Get all feedback
+app.get('/api/admin/feedback', verifyAdmin, async (req, res) => {
+    try {
+        const feedback = await Feedback.find().sort({ date: -1 });
+        res.json(feedback);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch feedback' });
+    }
+});
+
 // ==========================================
 // 📊 API ENDPOINTS (TRACKING / ANALYTICS)
 // ==========================================
@@ -357,6 +368,17 @@ app.post('/api/offers', verifyAdmin, async (req, res) => {
         const newOffer = new Offer(req.body);
         await newOffer.save();
         res.status(201).json(newOffer);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Public: Submit Feedback
+app.post('/api/feedback', async (req, res) => {
+    try {
+        const newFeedback = new Feedback(req.body);
+        await newFeedback.save();
+        res.status(201).json({ message: 'Feedback submitted successfully' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }

@@ -51,6 +51,9 @@ export default function RootLayout({
             <i className="fa-brands fa-twitter hover:text-white cursor-pointer transition"></i>
             <i className="fa-brands fa-instagram hover:text-white cursor-pointer transition"></i>
           </div>
+          <div className="mb-4">
+            <a href="/feedback" className="text-sm hover:text-white transition underline">Share Feedback</a>
+          </div>
           <p>&copy; 2026 DealNamaa. All rights reserved.</p>
         </footer>
         <GoogleAnalytics gaId="G-YOUR_TRACKING_ID" />
