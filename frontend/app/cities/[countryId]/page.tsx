@@ -45,7 +45,7 @@ export default async function CitiesPage({ params }: { params: { countryId: stri
             {cities.map((c: any) => (
               <Link href={`/retailers/${c.id || c._id}`} key={c.id || c._id}>
                 <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-100 group">
-                  <div className="overflow-hidden h-36">
+                  <div className="overflow-hidden h-24">
                     <img src={c.image} alt={c.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <div className="p-4 text-center">

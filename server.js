@@ -26,7 +26,7 @@ app.use(cors());
 // 3. Rate Limiting: Prevents brute-force and DDoS attacks
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
+    max: 1000, // Increased limit so local Next.js fetches don't get blocked
     message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api', limiter);
@@ -347,6 +347,6 @@ app.post('/api/offers', verifyAdmin, async (req, res) => {
 
 // Start the server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Secure Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Secure Server running on http://0.0.0.0:${PORT}`);
 });
