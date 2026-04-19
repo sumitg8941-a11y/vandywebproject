@@ -14,6 +14,7 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
   const [offer, setOffer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [isFlipbookOpen, setIsFlipbookOpen] = useState(false);
   const startTimeRef = useRef(Date.now());
   const maxPageRef = useRef(1);
 
@@ -107,14 +108,12 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
           </div>
           
           <div className="flex-shrink-0 flex flex-col items-center w-full md:w-auto">
-             <a 
-              href={`${apiBaseUrl}/api/redirect/offer/${offer.id || offer._id}`} 
-              target="_blank"
-              rel="noopener noreferrer"
+             <button 
+              onClick={() => setIsFlipbookOpen(true)}
               className="inline-flex items-center bg-yellow-400 text-gray-900 px-8 py-4 rounded-xl font-extrabold text-lg md:text-xl shadow-lg hover:bg-yellow-500 hover:scale-105 transition-all w-full justify-center border border-yellow-500"
             >
-              View Full Catalog <i className="fa-solid fa-arrow-up-right-from-square ml-3"></i>
-            </a>
+              View Full Catalog <i className="fa-solid fa-book-open ml-3"></i>
+            </button>
             {offer.couponCode && (
               <div className="mt-4 bg-gray-100 text-gray-800 px-4 py-2 rounded border border-dashed border-gray-400 font-mono text-center w-full text-lg">
                 Code: <strong>{offer.couponCode}</strong>
@@ -128,6 +127,28 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
           <img src={offer.image} alt={offer.title} className="max-w-full h-auto rounded-xl shadow-sm border border-gray-50" />
         </div>
       </div>
+
+      {/* Flipbook Modal */}
+      {isFlipbookOpen && (
+        <div className="fixed inset-0 z-[9999] bg-black/95 flex flex-col">
+          <div className="flex justify-between items-center p-4 border-b border-gray-800 text-white">
+            <div className="font-bold text-xl truncate pr-4">{offer.title}</div>
+            <button 
+              onClick={() => setIsFlipbookOpen(false)} 
+              className="w-10 h-10 bg-gray-800 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors text-xl font-bold"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div className="flex-1 w-full h-full p-2 sm:p-6 overflow-hidden flex justify-center items-center">
+            <iframe 
+              src={`${apiBaseUrl}/api/redirect/offer/${offer.id || offer._id}`} 
+              className="w-full h-full max-w-5xl bg-white rounded-xl shadow-2xl"
+              title="Catalog Viewer"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
