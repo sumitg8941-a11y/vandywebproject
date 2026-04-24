@@ -44,9 +44,9 @@ const seedDatabase = async () => {
 
         // 4. Seed Offers
         await Offer.insertMany([
-            { id: 'o1', title: 'Weekend Big Saver Flyer', date: new Date('2026-10-25'), pdfUrl: 'YOUR_FIRST_FILE_NAME.pdf', image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&q=80', badge: 'Up to 50% OFF', retailerId: 'r1' },
-            { id: 'o2', title: 'Organic Produce Promo', date: new Date('2026-10-18'), pdfUrl: 'YOUR_SECOND_FILE_NAME.pdf', image: 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=500&q=80', badge: 'New Deals', retailerId: 'r1' },
-            { id: 'o3', title: 'Grocery Bonanza', date: new Date('2026-10-24'), pdfUrl: '#', image: 'https://images.unsplash.com/photo-1506617420156-8e4536971650?w=500&q=80', badge: 'Flash Sale', retailerId: 'r2' }
+            { id: 'o1', title: 'Weekend Big Saver Flyer', validFrom: new Date('2026-10-20'), validUntil: new Date('2026-10-25'), pdfUrl: 'YOUR_FIRST_FILE_NAME.pdf', image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&q=80', badge: 'Up to 50% OFF', retailerId: 'r1' },
+            { id: 'o2', title: 'Organic Produce Promo', validFrom: new Date('2026-10-10'), validUntil: new Date('2026-10-18'), pdfUrl: 'YOUR_SECOND_FILE_NAME.pdf', image: 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=500&q=80', badge: 'New Deals', retailerId: 'r1' },
+            { id: 'o3', title: 'Grocery Bonanza', validFrom: new Date('2026-10-20'), validUntil: new Date('2026-10-24'), pdfUrl: '#', image: 'https://images.unsplash.com/photo-1506617420156-8e4536971650?w=500&q=80', badge: 'Flash Sale', retailerId: 'r2' }
         ]);
 
         console.log('🎉 Data successfully migrated to MongoDB!');

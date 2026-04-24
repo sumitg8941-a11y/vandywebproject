@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const offerSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true, lowercase: true, trim: true },
     title: { type: String, required: true, trim: true },
-    date: { type: Date, required: true },
+    validFrom: { type: Date, required: true },
+    validUntil: { type: Date, required: true },
     pdfUrl: { type: String, default: '#' },
     clicks: { type: Number, default: 0 },
     likes: { type: Number, default: 0 },

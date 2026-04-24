@@ -274,7 +274,7 @@ const admin = {
         const offers = await api.getAllOffers();
         const retailers = await api.getAllRetailers();
         
-        let rows = offers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${new Date(o.date).toISOString().split('T')[0]}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
+        let rows = offers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${o.validFrom ? new Date(o.validFrom).toISOString().split('T')[0] : ''} to ${o.validUntil ? new Date(o.validUntil).toISOString().split('T')[0] : ''}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
         let retailerOptions = retailers.map(r => `<option value="${r.id}">${r.name} (${r.cityId})</option>`).join('');
 
         return `
@@ -288,7 +288,16 @@ const admin = {
                 <div style="margin-top:10px;">
                     <input type="text" id="new-off-id" placeholder="Offer ID (e.g. o20)" style="width:100%; padding:8px; margin-bottom:10px;">
                     <input type="text" id="new-off-title" placeholder="Offer Title (e.g., Weekend Sale)" style="width:100%; padding:8px; margin-bottom:10px;">
-                    <input type="date" id="new-off-date" style="width:100%; padding:8px; margin-bottom:10px;">
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <div style="flex:1;">
+                            <label style="font-weight: bold; font-size: 0.9em;">Valid From:</label>
+                            <input type="date" id="new-off-valid-from" style="width:100%; padding:8px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-weight: bold; font-size: 0.9em;">Valid Until:</label>
+                            <input type="date" id="new-off-valid-until" style="width:100%; padding:8px;">
+                        </div>
+                    </div>
                     <select id="new-off-retailer" style="width:100%; padding:8px; margin-bottom:10px;">${retailerOptions}</select>
                     
                     <label style="font-weight: bold; font-size: 0.9em;">Upload PDF Flyer (Optional):</label>
@@ -305,7 +314,7 @@ const admin = {
                 </div>
             </div>
             
-            <table class="admin-table" style="margin-top:20px;"><thead><tr><th>Title</th><th>Retailer</th><th>Date</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+            <table class="admin-table" style="margin-top:20px;"><thead><tr><th>Title</th><th>Retailer</th><th>Validity</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
         `;
     },
 
@@ -327,7 +336,8 @@ const admin = {
         document.getElementById('new-off-id').readOnly = false;
         document.getElementById('new-off-id').value = '';
         document.getElementById('new-off-title').value = '';
-        document.getElementById('new-off-date').value = '';
+        document.getElementById('new-off-valid-from').value = '';
+        document.getElementById('new-off-valid-until').value = '';
         document.getElementById('new-off-badge').value = '';
         document.getElementById('new-off-pdf').value = '';
         document.getElementById('new-off-image').value = '';
@@ -350,7 +360,8 @@ const admin = {
             document.getElementById('new-off-id').value = offer.id || offer._id;
             document.getElementById('new-off-id').readOnly = true;
             document.getElementById('new-off-title').value = offer.title || '';
-            document.getElementById('new-off-date').value = offer.date ? new Date(offer.date).toISOString().split('T')[0] : '';
+            document.getElementById('new-off-valid-from').value = offer.validFrom ? new Date(offer.validFrom).toISOString().split('T')[0] : '';
+            document.getElementById('new-off-valid-until').value = offer.validUntil ? new Date(offer.validUntil).toISOString().split('T')[0] : '';
             document.getElementById('new-off-retailer').value = offer.retailerId || '';
             document.getElementById('new-off-badge').value = offer.badge || '';
             document.getElementById('new-off-pdf').value = (offer.pdfUrl && offer.pdfUrl !== '#') ? offer.pdfUrl : '';
@@ -367,7 +378,8 @@ const admin = {
     saveOffer: async function() {
         const id = document.getElementById('new-off-id').value.toLowerCase();
         const title = document.getElementById('new-off-title').value;
-        const date = document.getElementById('new-off-date').value;
+        const validFrom = document.getElementById('new-off-valid-from').value;
+        const validUntil = document.getElementById('new-off-valid-until').value;
         const retailerId = document.getElementById('new-off-retailer').value;
         const badge = document.getElementById('new-off-badge').value;
 
@@ -386,8 +398,8 @@ const admin = {
             if (pdfFile) pdfUrl = await this.uploadFile(pdfFile);
             if (imageFile) image = await this.uploadFile(imageFile);
             
-            if(id && title && date && retailerId) {
-                const payload = { id, title, date, retailerId, pdfUrl, image, badge };
+            if(id && title && validFrom && validUntil && retailerId) {
+                const payload = { id, title, validFrom, validUntil, retailerId, pdfUrl, image, badge };
                 if (editId) {
                     const res = await fetch(`/api/offers/${editId}`, {
                         method: 'PUT',

@@ -93,7 +93,9 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
               </span>
             )}
             <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">{offer.title}</h1>
-            <p className="text-gray-600 font-medium text-lg"><i className="fa-regular fa-calendar mr-2"></i> Valid from: {new Date(offer.date).toLocaleDateString()}</p>
+            <p className="text-gray-600 font-medium text-lg">
+              <i className="fa-regular fa-calendar mr-2"></i> Valid: {offer.validFrom ? new Date(offer.validFrom).toLocaleDateString() : ''} - {offer.validUntil ? new Date(offer.validUntil).toLocaleDateString() : ''}
+            </p>
             
             {/* Like / Dislike Feedback Buttons */}
             <div className="mt-6 flex flex-wrap items-center gap-4 text-sm font-semibold">

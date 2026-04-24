@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
@@ -14,24 +14,20 @@ const app = express();
 // ==========================================
 // 🛡️ SECURITY MIDDLEWARES
 // ==========================================
-// 1. Helmet: Secures HTTP headers from known web vulnerabilities
 app.use(helmet({
     contentSecurityPolicy: false,
     crossOriginResourcePolicy: false
 }));
 
-// 2. CORS: Controls Cross-Origin Resource Sharing (Allows your frontend to talk to your backend safely)
 app.use(cors());
 
-// 3. Rate Limiting: Prevents brute-force and DDoS attacks
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 1000, // Increased limit so local Next.js fetches don't get blocked
+    windowMs: 15 * 60 * 1000,
+    max: 1000,
     message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api', limiter);
 
-// 4. Body Parser with limit: Prevents attackers from sending huge payloads to crash the server
 app.use(express.json({ limit: '10kb' }));
 
 // ==========================================
@@ -44,7 +40,6 @@ mongoose.connect(process.env.MONGO_URI)
 // ==========================================
 // 🌐 ROUTES & STATIC FILES
 // ==========================================
-// Serve our front-end HTML, CSS, and JS files securely
 app.use(express.static(__dirname));
 
 // Import Database Models
@@ -55,29 +50,41 @@ const Offer = require('./Offer');
 const SiteStat = require('./SiteStat');
 const Feedback = require('./Feedback');
 
+// ==========================================
+// 🔧 INPUT VALIDATION HELPER
+// ==========================================
+function validateId(id) {
+    return /^[a-z0-9_-]+$/.test(id) && id.length <= 50;
+}
+
+// ==========================================
+// 🚀 API ENDPOINTS
+// ==========================================
+
 app.get('/api/health', (req, res) => {
     res.json({ status: 'secure', message: 'DealNamaa API is running safely!' });
 });
 
+// Track offer stats
 app.post('/api/track/offer-stats/:id', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
         const { duration, maxPage } = req.body;
         await Offer.findOneAndUpdate(
-            { id: req.params.id }, 
+            { id: id.toLowerCase() }, 
             { 
                 $inc: { totalTimeSeconds: duration },
-                $max: { maxPagesViewed: maxPage } // Only updates if the new page is higher
+                $max: { maxPagesViewed: maxPage }
             }
         );
         res.status(200).send('OK');
     } catch (e) { res.status(500).send('Error'); }
 });
 
-// ==========================================
-// 🚀 API ENDPOINTS (READ OPERATIONS)
-// ==========================================
-
-// 1. Get all countries
+// Get all countries
 app.get('/api/countries', async (req, res) => {
     try {
         const countries = await Country.find();
@@ -87,30 +94,42 @@ app.get('/api/countries', async (req, res) => {
     }
 });
 
-// 2. Get cities by country ID
+// Get cities by country ID
 app.get('/api/cities/:countryId', async (req, res) => {
+    const { countryId } = req.params;
+    if (!validateId(countryId)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        const cities = await City.find({ countryId: req.params.countryId.toLowerCase() });
+        const cities = await City.find({ countryId: countryId.toLowerCase() });
         res.json(cities);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch cities' });
     }
 });
 
-// 3. Get retailers by city ID
+// Get retailers by city ID
 app.get('/api/retailers/:cityId', async (req, res) => {
+    const { cityId } = req.params;
+    if (!validateId(cityId)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        const retailers = await Retailer.find({ cityId: req.params.cityId.toLowerCase() });
+        const retailers = await Retailer.find({ cityId: cityId.toLowerCase() });
         res.json(retailers);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch retailers' });
     }
 });
 
-// Get Single Retailer Detail (For Website Link)
+// Get Single Retailer Detail
 app.get('/api/retailer/:id', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        const retailer = await Retailer.findOne({ id: req.params.id.toLowerCase() });
+        const retailer = await Retailer.findOne({ id: id.toLowerCase() });
         res.json(retailer);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch retailer details' });
@@ -119,8 +138,12 @@ app.get('/api/retailer/:id', async (req, res) => {
 
 // Get Single Offer Detail
 app.get('/api/offer/:id', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        const offer = await Offer.findOne({ id: req.params.id.toLowerCase() });
+        const offer = await Offer.findOne({ id: id.toLowerCase() });
         if (!offer) return res.status(404).json({ error: 'Offer not found' });
         res.json(offer);
     } catch (err) {
@@ -130,8 +153,12 @@ app.get('/api/offer/:id', async (req, res) => {
 
 // Offer Feedback (Like)
 app.post('/api/offer/:id/like', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        const offer = await Offer.findOneAndUpdate({ id: req.params.id.toLowerCase() }, { $inc: { likes: 1 } }, { new: true });
+        const offer = await Offer.findOneAndUpdate({ id: id.toLowerCase() }, { $inc: { likes: 1 } }, { new: true });
         if (!offer) return res.status(404).json({ error: 'Offer not found' });
         res.json({ likes: offer.likes, dislikes: offer.dislikes });
     } catch (err) { res.status(500).json({ error: 'Failed to update' }); }
@@ -139,8 +166,12 @@ app.post('/api/offer/:id/like', async (req, res) => {
 
 // Offer Feedback (Dislike)
 app.post('/api/offer/:id/dislike', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        const offer = await Offer.findOneAndUpdate({ id: req.params.id.toLowerCase() }, { $inc: { dislikes: 1 } }, { new: true });
+        const offer = await Offer.findOneAndUpdate({ id: id.toLowerCase() }, { $inc: { dislikes: 1 } }, { new: true });
         if (!offer) return res.status(404).json({ error: 'Offer not found' });
         res.json({ likes: offer.likes, dislikes: offer.dislikes });
     } catch (err) { res.status(500).json({ error: 'Failed to update' }); }
@@ -148,21 +179,22 @@ app.post('/api/offer/:id/dislike', async (req, res) => {
 
 // Tracking Redirect for outbound traffic
 app.get('/api/redirect/offer/:id', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        const offer = await Offer.findOne({ id: req.params.id.toLowerCase() });
+        const offer = await Offer.findOne({ id: id.toLowerCase() });
         if (!offer) return res.status(404).send('Offer not found');
         
-        // Track the click
         offer.clicks += 1;
         await offer.save();
 
-        // Determine destination
         let dest = offer.couponUrl || offer.externalAdLink || offer.pdfUrl;
         if (!dest || dest === '#') {
             return res.status(400).send('No valid destination link for this offer');
         }
         
-        // Append UTM tags so end retailers know the traffic came from DealNamaa
         try {
             const urlObj = new URL(dest);
             urlObj.searchParams.set('utm_source', 'DealNamaa');
@@ -179,32 +211,33 @@ app.get('/api/redirect/offer/:id', async (req, res) => {
     }
 });
 
-// 4. Get offers by retailer ID
+// Get offers by retailer ID
 app.get('/api/offers/:retailerId', async (req, res) => {
+    const { retailerId } = req.params;
+    if (!validateId(retailerId)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        // Fetch offers and automatically sort them from newest to oldest based on the date
-        const offers = await Offer.find({ retailerId: req.params.retailerId.toLowerCase() }).sort({ date: -1 });
+        const offers = await Offer.find({ retailerId: retailerId.toLowerCase() }).sort({ validUntil: -1 });
         res.json(offers);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch offers' });
     }
 });
 
-// 5. Global Search API
+// Global Search API
 app.get('/api/search', async (req, res) => {
     try {
         const query = req.query.q;
         if (!query) return res.json({ retailers: [], offers: [] });
         
-        const regex = new RegExp(query, 'i'); // Case-insensitive search
+        // Limit query length to prevent abuse
+        const safeQuery = query.substring(0, 100);
+        const regex = new RegExp(safeQuery, 'i');
         
-        // Find matching retailers
         const retailers = await Retailer.find({ name: regex });
-        
-        // Get the IDs of the matched retailers
         const retailerIds = retailers.map(r => r.id);
         
-        // Find offers matching the title, badge, coupon code, OR belonging to the matched retailers
         const offers = await Offer.find({ 
             $or: [
                 { title: regex }, 
@@ -220,7 +253,7 @@ app.get('/api/search', async (req, res) => {
     }
 });
 
-// Admin: Get all cities for the dashboard
+// Admin: Get all cities
 app.get('/api/cities', async (req, res) => {
     try {
         const cities = await City.find();
@@ -243,7 +276,7 @@ app.get('/api/retailers', async (req, res) => {
 // Admin: Get all offers
 app.get('/api/offers', async (req, res) => {
     try {
-        const offers = await Offer.find().sort({ date: -1 });
+        const offers = await Offer.find().sort({ validUntil: -1 });
         res.json(offers);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch offers' });
@@ -278,15 +311,23 @@ app.post('/api/track/visit', async (req, res) => {
 });
 
 app.post('/api/track/retailer/:id', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        await Retailer.findOneAndUpdate({ id: req.params.id }, { $inc: { clicks: 1 } });
+        await Retailer.findOneAndUpdate({ id: id.toLowerCase() }, { $inc: { clicks: 1 } });
         res.status(200).send('OK');
     } catch (e) { res.status(500).send('Error'); }
 });
 
 app.post('/api/track/offer/:id', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        await Offer.findOneAndUpdate({ id: req.params.id }, { $inc: { clicks: 1 } });
+        await Offer.findOneAndUpdate({ id: id.toLowerCase() }, { $inc: { clicks: 1 } });
         res.status(200).send('OK');
     } catch (e) { res.status(500).send('Error'); }
 });
@@ -335,14 +376,11 @@ app.get('/api/admin/feedback', verifyAdmin, async (req, res) => {
 // ==========================================
 // 📝 API ENDPOINTS (WRITE OPERATIONS & UPLOADS)
 // ==========================================
-
-// Ensure uploads directory exists
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)){
     fs.mkdirSync(uploadDir);
 }
 
-// Configure Multer for physical file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/');
@@ -354,24 +392,24 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// Admin: Upload physical file (Image/PDF)
+// Admin: Upload physical file
 app.post('/api/upload', verifyAdmin, upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     res.json({ url: '/uploads/' + req.file.filename });
 });
 
-// Admin: Create new Country securely
+// Admin: Create new Country
 app.post('/api/countries', verifyAdmin, async (req, res) => {
     try {
         const newCountry = new Country(req.body);
-        await newCountry.save(); // Permanently saves to MongoDB!
+        await newCountry.save();
         res.status(201).json(newCountry);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-// Admin: Create new City securely
+// Admin: Create new City
 app.post('/api/cities', verifyAdmin, async (req, res) => {
     try {
         const newCity = new City(req.body);
@@ -382,7 +420,7 @@ app.post('/api/cities', verifyAdmin, async (req, res) => {
     }
 });
 
-// Admin: Create new Retailer securely
+// Admin: Create new Retailer
 app.post('/api/retailers', verifyAdmin, async (req, res) => {
     try {
         const newRetailer = new Retailer(req.body);
@@ -393,7 +431,7 @@ app.post('/api/retailers', verifyAdmin, async (req, res) => {
     }
 });
 
-// Admin: Create new Offer securely
+// Admin: Create new Offer
 app.post('/api/offers', verifyAdmin, async (req, res) => {
     try {
         const newOffer = new Offer(req.body);
@@ -404,10 +442,14 @@ app.post('/api/offers', verifyAdmin, async (req, res) => {
     }
 });
 
-// Admin: Update existing Offer securely
+// Admin: Update existing Offer
 app.put('/api/offers/:id', verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        const updatedOffer = await Offer.findOneAndUpdate({ id: req.params.id.toLowerCase() }, req.body, { new: true });
+        const updatedOffer = await Offer.findOneAndUpdate({ id: id.toLowerCase() }, req.body, { new: true });
         if (!updatedOffer) return res.status(404).json({ error: 'Offer not found' });
         res.json(updatedOffer);
     } catch (err) {
@@ -415,40 +457,56 @@ app.put('/api/offers/:id', verifyAdmin, async (req, res) => {
     }
 });
 
-// Admin: Delete Country securely
+// Admin: Delete Country
 app.delete('/api/countries/:id', verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        await Country.findOneAndDelete({ id: req.params.id.toLowerCase() });
+        await Country.findOneAndDelete({ id: id.toLowerCase() });
         res.json({ message: 'Country deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Admin: Delete City securely
+// Admin: Delete City
 app.delete('/api/cities/:id', verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        await City.findOneAndDelete({ id: req.params.id.toLowerCase() });
+        await City.findOneAndDelete({ id: id.toLowerCase() });
         res.json({ message: 'City deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Admin: Delete Retailer securely
+// Admin: Delete Retailer
 app.delete('/api/retailers/:id', verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        await Retailer.findOneAndDelete({ id: req.params.id.toLowerCase() });
+        await Retailer.findOneAndDelete({ id: id.toLowerCase() });
         res.json({ message: 'Retailer deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Admin: Delete Offer securely
+// Admin: Delete Offer
 app.delete('/api/offers/:id', verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
     try {
-        await Offer.findOneAndDelete({ id: req.params.id.toLowerCase() });
+        await Offer.findOneAndDelete({ id: id.toLowerCase() });
         res.json({ message: 'Offer deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
