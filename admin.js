@@ -147,11 +147,10 @@ const admin = {
                 if (imageFile) image = await this.uploadFile(imageFile);
                 await api.addCountry({ id, name, image });
                 alert('Country securely saved to MongoDB permanently!');
-                this.showTab('countries'); 
+                this.showTab('countries');
             } catch (error) {
-                alert('Error saving country to the database. Ensure server is running.');
-            }
-        } else {
+                alert('Error saving country: ' + error.message);
+            }        } else {
             alert('Please fill in all required fields before saving.');
         }
     },
