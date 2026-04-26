@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+﻿﻿require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
@@ -233,10 +233,14 @@ app.get('/api/search', async (req, res) => {
         
         // Limit query length to prevent abuse
         const safeQuery = query.substring(0, 100);
-        const regex = new RegExp(safeQuery, 'i');
         
-        const retailers = await Retailer.find({ name: regex });
-        const retailerIds = retailers.map(r => r.id);
+        // Escape regex characters to prevent crashes on special characters
+        const escapedQuery = safeQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+        const regex = new RegExp(escapedQuery, 'i');
+        
+        // Use .lean() to prevent Mongoose virtuals from overriding the custom string 'id'
+        const retailers = await Retailer.find({ name: regex }).lean();
+        const retailerIds = retailers.map(r => r.id || r._id);
         
         const offers = await Offer.find({ 
             $or: [
@@ -245,10 +249,11 @@ app.get('/api/search', async (req, res) => {
                 { couponCode: regex },
                 { retailerId: { $in: retailerIds } }
             ] 
-        });
+        }).lean();
         
         res.json({ retailers, offers });
     } catch (err) {
+        console.error('Search API Error:', err);
         res.status(500).json({ error: 'Search failed' });
     }
 });
