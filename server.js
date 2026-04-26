@@ -582,22 +582,4 @@ app.use((err, req, res, next) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Secure Server running on http://0.0.0.0:${PORT}`);
 });
-message });
-    }
-});
-
-// Admin: Update existing Offer
-app.put('/api/offers/:id', verifyAdmin, async (req, res) => {
-    const { id } = req.params;
-    if (!validateId(id)) {
-        return res.status(400).json({ error: 'Invalid ID format' });
-    }
-    try {
-        const updatedOffer = await Offer.findOneAndUpdate({ id: id.toLowerCase() }, req.body, { new: true });
-        if (!updatedOffer) return res.status(404).json({ error: 'Offer not found' });
-        res.json(updatedOffer);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
 
