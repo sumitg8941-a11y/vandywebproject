@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 
 function SearchContent() {
@@ -72,7 +73,16 @@ function SearchContent() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {results.retailers.map((r: any) => (
               <Link href={`/offers/${r.id}`} key={r.id} className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition">
-                <img src={r.image} alt={r.name} className="w-full h-16 object-contain mb-2" />
+                <div className="relative w-full h-16 mb-2">
+                  <Image 
+                    src={r.image} 
+                    alt={r.name} 
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-contain" 
+                    loading="lazy"
+                  />
+                </div>
                 <p className="font-bold text-center">{r.name}</p>
               </Link>
             ))}
@@ -87,7 +97,18 @@ function SearchContent() {
             {results.offers.map((o: any) => (
               <Link href={`/view/${o.id}`} key={o.id} className="block bg-white p-4 rounded-lg shadow hover:shadow-lg transition">
                 <div className="flex gap-4">
-                  {o.image && <img src={o.image} alt={o.title} className="w-20 h-20 object-cover rounded" />}
+                  {o.image && (
+                    <div className="relative w-20 h-20 flex-shrink-0">
+                      <Image 
+                        src={o.image} 
+                        alt={o.title} 
+                        fill
+                        sizes="80px"
+                        className="object-cover rounded" 
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
                   <div>
                     <h3 className="font-bold">{o.title}</h3>
                     {o.badge && <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">{o.badge}</span>}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
 
 export default function OfferView({ params }: { params: { offerId: string } }) {
@@ -129,7 +130,16 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
 
         {/* Flyer Image Preview */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 md:p-8 flex justify-center">
-          <img src={offer.image} alt={offer.title} className="max-w-full h-auto rounded-xl shadow-sm border border-gray-50" />
+          <div className="relative w-full max-w-3xl" style={{ aspectRatio: '3/4' }}>
+            <Image 
+              src={offer.image} 
+              alt={offer.title} 
+              fill
+              sizes="(max-width: 768px) 100vw, 896px"
+              className="rounded-xl shadow-sm border border-gray-50 object-contain" 
+              priority
+            />
+          </div>
         </div>
       </div>
 

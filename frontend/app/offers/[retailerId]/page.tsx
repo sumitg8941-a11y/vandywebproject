@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
 
 async function getOffers(retailerId: string) {
@@ -66,7 +67,14 @@ export default async function OffersPage({ params }: { params: { retailerId: str
                     </div>
                   )}
                   <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
-                    <img src={o.image} alt={o.title} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
+                    <Image 
+                      src={o.image} 
+                      alt={o.title} 
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" 
+                      loading="lazy"
+                    />
                   </div>
                   <div className="p-4 border-t border-gray-100">
                     <h3 className="text-lg font-bold text-gray-800 truncate mb-1">{o.title}</h3>

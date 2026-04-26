@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
 
 // Fetch retailers from your Node.js Backend API
@@ -50,8 +51,14 @@ export default async function RetailersPage({ params }: { params: { cityId: stri
             {retailers.map((r: any) => (
               <Link href={`/offers/${r.id || r._id}`} key={r.id || r._id}>
                 <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-100 group">
-                  <div className="overflow-hidden h-32">
-                    <img src={r.logo || r.image} alt={r.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+                  <div className="overflow-hidden h-32 relative">
+                    <Image 
+                      src={r.logo || r.image} 
+                      alt={r.name} 
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
+                      className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
+                    />
                   </div>
                   <div className="p-3 text-center border-t border-gray-100">
                     <h3 className="text-lg font-bold text-gray-800">{r.name}</h3>

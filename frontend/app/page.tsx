@@ -1,5 +1,5 @@
 import Link from 'next/link';
-
+import Image from 'next/image';
 import SearchBar from './SearchBar';
 
 async function getCountries() {
@@ -44,8 +44,14 @@ export default async function HomePage() {
             {countries.map((c: any) => (
               <Link href={`/cities/${c.id || c._id}`} key={c.id || c._id}>
                 <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-100 group">
-                  <div className="overflow-hidden h-24">
-                    <img src={c.image} alt={c.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="overflow-hidden h-24 relative">
+                    <Image 
+                      src={c.image} 
+                      alt={c.name} 
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
                   </div>
                   <div className="p-4 text-center">
                     <h3 className="text-lg font-bold text-gray-800">{c.name}</h3>
