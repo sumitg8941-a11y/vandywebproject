@@ -1,19 +1,26 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
-export default function SearchPage() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState({ retailers: [], offers: [] });
+function SearchContent() {
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get('q') || '';
+  
+  const [query, setQuery] = useState(initialQuery);
+  const [results, setResults] = useState<{ retailers: any[]; offers: any[] }>({ retailers: [], offers: [] });
   const [loading, setLoading] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Debounced search
   useEffect(() => {
+    let active = true;
+
     if (!query.trim()) {
-      setResults({ retailers: [], offers: [] });
-      return;
+      setTimeout(() => {
+        if (active) setResults({ retailers: [], offers: [] });
+      }, 0);
+      return () => { active = false; };
     }
 
     const timer = setTimeout(async () => {
@@ -21,14 +28,17 @@ export default function SearchPage() {
       try {
         const res = await fetch(`http://127.0.0.1:3000/api/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
-        setResults(data);
+        if (active) setResults(data);
       } catch (err) {
         console.error(err);
       }
-      setLoading(false);
+      if (active) setLoading(false);
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [query]);
 
   return (
@@ -42,11 +52,7 @@ export default function SearchPage() {
         <input
           type="text"
           value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setShowSuggestions(true);
-          }}
-          onFocus={() => setShowSuggestions(true)}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder="Search for electronics, groceries, fashion..."
           className="w-full p-4 text-lg border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none"
         />
@@ -95,7 +101,7 @@ export default function SearchPage() {
 
       {query && !loading && results.retailers.length === 0 && results.offers.length === 0 && (
         <div className="mt-8 text-center text-gray-500">
-          <p>No results found for "{query}"</p>
+          <p>No results found for &quot;{query}&quot;</p>
         </div>
       )}
 
@@ -103,5 +109,13 @@ export default function SearchPage() {
         <Link href="/" className="text-red-600 hover:underline">← Back to Home</Link>
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-center">Loading search...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }

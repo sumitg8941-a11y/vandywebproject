@@ -239,7 +239,12 @@ app.get('/api/search', async (req, res) => {
         const regex = new RegExp(escapedQuery, 'i');
         
         // Use .lean() to prevent Mongoose virtuals from overriding the custom string 'id'
-        const retailers = await Retailer.find({ name: regex }).lean();
+        const retailers = await Retailer.find({ 
+            $or: [
+                { name: regex },
+                { category: regex }
+            ]
+        }).lean();
         const retailerIds = retailers.map(r => r.id || r._id);
         
         const offers = await Offer.find({ 
@@ -247,6 +252,7 @@ app.get('/api/search', async (req, res) => {
                 { title: regex }, 
                 { badge: regex },
                 { couponCode: regex },
+                { category: regex },
                 { retailerId: { $in: retailerIds } }
             ] 
         }).lean();
