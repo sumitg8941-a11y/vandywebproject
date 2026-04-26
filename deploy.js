@@ -3,7 +3,7 @@ const { Client } = require('ssh2');
 const conn = new Client();
 conn.on('ready', () => {
     console.log('SSH Connection established');
-    conn.exec('cd vandywebproject && git clean -fd && git stash && git pull && pm2 restart dealnamaa-backend', (err, stream) => {
+    conn.exec('cd vandywebproject && git clean -fd && git stash && git pull && pm2 restart dealnamaa-backend && cd frontend && npm run build && pm2 restart dealnamaa-frontend', (err, stream) => {
         if (err) throw err;
         stream.on('close', (code, signal) => {
             console.log('Deployment completed with code: ' + code);

@@ -3,32 +3,69 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 function SearchContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  
   const initialQuery = searchParams.get('q') || '';
+  const initialCategory = searchParams.get('category') || 'all';
+  const initialCityId = searchParams.get('cityId') || 'all';
+  const initialRetailerId = searchParams.get('retailerId') || 'all';
   
   const [query, setQuery] = useState(initialQuery);
+  const [category, setCategory] = useState(initialCategory);
+  const [cityId, setCityId] = useState(initialCityId);
+  const [retailerId, setRetailerId] = useState(initialRetailerId);
+  const [showFilters, setShowFilters] = useState(false);
+  
   const [results, setResults] = useState<{ retailers: any[]; offers: any[] }>({ retailers: [], offers: [] });
+  const [filters, setFilters] = useState<{ categories: string[]; cities: any[]; retailers: any[] }>({ categories: [], cities: [], retailers: [] });
   const [loading, setLoading] = useState(false);
 
-  // Debounced search
+  // Fetch available filters on mount
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        const apiBaseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : 'http://127.0.0.1:3000';
+        const res = await fetch(`${apiBaseUrl}/api/search/filters`);
+        const data = await res.json();
+        setFilters(data);
+      } catch (err) {
+        console.error('Failed to fetch filters:', err);
+      }
+    };
+    fetchFilters();
+  }, []);
+
+  // Update URL when filters change
+  const updateURL = (newQuery: string, newCategory: string, newCityId: string, newRetailerId: string) => {
+    const params = new URLSearchParams();
+    if (newQuery) params.set('q', newQuery);
+    if (newCategory && newCategory !== 'all') params.set('category', newCategory);
+    if (newCityId && newCityId !== 'all') params.set('cityId', newCityId);
+    if (newRetailerId && newRetailerId !== 'all') params.set('retailerId', newRetailerId);
+    
+    const queryString = params.toString();
+    router.push(`/search${queryString ? `?${queryString}` : ''}`, { scroll: false });
+  };
+
+  // Debounced search with filters
   useEffect(() => {
     let active = true;
-
-    if (!query.trim()) {
-      setTimeout(() => {
-        if (active) setResults({ retailers: [], offers: [] });
-      }, 0);
-      return () => { active = false; };
-    }
 
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
         const apiBaseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : 'http://127.0.0.1:3000';
-        const res = await fetch(`${apiBaseUrl}/api/search?q=${encodeURIComponent(query)}`);
+        const params = new URLSearchParams();
+        if (query) params.set('q', query);
+        if (category && category !== 'all') params.set('category', category);
+        if (cityId && cityId !== 'all') params.set('cityId', cityId);
+        if (retailerId && retailerId !== 'all') params.set('retailerId', retailerId);
+        
+        const res = await fetch(`${apiBaseUrl}/api/search?${params.toString()}`);
         const data = await res.json();
         if (active) setResults(data);
       } catch (err) {
@@ -41,94 +78,274 @@ function SearchContent() {
       active = false;
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, category, cityId, retailerId]);
+
+  const handleQueryChange = (newQuery: string) => {
+    setQuery(newQuery);
+    updateURL(newQuery, category, cityId, retailerId);
+  };
+
+  const handleCategoryChange = (newCategory: string) => {
+    setCategory(newCategory);
+    updateURL(query, newCategory, cityId, retailerId);
+  };
+
+  const handleCityChange = (newCityId: string) => {
+    setCityId(newCityId);
+    setRetailerId('all'); // Reset retailer when city changes
+    updateURL(query, category, newCityId, 'all');
+  };
+
+  const handleRetailerChange = (newRetailerId: string) => {
+    setRetailerId(newRetailerId);
+    updateURL(query, category, cityId, newRetailerId);
+  };
+
+  const clearFilters = () => {
+    setQuery('');
+    setCategory('all');
+    setCityId('all');
+    setRetailerId('all');
+    router.push('/search', { scroll: false });
+  };
+
+  const activeFiltersCount = [category !== 'all', cityId !== 'all', retailerId !== 'all'].filter(Boolean).length;
+
+  // Filter retailers by selected city
+  const filteredRetailers = cityId === 'all' 
+    ? filters.retailers 
+    : filters.retailers.filter((r: any) => r.cityId === cityId);
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white text-center py-12 px-4 rounded-xl mb-8">
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white text-center py-12 px-4 shadow-md">
         <h1 className="text-4xl font-black mb-4">Search Deals</h1>
         <p className="opacity-95">Find coupons, offers, and retailers</p>
       </div>
 
-      <div className="relative">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for electronics, groceries, fashion..."
-          className="w-full p-4 text-lg border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none"
-        />
-        
-        {loading && (
-          <div className="absolute right-4 top-4">
-            <i className="fa-solid fa-spinner fa-spin text-red-600"></i>
+      <div className="max-w-7xl mx-auto p-4 md:p-6">
+        {/* Search Bar */}
+        <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+          <div className="relative">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => handleQueryChange(e.target.value)}
+              placeholder="Search for electronics, groceries, fashion..."
+              className="w-full p-4 pr-12 text-lg border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none"
+            />
+            {loading && (
+              <div className="absolute right-4 top-4">
+                <i className="fa-solid fa-spinner fa-spin text-red-600"></i>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Results */}
-      {results.retailers.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Retailers</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {results.retailers.map((r: any) => (
-              <Link href={`/offers/${r.id}`} key={r.id} className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition">
-                <div className="relative w-full h-16 mb-2">
-                  <Image 
-                    src={r.image} 
-                    alt={r.name} 
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    className="object-contain" 
-                    loading="lazy"
-                  />
-                </div>
-                <p className="font-bold text-center">{r.name}</p>
-              </Link>
-            ))}
-          </div>
+          {/* Filter Toggle Button (Mobile) */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="mt-4 w-full md:hidden flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-lg transition"
+          >
+            <i className="fa-solid fa-filter"></i>
+            Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+          </button>
         </div>
-      )}
 
-      {results.offers.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Offers</h2>
-          <div className="space-y-4">
-            {results.offers.map((o: any) => (
-              <Link href={`/view/${o.id}`} key={o.id} className="block bg-white p-4 rounded-lg shadow hover:shadow-lg transition">
-                <div className="flex gap-4">
-                  {o.image && (
-                    <div className="relative w-20 h-20 flex-shrink-0">
-                      <Image 
-                        src={o.image} 
-                        alt={o.title} 
-                        fill
-                        sizes="80px"
-                        className="object-cover rounded" 
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="font-bold">{o.title}</h3>
-                    {o.badge && <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">{o.badge}</span>}
-                    {o.couponCode && <p className="text-sm text-gray-600">Code: {o.couponCode}</p>}
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Filter Sidebar */}
+          <div className={`${showFilters ? 'block' : 'hidden'} md:block w-full md:w-64 flex-shrink-0`}>
+            <div className="bg-white rounded-xl shadow-md p-6 sticky top-4">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-800">Filters</h2>
+                {activeFiltersCount > 0 && (
+                  <button
+                    onClick={clearFilters}
+                    className="text-sm text-red-600 hover:text-red-700 font-semibold"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+
+              {/* Category Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <i className="fa-solid fa-tag mr-2"></i>Category
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none bg-white"
+                >
+                  <option value="all">All Categories</option>
+                  {filters.categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* City Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <i className="fa-solid fa-location-dot mr-2"></i>City
+                </label>
+                <select
+                  value={cityId}
+                  onChange={(e) => handleCityChange(e.target.value)}
+                  className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none bg-white"
+                >
+                  <option value="all">All Cities</option>
+                  {filters.cities.map((city) => (
+                    <option key={city.id} value={city.id}>{city.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Retailer Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <i className="fa-solid fa-store mr-2"></i>Retailer
+                </label>
+                <select
+                  value={retailerId}
+                  onChange={(e) => handleRetailerChange(e.target.value)}
+                  className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none bg-white"
+                  disabled={filteredRetailers.length === 0}
+                >
+                  <option value="all">All Retailers</option>
+                  {filteredRetailers.map((retailer: any) => (
+                    <option key={retailer.id} value={retailer.id}>{retailer.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Active Filters Summary */}
+              {activeFiltersCount > 0 && (
+                <div className="pt-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-600 mb-2">Active Filters:</p>
+                  <div className="space-y-2">
+                    {category !== 'all' && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-700">Category: <strong>{category}</strong></span>
+                        <button onClick={() => handleCategoryChange('all')} className="text-red-600 hover:text-red-700">
+                          <i className="fa-solid fa-xmark"></i>
+                        </button>
+                      </div>
+                    )}
+                    {cityId !== 'all' && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-700">City: <strong>{filters.cities.find(c => c.id === cityId)?.name}</strong></span>
+                        <button onClick={() => handleCityChange('all')} className="text-red-600 hover:text-red-700">
+                          <i className="fa-solid fa-xmark"></i>
+                        </button>
+                      </div>
+                    )}
+                    {retailerId !== 'all' && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-700">Retailer: <strong>{filters.retailers.find(r => r.id === retailerId)?.name}</strong></span>
+                        <button onClick={() => handleRetailerChange('all')} className="text-red-600 hover:text-red-700">
+                          <i className="fa-solid fa-xmark"></i>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </Link>
-            ))}
+              )}
+            </div>
+          </div>
+
+          {/* Results Section */}
+          <div className="flex-1">
+            {/* Results Count */}
+            {(results.retailers.length > 0 || results.offers.length > 0) && (
+              <div className="mb-4 text-gray-600">
+                Found <strong>{results.retailers.length}</strong> retailer(s) and <strong>{results.offers.length}</strong> offer(s)
+              </div>
+            )}
+
+            {/* Retailers Results */}
+            {results.retailers.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4 text-gray-800">Retailers</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {results.retailers.map((r: any) => (
+                    <Link href={`/offers/${r.id}`} key={r.id} className="bg-white p-4 rounded-lg shadow hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                      <div className="relative w-full h-16 mb-2">
+                        <Image 
+                          src={r.image} 
+                          alt={r.name} 
+                          fill
+                          sizes="(max-width: 768px) 50vw, 25vw"
+                          className="object-contain" 
+                          loading="lazy"
+                        />
+                      </div>
+                      <p className="font-bold text-center text-sm">{r.name}</p>
+                      {r.category && <p className="text-xs text-gray-500 text-center mt-1">{r.category}</p>}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Offers Results */}
+            {results.offers.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold mb-4 text-gray-800">Offers</h2>
+                <div className="space-y-4">
+                  {results.offers.map((o: any) => (
+                    <Link href={`/view/${o.id}`} key={o.id} className="block bg-white p-4 rounded-lg shadow hover:shadow-xl transition-all duration-300">
+                      <div className="flex gap-4">
+                        {o.image && (
+                          <div className="relative w-20 h-20 flex-shrink-0">
+                            <Image 
+                              src={o.image} 
+                              alt={o.title} 
+                              fill
+                              sizes="80px"
+                              className="object-cover rounded" 
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <h3 className="font-bold text-lg">{o.title}</h3>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {o.badge && <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded font-semibold">{o.badge}</span>}
+                            {o.category && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">{o.category}</span>}
+                          </div>
+                          {o.couponCode && <p className="text-sm text-gray-600 mt-2"><i className="fa-solid fa-ticket mr-1"></i>Code: <strong>{o.couponCode}</strong></p>}
+                          {o.validUntil && (
+                            <p className="text-xs text-gray-500 mt-2">
+                              <i className="fa-regular fa-calendar mr-1"></i>
+                              Valid until: {new Date(o.validUntil).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Results */}
+            {!loading && results.retailers.length === 0 && results.offers.length === 0 && (
+              <div className="text-center py-12 bg-white rounded-xl shadow-md">
+                <i className="fa-solid fa-magnifying-glass text-6xl text-gray-300 mb-4"></i>
+                <p className="text-xl text-gray-600 mb-2">No results found</p>
+                <p className="text-gray-500">Try adjusting your search or filters</p>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {query && !loading && results.retailers.length === 0 && results.offers.length === 0 && (
-        <div className="mt-8 text-center text-gray-500">
-          <p>No results found for &quot;{query}&quot;</p>
+        <div className="mt-8 text-center">
+          <Link href="/" className="text-red-600 hover:underline font-semibold">
+            <i className="fa-solid fa-arrow-left mr-2"></i>Back to Home
+          </Link>
         </div>
-      )}
-
-      <div className="mt-8 text-center">
-        <Link href="/" className="text-red-600 hover:underline">← Back to Home</Link>
       </div>
     </div>
   );

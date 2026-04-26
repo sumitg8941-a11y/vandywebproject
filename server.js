@@ -326,42 +326,90 @@ app.get('/api/breadcrumbs/:type/:id', async (req, res) => {
     }
 });
 
-// Global Search API
+// Global Search API with Advanced Filters
 app.get('/api/search', async (req, res) => {
     try {
-        const query = req.query.q;
-        if (!query) return res.json({ retailers: [], offers: [] });
+        const { q: query, category, cityId, retailerId } = req.query;
         
-        // Limit query length to prevent abuse
-        const safeQuery = query.substring(0, 100);
-        
-        // Escape regex characters to prevent crashes on special characters
-        const escapedQuery = safeQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-        const regex = new RegExp(escapedQuery, 'i');
-        
-        // Use .lean() to prevent Mongoose virtuals from overriding the custom string 'id'
-        const retailers = await Retailer.find({ 
-            $or: [
+        // Build dynamic filter for retailers
+        const retailerFilter = {};
+        if (query) {
+            const safeQuery = query.substring(0, 100);
+            const escapedQuery = safeQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+            const regex = new RegExp(escapedQuery, 'i');
+            retailerFilter.$or = [
                 { name: regex },
                 { category: regex }
-            ]
-        }).lean();
+            ];
+        }
+        if (category && category !== 'all') {
+            retailerFilter.category = category;
+        }
+        if (cityId && cityId !== 'all') {
+            if (!validateId(cityId)) {
+                return res.status(400).json({ error: 'Invalid cityId format' });
+            }
+            retailerFilter.cityId = cityId.toLowerCase();
+        }
+        
+        // Fetch retailers based on filters
+        const retailers = await Retailer.find(retailerFilter).lean();
         const retailerIds = retailers.map(r => r.id || r._id);
         
-        const offers = await Offer.find({ 
-            $or: [
+        // Build dynamic filter for offers
+        const offerFilter = {};
+        if (query) {
+            const safeQuery = query.substring(0, 100);
+            const escapedQuery = safeQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+            const regex = new RegExp(escapedQuery, 'i');
+            offerFilter.$or = [
                 { title: regex }, 
                 { badge: regex },
                 { couponCode: regex },
-                { category: regex },
-                { retailerId: { $in: retailerIds } }
-            ] 
-        }).lean();
+                { category: regex }
+            ];
+        }
+        if (category && category !== 'all') {
+            offerFilter.category = category;
+        }
+        if (retailerId && retailerId !== 'all') {
+            if (!validateId(retailerId)) {
+                return res.status(400).json({ error: 'Invalid retailerId format' });
+            }
+            offerFilter.retailerId = retailerId.toLowerCase();
+        } else if (retailerIds.length > 0) {
+            // If no specific retailer filter but we have filtered retailers, include their offers
+            if (!offerFilter.$or) {
+                offerFilter.retailerId = { $in: retailerIds };
+            } else {
+                offerFilter.$or.push({ retailerId: { $in: retailerIds } });
+            }
+        }
+        
+        // Fetch offers based on filters
+        const offers = await Offer.find(offerFilter).sort({ validUntil: -1 }).lean();
         
         res.json({ retailers, offers });
     } catch (err) {
         console.error('Search API Error:', err);
         res.status(500).json({ error: 'Search failed' });
+    }
+});
+
+// Get unique categories from retailers and offers
+app.get('/api/search/filters', async (req, res) => {
+    try {
+        const retailerCategories = await Retailer.distinct('category');
+        const offerCategories = await Offer.distinct('category');
+        const categories = [...new Set([...retailerCategories, ...offerCategories])].sort();
+        
+        const cities = await City.find().select('id name').lean();
+        const retailers = await Retailer.find().select('id name').lean();
+        
+        res.json({ categories, cities, retailers });
+    } catch (err) {
+        console.error('Filter API Error:', err);
+        res.status(500).json({ error: 'Failed to fetch filters' });
     }
 });
 
