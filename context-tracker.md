@@ -76,14 +76,14 @@ Follow these steps to deploy the project completely on a new Linux Ubuntu server
 - **Backend Setup:** Node.js server with Express, connected to MongoDB. Port 3000.
 - **Security:** Helmet, CORS, Rate Limiting, JSON payload limits in `server.js`. Input validation added.
 - **Database Models:** Country, State, City, Retailer, Offer, SiteStat.
-- **API Endpoints:** Read/Write operations for all models, analytics endpoints, regions endpoint for states/cities.
+- **API Endpoints:** Read/Write operations for all models, analytics endpoints, regions endpoint for states/cities, advanced search with filters.
 - **Admin Panel:** CRUD operations inserting directly into MongoDB. Secured by JWT Login.
 - **File Uploads (Multer):** Physical Image/PDF uploads from Admin dashboard to `/uploads`.
 - **Frontend Setup:** Next.js App Router on Port 3001. Dynamic routes for Cities, Retailers, and Offers.
 - **Static Pages:** About, Contact, Terms, and Privacy pages linked in footer.
 - **Advanced Tracking:** Dynamic time tracking per offer, retailer traffic tracked via UTM tagged redirects (`/api/redirect/offer/:id`).
 - **SEO & Performance:** robots.txt, sitemap.xml, SEO Meta Tags, Image optimization with next/image.
-- **Search:** Global search with autocomplete functionality.
+- **Search:** Global search with advanced filtering by Category, City, and Retailer. Shareable filter URLs with responsive sidebar.
 - **Server Fix:** Backend `index.html` updated to redirect users to port 3001 to solve blank page issue.
 - **Image Optimization:** Implemented next/image component across all pages with WebP/AVIF support, lazy loading, and responsive sizing for improved Core Web Vitals.
 
