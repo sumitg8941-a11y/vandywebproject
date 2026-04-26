@@ -54,12 +54,8 @@ VandanaProject/
 ├── scraper.js                  # Web scraping utilities
 ├── deploy.js                   # Deployment script
 │
-├── admin.html                  # Legacy admin interface
-├── admin.js                    # Legacy admin logic
-├── index.html                  # Legacy frontend
-├── d4d.html                    # Legacy deal viewer
-├── flipbook.js                 # PDF flipbook viewer
-├── styles.css                  # Legacy styles
+├── admin.html                  # Admin dashboard interface
+├── admin.js                    # Admin dashboard logic
 │
 ├── .env                        # Environment variables
 ├── package.json                # Backend dependencies
@@ -73,6 +69,7 @@ VandanaProject/
 - **Database Models**: Mongoose schemas for data entities
 - **Middleware**: Security (Helmet, CORS), rate limiting, JWT authentication
 - **File Uploads**: Multer-based file handling for offer materials
+- **Admin Interface**: admin.html and admin.js provide web-based management dashboard
 
 ### Frontend (Next.js)
 - **App Router**: File-based routing with React Server Components
@@ -117,7 +114,7 @@ Country (e.g., India)
 4. Results rendered with Next.js components
 
 ### Admin Workflow
-1. Admin authenticates via JWT
+1. Admin authenticates via JWT (admin.html interface)
 2. Uploads files (PDFs, images) to /uploads
 3. Creates/updates entities via protected API routes
 4. Changes immediately reflected in user-facing pages
@@ -127,3 +124,19 @@ Country (e.g., India)
 2. Server updates counters in MongoDB
 3. Admin dashboard aggregates statistics
 4. Top performers calculated via sorting queries
+
+## Project Cleanup Notes
+
+### Removed Legacy Files (2025)
+The following legacy files were removed as they were not integrated with the current Next.js frontend:
+- **index.html**: Empty legacy frontend file
+- **d4d.html**: External D4D Online service viewer (not part of DealNamaa)
+- **flipbook.js**: Unused PDF flipbook JavaScript library
+- **styles.css**: Legacy CSS file (replaced by Tailwind CSS in Next.js)
+
+### Current Admin Interface
+The admin dashboard is served via:
+- **admin.html**: Web-based admin interface (accessible at root/admin.html)
+- **admin.js**: Client-side admin logic with JWT authentication
+- Uses modern fetch API to communicate with Express backend
+- Provides CRUD operations for all entities and file upload management

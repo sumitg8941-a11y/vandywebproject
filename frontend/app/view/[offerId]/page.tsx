@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import Script from 'next/script';
 import Breadcrumbs from '../../Breadcrumbs';
+import PDFFlipbook from '../../PDFFlipbook';
 
 // Generate JSON-LD structured data for the offer
 function generateOfferStructuredData(offer: any, retailer: any) {
@@ -131,6 +131,23 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
     };
   }, [offerId, apiBaseUrl]);
 
+  // Add structured data to head when offer and retailer are loaded
+  useEffect(() => {
+    if (!offer) return;
+    
+    const structuredData = generateOfferStructuredData(offer, retailer);
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify(structuredData);
+    script.id = 'offer-structured-data';
+    document.head.appendChild(script);
+    
+    return () => {
+      const existingScript = document.getElementById('offer-structured-data');
+      if (existingScript) existingScript.remove();
+    };
+  }, [offer, retailer]);
+
   const handleFeedback = async (type: 'like' | 'dislike') => {
     if (feedbackGiven || !offer) return;
     try {
@@ -160,22 +177,8 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
     );
   }
 
-  // Generate structured data
-  const structuredData = generateOfferStructuredData(offer, retailer);
-
   return (
     <div className="bg-gray-50 min-h-screen pb-12">
-      {/* JSON-LD Structured Data */}
-      <Script
-        id="offer-structured-data"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredData)
-        }}
-        strategy="beforeInteractive"
-      />
-
-      {/* Top Nav */}
       <div className="bg-white shadow-sm border-b py-4 px-6 flex justify-between items-center sticky top-0 z-50">
         <Link href={`/offers/${offer.retailerId}`} className="text-gray-600 hover:text-gray-900 font-semibold transition">
           <i className="fa-solid fa-arrow-left mr-2"></i> Back to Retailer
@@ -213,7 +216,11 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
           
           <div className="flex-shrink-0 flex flex-col items-center w-full md:w-auto">
              <button 
-              onClick={() => setIsFlipbookOpen(true)}
+              onClick={() => {
+                console.log('Opening PDF:', offer.pdfUrl);
+                console.log('Full URL will be:', offer.pdfUrl.startsWith('http') ? offer.pdfUrl : `http://localhost:3000${offer.pdfUrl}`);
+                setIsFlipbookOpen(true);
+              }}
               className="inline-flex items-center bg-yellow-400 text-gray-900 px-8 py-4 rounded-xl font-extrabold text-lg md:text-xl shadow-lg hover:bg-yellow-500 hover:scale-105 transition-all w-full justify-center border border-yellow-500"
             >
               View Full Catalog <i className="fa-solid fa-book-open ml-3"></i>
@@ -242,25 +249,12 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
       </div>
 
       {/* Flipbook Modal */}
-      {isFlipbookOpen && (
-        <div className="fixed inset-0 z-[9999] bg-black/95 flex flex-col">
-          <div className="flex justify-between items-center p-4 border-b border-gray-800 text-white">
-            <div className="font-bold text-xl truncate pr-4">{offer.title}</div>
-            <button 
-              onClick={() => setIsFlipbookOpen(false)} 
-              className="w-10 h-10 bg-gray-800 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors text-xl font-bold"
-            >
-              <i className="fa-solid fa-xmark"></i>
-            </button>
-          </div>
-          <div className="flex-1 w-full h-full p-2 sm:p-6 overflow-hidden flex justify-center items-center">
-            <iframe 
-              src={`${apiBaseUrl}/api/redirect/offer/${offer.id || offer._id}`} 
-              className="w-full h-full max-w-5xl bg-white rounded-xl shadow-2xl"
-              title="Catalog Viewer"
-            />
-          </div>
-        </div>
+      {isFlipbookOpen && offer.pdfUrl && offer.pdfUrl !== '#' && (
+        <PDFFlipbook
+          pdfUrl={offer.pdfUrl.startsWith('http') ? offer.pdfUrl : `http://localhost:3000${offer.pdfUrl}`}
+          onClose={() => setIsFlipbookOpen(false)}
+          title={offer.title}
+        />
       )}
     </div>
   );

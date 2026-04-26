@@ -1,14 +1,18 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-export default async function Breadcrumbs({ type, id }: { type: string, id: string }) {
-  let breadcrumbs: any = null;
-  try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
-    const res = await fetch(`${apiBaseUrl}/api/breadcrumbs/${type}/${id}`, { cache: 'no-store' });
-    if (res.ok) {
-      breadcrumbs = await res.json();
-    }
-  } catch (err) {}
+export default function Breadcrumbs({ type, id }: { type: string, id: string }) {
+  const [breadcrumbs, setBreadcrumbs] = useState<any>(null);
+
+  useEffect(() => {
+    const apiBaseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : 'http://127.0.0.1:3000';
+    fetch(`${apiBaseUrl}/api/breadcrumbs/${type}/${id}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setBreadcrumbs(data))
+      .catch(() => setBreadcrumbs(null));
+  }, [type, id]);
 
   if (!breadcrumbs) return null;
 

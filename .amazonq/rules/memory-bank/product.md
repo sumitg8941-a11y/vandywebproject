@@ -22,12 +22,13 @@ DealNamaa is a full-stack deals and coupons aggregation platform that connects u
 - Responsive Next.js frontend with server-side rendering
 
 ### Admin Features
-- JWT-based authentication system
+- JWT-based authentication system (via admin.html interface)
 - CRUD operations for all entities (Countries, States, Cities, Retailers, Offers)
 - File upload system for offer materials (PDFs, images)
 - Analytics dashboard with visit tracking
 - Top performers tracking (retailers and offers by clicks)
 - Feedback management system
+- Web-based interface accessible at `/admin.html`
 
 ### Analytics & Tracking
 - Site visit tracking

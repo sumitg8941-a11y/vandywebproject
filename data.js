@@ -129,7 +129,7 @@ const api = {
         return await res.json();
     },
     addCountry: async (countryData) => {
-        const res = await fetch('/api/countries', {
+        const res = await fetch('/api/admin/countries', {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify(countryData)
@@ -151,7 +151,7 @@ const api = {
         return await res.json();
     },
     addCity: async (cityData) => {
-        const res = await fetch('/api/cities', {
+        const res = await fetch('/api/admin/cities', {
             method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(cityData)
         });
         if (!res.ok) {
@@ -161,7 +161,7 @@ const api = {
         return await res.json();
     },
     addRetailer: async (retailerData) => {
-        const res = await fetch('/api/retailers', {
+        const res = await fetch('/api/admin/retailers', {
             method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(retailerData)
         });
         if (!res.ok) {
@@ -171,7 +171,7 @@ const api = {
         return await res.json();
     },
     addOffer: async (offerData) => {
-        const res = await fetch('/api/offers', {
+        const res = await fetch('/api/admin/offers', {
             method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(offerData)
         });
         if (!res.ok) throw new Error('Failed to save to MongoDB');

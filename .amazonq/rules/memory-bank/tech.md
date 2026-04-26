@@ -68,6 +68,7 @@ npm install
 npm start
 # Runs: node server.js
 # Server listens on PORT (default: 3000)
+# Serves admin interface at http://localhost:3000/admin.html
 
 # Development (manual)
 node server.js
@@ -155,9 +156,11 @@ PORT=3000
 ## Build System
 - **Backend**: No build step (Node.js CommonJS)
 - **Frontend**: Next.js build system with Turbopack (dev) and Webpack (production)
+- **Admin Interface**: Static HTML/JS served via Express static middleware
 
 ## Deployment
 - Backend runs on port 3000 (configurable via PORT env var)
 - Frontend can be deployed to Vercel or self-hosted
+- Admin interface accessible at `/admin.html` when backend is running
 - MongoDB connection required for both environments
 - File uploads stored in /uploads directory (requires persistent storage)
