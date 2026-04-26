@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import Breadcrumbs from '../../Breadcrumbs';
 
 // Fetch retailers from your Node.js Backend API
 async function getRetailers(cityId: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:3000/api/retailers/${cityId}`, { cache: 'no-store' });
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const res = await fetch(`${apiBaseUrl}/api/retailers/${cityId}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch retailers');
     return res.json();
   } catch (error) {
@@ -30,8 +32,12 @@ export default async function RetailersPage({ params }: { params: { cityId: stri
         </div>
       </div>
 
+      <div className="max-w-6xl mx-auto p-6 mt-4">
+        <Breadcrumbs type="city" id={resolvedParams.cityId} />
+      </div>
+
       {/* Retailers Grid */}
-      <div className="max-w-6xl mx-auto p-6 mt-8">
+      <div className="max-w-6xl mx-auto p-6 mt-2">
         <h2 className="text-3xl font-bold mb-8 text-gray-800 border-b pb-2">Retailers in this City</h2>
         
         {retailers.length === 0 ? (

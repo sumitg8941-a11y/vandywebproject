@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import Breadcrumbs from '../../Breadcrumbs';
 
 export default function OfferView({ params }: { params: { offerId: string } }) {
   const [offerId, setOfferId] = useState<string>('');
@@ -84,6 +85,8 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
       </div>
 
       <div className="max-w-5xl mx-auto mt-8 px-4">
+        <Breadcrumbs type="offer" id={offerId} />
+
         {/* Offer Header Card */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-center md:items-start mb-8 relative overflow-hidden">
           <div className="flex-1 w-full">

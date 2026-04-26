@@ -44,6 +44,7 @@ app.use(express.static(__dirname));
 
 // Import Database Models
 const Country = require('./Country');
+const State = require('./State');
 const City = require('./City');
 const Retailer = require('./Retailer');
 const Offer = require('./Offer');
@@ -264,6 +265,16 @@ app.get('/api/search', async (req, res) => {
     }
 });
 
+// Admin: Get all states
+app.get('/api/states', async (req, res) => {
+    try {
+        const states = await State.find();
+        res.json(states);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch states' });
+    }
+});
+
 // Admin: Get all cities
 app.get('/api/cities', async (req, res) => {
     try {
@@ -420,6 +431,17 @@ app.post('/api/countries', verifyAdmin, async (req, res) => {
     }
 });
 
+// Admin: Create new State
+app.post('/api/states', verifyAdmin, async (req, res) => {
+    try {
+        const newState = new State(req.body);
+        await newState.save();
+        res.status(201).json(newState);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
 // Admin: Create new City
 app.post('/api/cities', verifyAdmin, async (req, res) => {
     try {
@@ -477,6 +499,20 @@ app.delete('/api/countries/:id', verifyAdmin, async (req, res) => {
     try {
         await Country.findOneAndDelete({ id: id.toLowerCase() });
         res.json({ message: 'Country deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Delete State
+app.delete('/api/states/:id', verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
+    try {
+        await State.findOneAndDelete({ id: id.toLowerCase() });
+        res.json({ message: 'State deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -546,3 +582,22 @@ app.use((err, req, res, next) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Secure Server running on http://0.0.0.0:${PORT}`);
 });
+message });
+    }
+});
+
+// Admin: Update existing Offer
+app.put('/api/offers/:id', verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
+    try {
+        const updatedOffer = await Offer.findOneAndUpdate({ id: id.toLowerCase() }, req.body, { new: true });
+        if (!updatedOffer) return res.status(404).json({ error: 'Offer not found' });
+        res.json(updatedOffer);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+

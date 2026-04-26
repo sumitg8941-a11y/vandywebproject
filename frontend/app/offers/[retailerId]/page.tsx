@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import Breadcrumbs from '../../Breadcrumbs';
 
 async function getOffers(retailerId: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:3000/api/offers/${retailerId}`, { cache: 'no-store' });
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const res = await fetch(`${apiBaseUrl}/api/offers/${retailerId}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch');
     return res.json();
   } catch (error) {
@@ -12,7 +14,8 @@ async function getOffers(retailerId: string) {
 
 async function getRetailer(retailerId: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:3000/api/retailer/${retailerId}`, { cache: 'no-store' });
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const res = await fetch(`${apiBaseUrl}/api/retailer/${retailerId}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch');
     return res.json();
   } catch (error) {
@@ -42,7 +45,11 @@ export default async function OffersPage({ params }: { params: { retailerId: str
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-6 mt-8">
+      <div className="max-w-6xl mx-auto p-6 mt-4">
+        <Breadcrumbs type="retailer" id={retailerId} />
+      </div>
+
+      <div className="max-w-6xl mx-auto p-6 mt-2">
         {offers.length === 0 ? (
           <div className="text-center p-10 bg-yellow-100 text-yellow-800 rounded-lg">
             <h2 className="text-2xl font-bold"><i className="fa-solid fa-triangle-exclamation"></i> No Offers Found</h2>
