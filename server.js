@@ -537,6 +537,12 @@ app.post('/api/feedback', async (req, res) => {
 
 // Start the server
 const PORT = process.env.PORT || 3000;
+
+app.use((err, req, res, next) => {
+    console.error('Express Error:', err.stack);
+    res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Secure Server running on http://0.0.0.0:${PORT}`);
 });

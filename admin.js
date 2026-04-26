@@ -325,7 +325,19 @@ const admin = {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
             body: formData
         });
-        if (!res.ok) throw new Error('Failed to upload file');
+        if (!res.ok) {
+            let errMsg = `Failed to upload file (HTTP ${res.status})`;
+            try {
+                const text = await res.text();
+                try {
+                    const data = JSON.parse(text);
+                    if (data.error) errMsg = data.error;
+                } catch(e) {
+                    errMsg += `: ` + text.substring(0, 50);
+                }
+            } catch(e) {}
+            throw new Error(errMsg);
+        }
         const data = await res.json();
         return data.url;
     },
