@@ -1,17 +1,44 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
 
-// Fetch retailers from your Node.js Backend API
 async function getRetailers(cityId: string) {
   try {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
-    const res = await fetch(`${apiBaseUrl}/api/retailers/${cityId}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch retailers');
-    return res.json();
+    const [retailers, offerCounts] = await Promise.all([
+      fetch(`${apiBaseUrl}/api/retailers/${cityId}`, { cache: 'no-store' }).then(r => r.json()),
+      fetch(`${apiBaseUrl}/api/offer-counts`, { cache: 'no-store' }).then(r => r.json()),
+    ]);
+    return retailers.map((r: any) => ({ ...r, offerCount: offerCounts[r.id] || 0 }));
   } catch (error) {
     return [];
   }
+}
+
+async function getCity(cityId: string) {
+  try {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const res = await fetch(`${apiBaseUrl}/api/breadcrumbs/city/${cityId}`, { cache: 'no-store' });
+    const data = await res.json();
+    return data.city || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function generateMetadata({ params }: { params: { cityId: string } }): Promise<Metadata> {
+  const resolvedParams = await Promise.resolve(params);
+  const city = await getCity(resolvedParams.cityId);
+  const name = city?.name || 'City';
+  return {
+    title: `Retailers in ${name}`,
+    description: `Browse top retailers and latest offers in ${name} on DealNamaa.`,
+    openGraph: {
+      title: `Retailers in ${name} | DealNamaa`,
+      description: `Browse top retailers and latest offers in ${name} on DealNamaa.`,
+    },
+  };
 }
 
 export default async function RetailersPage({ params }: { params: { cityId: string } }) {
@@ -61,7 +88,10 @@ export default async function RetailersPage({ params }: { params: { cityId: stri
                     />
                   </div>
                   <div className="p-3 text-center border-t border-gray-100">
-                    <h3 className="text-lg font-bold text-gray-800">{r.name}</h3>
+                    <h3 className="text-sm font-bold text-gray-800">{r.name}</h3>
+                    <p className="text-xs text-red-600 font-semibold mt-1">
+                      <i className="fa-solid fa-tag mr-1"></i>{r.offerCount} {r.offerCount === 1 ? 'offer' : 'offers'}
+                    </p>
                   </div>
                 </div>
               </Link>

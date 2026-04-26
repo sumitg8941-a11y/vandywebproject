@@ -1,8 +1,8 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
 
-// Fetch regions (states or cities) from your Node.js Backend API
 async function getRegions(countryId: string) {
   try {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
@@ -12,6 +12,31 @@ async function getRegions(countryId: string) {
   } catch (error) {
     return { type: 'cities', data: [] };
   }
+}
+
+async function getCountry(countryId: string) {
+  try {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const res = await fetch(`${apiBaseUrl}/api/breadcrumbs/city/${countryId}`, { cache: 'no-store' });
+    const data = await res.json();
+    return data.country || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function generateMetadata({ params }: { params: { countryId: string } }): Promise<Metadata> {
+  const resolvedParams = await Promise.resolve(params);
+  const country = await getCountry(resolvedParams.countryId);
+  const name = country?.name || 'Region';
+  return {
+    title: `${name} - Cities & Deals`,
+    description: `Browse cities and top retail offers in ${name} on DealNamaa.`,
+    openGraph: {
+      title: `${name} - Cities & Deals | DealNamaa`,
+      description: `Browse cities and top retail offers in ${name} on DealNamaa.`,
+    },
+  };
 }
 
 export default async function CitiesPage({ params }: { params: { countryId: string } }) {

@@ -8,8 +8,8 @@ import PDFFlipbook from '../../PDFFlipbook';
 
 // Generate JSON-LD structured data for the offer
 function generateOfferStructuredData(offer: any, retailer: any) {
-  const baseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3001` : 'https://dealnamaa.com';
-  const apiBaseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : 'http://127.0.0.1:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dealnamaa.com';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
   
   // Build the structured data object following schema.org Offer specification
   const structuredData: any = {
@@ -94,7 +94,7 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
   const startTimeRef = useRef(Date.now());
   const maxPageRef = useRef(1);
 
-  const apiBaseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : 'http://127.0.0.1:3000';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
   useEffect(() => {
     if (!offerId) return;
@@ -216,11 +216,7 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
           
           <div className="flex-shrink-0 flex flex-col items-center w-full md:w-auto">
              <button 
-              onClick={() => {
-                console.log('Opening PDF:', offer.pdfUrl);
-                console.log('Full URL will be:', offer.pdfUrl.startsWith('http') ? offer.pdfUrl : `http://localhost:3000${offer.pdfUrl}`);
-                setIsFlipbookOpen(true);
-              }}
+              onClick={() => setIsFlipbookOpen(true)}
               className="inline-flex items-center bg-yellow-400 text-gray-900 px-8 py-4 rounded-xl font-extrabold text-lg md:text-xl shadow-lg hover:bg-yellow-500 hover:scale-105 transition-all w-full justify-center border border-yellow-500"
             >
               View Full Catalog <i className="fa-solid fa-book-open ml-3"></i>
@@ -251,7 +247,7 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
       {/* Flipbook Modal */}
       {isFlipbookOpen && offer.pdfUrl && offer.pdfUrl !== '#' && (
         <PDFFlipbook
-          pdfUrl={offer.pdfUrl.startsWith('http') ? offer.pdfUrl : `http://localhost:3000${offer.pdfUrl}`}
+          pdfUrl={offer.pdfUrl.startsWith('http') ? offer.pdfUrl : `${apiBaseUrl}${offer.pdfUrl}`}
           onClose={() => setIsFlipbookOpen(false)}
           title={offer.title}
         />

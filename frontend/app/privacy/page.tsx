@@ -1,8 +1,13 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
-export const metadata = {
-  title: 'Privacy Policy - DealNamaa',
-  description: 'DealNamaa Privacy Policy - How we protect your data.',
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+  description: 'DealNamaa Privacy Policy - how we collect, use, and protect your data.',
+  openGraph: {
+    title: 'Privacy Policy | DealNamaa',
+    description: 'DealNamaa Privacy Policy - how we collect, use, and protect your data.',
+  },
 };
 
 export default function PrivacyPage() {

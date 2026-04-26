@@ -1,8 +1,13 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
-export const metadata = {
-  title: 'Contact Us - DealNamaa',
-  description: 'Get in touch with DealNamaa team.',
+export const metadata: Metadata = {
+  title: 'Contact Us',
+  description: 'Get in touch with the DealNamaa team.',
+  openGraph: {
+    title: 'Contact Us | DealNamaa',
+    description: 'Get in touch with the DealNamaa team.',
+  },
 };
 
 export default function ContactPage() {

@@ -230,6 +230,20 @@ app.get('/api/redirect/offer/:id', async (req, res) => {
     }
 });
 
+// Get offer counts grouped by retailer ID
+app.get('/api/offer-counts', async (req, res) => {
+    try {
+        const counts = await Offer.aggregate([
+            { $group: { _id: '$retailerId', count: { $sum: 1 } } }
+        ]);
+        const map = {};
+        counts.forEach(c => { map[c._id] = c.count; });
+        res.json(map);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch offer counts' });
+    }
+});
+
 // Get offers by retailer ID
 app.get('/api/offers/:retailerId', async (req, res) => {
     const { retailerId } = req.params;

@@ -1,8 +1,13 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
-export const metadata = {
-  title: 'Terms of Service - DealNamaa',
-  description: 'DealNamaa Terms of Service.',
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: 'DealNamaa Terms of Service - read our usage terms and conditions.',
+  openGraph: {
+    title: 'Terms of Service | DealNamaa',
+    description: 'DealNamaa Terms of Service - read our usage terms and conditions.',
+  },
 };
 
 export default function TermsPage() {

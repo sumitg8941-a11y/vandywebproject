@@ -1,8 +1,13 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
-export const metadata = {
-  title: 'About Us - DealNamaa',
-  description: 'Learn more about DealNamaa - your central hub for coupons and offers.',
+export const metadata: Metadata = {
+  title: 'About Us',
+  description: 'Learn more about DealNamaa - your central hub for coupons and offers across the Middle East.',
+  openGraph: {
+    title: 'About Us | DealNamaa',
+    description: 'Learn more about DealNamaa - your central hub for coupons and offers across the Middle East.',
+  },
 };
 
 export default function AboutPage() {

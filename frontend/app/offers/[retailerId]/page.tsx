@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
@@ -22,6 +23,22 @@ async function getRetailer(retailerId: string) {
   } catch (error) {
     return null;
   }
+}
+
+export async function generateMetadata({ params }: { params: { retailerId: string } }): Promise<Metadata> {
+  const resolvedParams = await Promise.resolve(params);
+  const retailer = await getRetailer(resolvedParams.retailerId);
+  const name = retailer?.name || 'Retailer';
+  const image = retailer?.logo || retailer?.image;
+  return {
+    title: `${name} Offers & Flyers`,
+    description: `Browse the latest coupons, flyers, and deals from ${name} on DealNamaa.`,
+    openGraph: {
+      title: `${name} Offers & Flyers | DealNamaa`,
+      description: `Browse the latest coupons, flyers, and deals from ${name} on DealNamaa.`,
+      ...(image && { images: [{ url: image }] }),
+    },
+  };
 }
 
 export default async function OffersPage({ params }: { params: { retailerId: string } }) {
