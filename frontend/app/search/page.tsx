@@ -26,7 +26,8 @@ function SearchContent() {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`http://127.0.0.1:3000/api/search?q=${encodeURIComponent(query)}`);
+        const apiBaseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : 'http://127.0.0.1:3000';
+        const res = await fetch(`${apiBaseUrl}/api/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
         if (active) setResults(data);
       } catch (err) {
