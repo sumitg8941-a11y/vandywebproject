@@ -3,7 +3,80 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import Script from 'next/script';
 import Breadcrumbs from '../../Breadcrumbs';
+
+// Generate JSON-LD structured data for the offer
+function generateOfferStructuredData(offer: any, retailer: any) {
+  const baseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3001` : 'https://dealnamaa.com';
+  const apiBaseUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : 'http://127.0.0.1:3000';
+  
+  // Build the structured data object following schema.org Offer specification
+  const structuredData: any = {
+    '@context': 'https://schema.org',
+    '@type': 'Offer',
+    'name': offer.title,
+    'description': offer.badge ? `${offer.badge} - ${offer.title}` : offer.title,
+    'image': offer.image ? (offer.image.startsWith('http') ? offer.image : `${apiBaseUrl}${offer.image}`) : undefined,
+    'url': `${baseUrl}/view/${offer.id}`,
+    'priceValidUntil': offer.validUntil ? new Date(offer.validUntil).toISOString().split('T')[0] : undefined,
+    'availability': offer.validUntil && new Date(offer.validUntil) > new Date() ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    'validFrom': offer.validFrom ? new Date(offer.validFrom).toISOString() : undefined,
+    'category': offer.category || 'General',
+  };
+
+  // Add seller information if retailer data is available
+  if (retailer) {
+    structuredData.seller = {
+      '@type': 'Organization',
+      'name': retailer.name,
+      'url': retailer.websiteUrl || `${baseUrl}/offers/${retailer.id}`,
+      'image': retailer.image ? (retailer.image.startsWith('http') ? retailer.image : `${apiBaseUrl}${retailer.image}`) : undefined
+    };
+  }
+
+  // Add coupon code if available
+  if (offer.couponCode) {
+    structuredData.priceSpecification = {
+      '@type': 'UnitPriceSpecification',
+      'priceCurrency': 'AED',
+      'eligibleTransactionVolume': {
+        '@type': 'PriceSpecification',
+        'name': `Coupon Code: ${offer.couponCode}`
+      }
+    };
+  }
+
+  // Add aggregate rating if there are likes/dislikes
+  if ((offer.likes || 0) + (offer.dislikes || 0) > 0) {
+    const totalRatings = (offer.likes || 0) + (offer.dislikes || 0);
+    const ratingValue = totalRatings > 0 ? ((offer.likes || 0) / totalRatings) * 5 : 0;
+    
+    structuredData.aggregateRating = {
+      '@type': 'AggregateRating',
+      'ratingValue': ratingValue.toFixed(1),
+      'bestRating': '5',
+      'worstRating': '0',
+      'ratingCount': totalRatings.toString()
+    };
+  }
+
+  // Remove undefined values
+  Object.keys(structuredData).forEach(key => {
+    if (structuredData[key] === undefined) {
+      delete structuredData[key];
+    }
+    if (typeof structuredData[key] === 'object' && structuredData[key] !== null) {
+      Object.keys(structuredData[key]).forEach(subKey => {
+        if (structuredData[key][subKey] === undefined) {
+          delete structuredData[key][subKey];
+        }
+      });
+    }
+  });
+
+  return structuredData;
+}
 
 export default function OfferView({ params }: { params: { offerId: string } }) {
   const [offerId, setOfferId] = useState<string>('');
@@ -14,6 +87,7 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
   }, [params]);
 
   const [offer, setOffer] = useState<any>(null);
+  const [retailer, setRetailer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [isFlipbookOpen, setIsFlipbookOpen] = useState(false);
@@ -29,7 +103,18 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
     fetch(`${apiBaseUrl}/api/offer/${offerId}`)
       .then(res => res.json())
       .then(data => {
-        if (!data.error) setOffer(data);
+        if (!data.error) {
+          setOffer(data);
+          // Fetch retailer information for structured data
+          if (data.retailerId) {
+            fetch(`${apiBaseUrl}/api/retailer/${data.retailerId}`)
+              .then(res => res.json())
+              .then(retailerData => {
+                if (!retailerData.error) setRetailer(retailerData);
+              })
+              .catch(err => console.error('Failed to fetch retailer:', err));
+          }
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -75,8 +160,21 @@ export default function OfferView({ params }: { params: { offerId: string } }) {
     );
   }
 
+  // Generate structured data
+  const structuredData = generateOfferStructuredData(offer, retailer);
+
   return (
     <div className="bg-gray-50 min-h-screen pb-12">
+      {/* JSON-LD Structured Data */}
+      <Script
+        id="offer-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData)
+        }}
+        strategy="beforeInteractive"
+      />
+
       {/* Top Nav */}
       <div className="bg-white shadow-sm border-b py-4 px-6 flex justify-between items-center sticky top-0 z-50">
         <Link href={`/offers/${offer.retailerId}`} className="text-gray-600 hover:text-gray-900 font-semibold transition">
