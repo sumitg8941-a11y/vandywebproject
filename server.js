@@ -235,6 +235,37 @@ app.post('/api/offer/:id/dislike', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Failed to update' }); }
 });
 
+// Undo like
+app.post('/api/offer/:id/unlike', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
+    try {
+        const offer = await Offer.findOneAndUpdate(
+            { id: id.toLowerCase() },
+            { $inc: { likes: -1 } },
+            { new: true }
+        );
+        if (!offer) return res.status(404).json({ error: 'Offer not found' });
+        res.json({ likes: Math.max(0, offer.likes), dislikes: offer.dislikes });
+    } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Undo dislike
+app.post('/api/offer/:id/undislike', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
+    try {
+        const offer = await Offer.findOneAndUpdate(
+            { id: id.toLowerCase() },
+            { $inc: { dislikes: -1 } },
+            { new: true }
+        );
+        if (!offer) return res.status(404).json({ error: 'Offer not found' });
+        res.json({ likes: offer.likes, dislikes: Math.max(0, offer.dislikes) });
+    } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+
 // Tracking Redirect for outbound traffic
 app.get('/api/redirect/offer/:id', async (req, res) => {
     const { id } = req.params;
