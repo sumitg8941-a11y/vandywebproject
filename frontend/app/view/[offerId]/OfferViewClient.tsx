@@ -26,7 +26,7 @@ function getExpiryLabel(validUntil: string): { text: string; className: string }
 
 export default function OfferViewClient({ offer: initialOffer, retailer, offerId }: Props) {
   const [offer, setOffer] = useState(initialOffer);
-  const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [userFeedback, setUserFeedback] = useState<'like' | 'dislike' | null>(null);
   const [isFlipbookOpen, setIsFlipbookOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const startTimeRef = useRef(Date.now());
@@ -34,6 +34,15 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dealnamaa.com';
+
+  // Load user's previous feedback from localStorage
+  useEffect(() => {
+    const key = `dn_feedback_${offerId}`;
+    const stored = localStorage.getItem(key);
+    if (stored === 'like' || stored === 'dislike') {
+      setUserFeedback(stored);
+    }
+  }, [offerId]);
 
   // Track offer click on mount
   useEffect(() => {
@@ -72,13 +81,16 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
   }, [offerId, apiBaseUrl]);
 
   const handleFeedback = async (type: 'like' | 'dislike') => {
-    if (feedbackGiven) return;
+    if (userFeedback) return; // Already gave feedback
+    
     try {
       const res = await fetch(`${apiBaseUrl}/api/offer/${offerId}/${type}`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setOffer({ ...offer, likes: data.likes, dislikes: data.dislikes });
-        setFeedbackGiven(true);
+        setUserFeedback(type);
+        // Persist to localStorage
+        localStorage.setItem(`dn_feedback_${offerId}`, type);
       }
     } catch {}
   };
@@ -190,17 +202,29 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
               <span className="text-gray-500">Was this helpful?</span>
               <button
                 onClick={() => handleFeedback('like')}
-                disabled={feedbackGiven}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition ${feedbackGiven ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-50 hover:border-green-300'} text-green-600 border-green-200`}
+                disabled={!!userFeedback}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition ${
+                  userFeedback === 'like' 
+                    ? 'bg-green-500 text-white border-green-600' 
+                    : userFeedback 
+                    ? 'opacity-50 cursor-not-allowed text-green-600 border-green-200' 
+                    : 'hover:bg-green-50 hover:border-green-300 text-green-600 border-green-200'
+                }`}
               >
-                <i className="fa-regular fa-thumbs-up"></i> {offer.likes || 0}
+                <i className={userFeedback === 'like' ? 'fa-solid fa-thumbs-up' : 'fa-regular fa-thumbs-up'}></i> {offer.likes || 0}
               </button>
               <button
                 onClick={() => handleFeedback('dislike')}
-                disabled={feedbackGiven}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition ${feedbackGiven ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-50 hover:border-red-300'} text-red-500 border-red-200`}
+                disabled={!!userFeedback}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition ${
+                  userFeedback === 'dislike' 
+                    ? 'bg-red-500 text-white border-red-600' 
+                    : userFeedback 
+                    ? 'opacity-50 cursor-not-allowed text-red-500 border-red-200' 
+                    : 'hover:bg-red-50 hover:border-red-300 text-red-500 border-red-200'
+                }`}
               >
-                <i className="fa-regular fa-thumbs-down"></i> {offer.dislikes || 0}
+                <i className={userFeedback === 'dislike' ? 'fa-solid fa-thumbs-down' : 'fa-regular fa-thumbs-down'}></i> {offer.dislikes || 0}
               </button>
               <SaveButton offerId={offerId} />
             </div>
