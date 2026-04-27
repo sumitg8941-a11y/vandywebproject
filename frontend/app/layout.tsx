@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import Link from 'next/link'
 import Script from 'next/script'
-import LangToggle from './LangToggle'
+import LangToggle, { LangProvider } from './LangToggle'
 import NavLinks from './NavLinks'
 import FindDealsButton from './FindDealsButton'
 import './globals.css'
@@ -56,6 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </head>
       <body className={`${poppins.className} bg-gray-50 text-gray-900`}>
+        <LangProvider>
 
         {/* Google Analytics — only injected when GA ID is set in admin */}
         {gaId && (
@@ -135,7 +136,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
           <p>&copy; {new Date().getFullYear()} DealNamaa. All rights reserved.</p>
         </footer>
-
+        </LangProvider>
       </body>
     </html>
   )

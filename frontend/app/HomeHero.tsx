@@ -5,43 +5,6 @@ import Link from 'next/link';
 import SearchBar from './SearchBar';
 import { useLang } from './LangToggle';
 
-const UI = {
-  en: {
-    selectCountry: 'Select a Country',
-    topRetailers: 'Top Retailers',
-    viewAll: 'View All',
-    expiringWeek: 'Expiring This Week',
-    dontMiss: "Don't miss out!",
-    latestOffers: 'Latest Coupons & Offers',
-    noRetailers: 'No retailers available yet.',
-    noOffers: 'No offers available yet.',
-    noCountries: 'No countries yet. Add some via the Admin Panel.',
-    backendError: 'Could not connect to the backend. Is your server running on port 3000?',
-    offer: 'offer',
-    offers: 'offers',
-    noActiveOffers: 'No active offers',
-    until: 'Until',
-    coveringCities: 'Covering retailers across multiple cities & regions',
-  },
-  ar: {
-    selectCountry: 'اختر دولة',
-    topRetailers: 'أبرز المتاجر',
-    viewAll: 'عرض الكل',
-    expiringWeek: 'تنتهي هذا الأسبوع',
-    dontMiss: 'لا تفوّت الفرصة!',
-    latestOffers: 'أحدث الكوبونات والعروض',
-    noRetailers: 'لا توجد متاجر بعد.',
-    noOffers: 'لا توجد عروض بعد.',
-    noCountries: 'لا توجد دول بعد. أضف بعضها عبر لوحة الإدارة.',
-    backendError: 'تعذّر الاتصال بالخادم. هل الخادم يعمل على المنفذ 3000؟',
-    offer: 'عرض',
-    offers: 'عروض',
-    noActiveOffers: 'لا توجد عروض نشطة',
-    until: 'حتى',
-    coveringCities: 'يغطي متاجر في مدن ومناطق متعددة',
-  },
-};
-
 function getDaysLeft(validUntil: string) {
   return Math.ceil((new Date(validUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
@@ -72,8 +35,7 @@ export default function HomeHero({
   expiringSoon: any[];
   heroImages: any[];
 }) {
-  const { lang, t } = useLang();
-  const u = UI[lang];
+  const { t } = useLang();
 
   return (
     <div>
@@ -93,7 +55,7 @@ export default function HomeHero({
             <SearchBar />
             <p className="mt-4 text-sm opacity-70">
               <i className="fa-solid fa-location-dot mr-1"></i>
-              {u.coveringCities}
+              {t.coveringCities}
             </p>
           </div>
           {heroImages.length >= 4 && (
@@ -112,17 +74,17 @@ export default function HomeHero({
       {/* ── Countries ── */}
       <div className="max-w-6xl mx-auto px-4 mt-12">
         <h2 className="text-2xl font-black text-gray-800 mb-6 flex items-center gap-2">
-          <i className="fa-solid fa-globe text-red-600"></i> {u.selectCountry}
+          <i className="fa-solid fa-globe text-red-600"></i> {t.selectCountry}
         </h2>
         {countries === null ? (
           <div className="text-center p-10 bg-red-50 text-red-700 rounded-xl border border-red-200">
             <i className="fa-solid fa-triangle-exclamation text-3xl mb-3"></i>
-            <p className="font-bold">{u.backendError}</p>
+            <p className="font-bold">{t.backendError}</p>
           </div>
         ) : countries.length === 0 ? (
           <div className="text-center p-10 bg-blue-50 text-blue-800 rounded-xl border border-blue-200">
             <i className="fa-solid fa-database text-3xl mb-3"></i>
-            <p className="font-bold">{u.noCountries}</p>
+            <p className="font-bold">{t.noCountries}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
@@ -147,15 +109,15 @@ export default function HomeHero({
       <div id="retailers" className="max-w-6xl mx-auto px-4 mt-14 scroll-mt-20">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-            <i className="fa-solid fa-store text-red-600"></i> {u.topRetailers}
+            <i className="fa-solid fa-store text-red-600"></i> {t.topRetailers}
           </h2>
           <Link href="/search" className="text-red-600 font-semibold hover:underline text-sm">
-            {u.viewAll} <i className="fa-solid fa-arrow-right ml-1"></i>
+            {t.viewAll} <i className="fa-solid fa-arrow-right ml-1"></i>
           </Link>
         </div>
         {topRetailers.length === 0 ? (
           <div className="text-center p-10 bg-gray-50 text-gray-500 rounded-xl border border-gray-200">
-            <p>{u.noRetailers}</p>
+            <p>{t.noRetailers}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
@@ -173,10 +135,10 @@ export default function HomeHero({
                     )}
                     {(r.offerCount ?? 0) > 0 ? (
                       <p className="text-xs text-red-600 font-semibold mt-1">
-                        <i className="fa-solid fa-tag mr-1"></i>{r.offerCount} {r.offerCount === 1 ? u.offer : u.offers}
+                        <i className="fa-solid fa-tag mr-1"></i>{r.offerCount} {r.offerCount === 1 ? t.offer : t.offers}
                       </p>
                     ) : (
-                      <p className="text-xs text-gray-400 mt-1">{u.noActiveOffers}</p>
+                      <p className="text-xs text-gray-400 mt-1">{t.noActiveOffers}</p>
                     )}
                   </div>
                 </div>
@@ -191,11 +153,11 @@ export default function HomeHero({
         <div className="max-w-6xl mx-auto px-4 mt-14">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-              <i className="fa-solid fa-clock text-orange-500"></i> {u.expiringWeek}
-              <span className="text-sm font-semibold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full ml-1">{u.dontMiss}</span>
+              <i className="fa-solid fa-clock text-orange-500"></i> {t.expiringWeek}
+              <span className="text-sm font-semibold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full ml-1">{t.dontMiss}</span>
             </h2>
             <Link href="/search" className="text-red-600 font-semibold hover:underline text-sm">
-              {u.viewAll} <i className="fa-solid fa-arrow-right ml-1"></i>
+              {t.viewAll} <i className="fa-solid fa-arrow-right ml-1"></i>
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
@@ -220,7 +182,7 @@ export default function HomeHero({
                       <h3 className="text-xs font-bold text-gray-800 truncate">{o.title}</h3>
                       <p className="text-xs text-orange-600 font-semibold mt-1">
                         <i className="fa-regular fa-calendar mr-1"></i>
-                        {u.until} {new Date(o.validUntil).toLocaleDateString()}
+                        {t.until} {new Date(o.validUntil).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -235,15 +197,15 @@ export default function HomeHero({
       <div id="coupons" className="max-w-6xl mx-auto px-4 mt-14 scroll-mt-20 mb-16">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-            <i className="fa-solid fa-ticket text-red-600"></i> {u.latestOffers}
+            <i className="fa-solid fa-ticket text-red-600"></i> {t.latestOffers}
           </h2>
           <Link href="/search" className="text-red-600 font-semibold hover:underline text-sm">
-            {u.viewAll} <i className="fa-solid fa-arrow-right ml-1"></i>
+            {t.viewAll} <i className="fa-solid fa-arrow-right ml-1"></i>
           </Link>
         </div>
         {latestOffers.length === 0 ? (
           <div className="text-center p-10 bg-gray-50 text-gray-500 rounded-xl border border-gray-200">
-            <p>{u.noOffers}</p>
+            <p>{t.noOffers}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
@@ -276,7 +238,7 @@ export default function HomeHero({
                       {o.validUntil && (
                         <p className="text-xs text-gray-400 mt-1">
                           <i className="fa-regular fa-calendar mr-1"></i>
-                          {u.until} {new Date(o.validUntil).toLocaleDateString()}
+                          {t.until} {new Date(o.validUntil).toLocaleDateString()}
                         </p>
                       )}
                     </div>
