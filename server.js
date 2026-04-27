@@ -847,10 +847,22 @@ app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
 // Admin: Get all feedback
 app.get('/api/admin/feedback', verifyAdmin, async (req, res) => {
     try {
-        const feedback = await Feedback.find().sort({ date: -1 });
+        const sort = req.query.sort || 'newest';
+        const sortOrder = sort === 'oldest' ? 1 : -1;
+        const feedback = await Feedback.find().sort({ date: sortOrder });
         res.json(feedback);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch feedback' });
+    }
+});
+
+// Admin: Delete feedback
+app.delete('/api/admin/feedback/:id', verifyAdmin, async (req, res) => {
+    try {
+        await Feedback.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Feedback deleted' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete feedback' });
     }
 });
 

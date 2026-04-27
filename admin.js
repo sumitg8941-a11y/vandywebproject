@@ -1077,24 +1077,52 @@ const admin = {
         }
     },
 
-    renderFeedback: async function() {
+    renderFeedback: async function(sort = 'newest') {
         try {
-            const res = await fetch('/api/admin/feedback', {
+            const res = await fetch(`/api/admin/feedback?sort=${sort}`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
             });
             if (!res.ok) throw new Error('Failed to fetch feedback');
             const feedbackList = await res.json();
-            
+
             let rows = feedbackList.map(f => `
                 <tr>
-                    <td>${new Date(f.date).toLocaleDateString()}</td>
+                    <td style="white-space:nowrap;">${new Date(f.date).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })}</td>
                     <td><b>${f.name}</b><br><small style="color:#7f8c8d;">${f.email}</small></td>
                     <td><div style="max-height:100px; overflow-y:auto; padding:8px; background:#f9f9f9; border:1px solid #ddd; border-radius:4px; font-style:italic;">"${f.message}"</div></td>
+                    <td><button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteFeedback('${f._id}')"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>
             `).join('');
 
-            return `<h2>User Feedback</h2><table class="admin-table" style="margin-top:15px;"><thead><tr><th style="width:15%;">Date</th><th style="width:25%;">User</th><th>Message</th></tr></thead><tbody>${rows || '<tr><td colspan="3" style="text-align:center;">No feedback yet.</td></tr>'}</tbody></table>`;
+            return `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h2>User Feedback <span style="font-size:0.85em; color:#64748b; font-weight:400;">(${feedbackList.length})</span></h2>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <label style="font-size:0.85em; color:#64748b;">Sort:</label>
+                        <select onchange="admin.showTab('feedback'); admin._feedbackSort=this.value; admin.renderFeedback(this.value).then(h=>admin.contentDiv.innerHTML=h)" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.85em;">
+                            <option value="newest" ${sort==='newest'?'selected':''}>Newest First</option>
+                            <option value="oldest" ${sort==='oldest'?'selected':''}>Oldest First</option>
+                        </select>
+                    </div>
+                </div>
+                <table class="admin-table">
+                    <thead><tr><th style="width:12%;">Date</th><th style="width:22%;">User</th><th>Message</th><th style="width:60px;">Del</th></tr></thead>
+                    <tbody>${rows || '<tr><td colspan="4" style="text-align:center;">No feedback yet.</td></tr>'}</tbody>
+                </table>
+            `;
         } catch(e) { return `<p style="color:red;">Error loading feedback. Ensure server is running.</p>`; }
+    },
+
+    deleteFeedback: async function(id) {
+        if (!confirm('Delete this feedback permanently?')) return;
+        try {
+            const res = await fetch(`/api/admin/feedback/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+            });
+            if (!res.ok) throw new Error('Failed to delete');
+            this.showTab('feedback');
+        } catch(e) { alert('Error deleting feedback: ' + e.message); }
     },
 
     deleteCountry: async function(id) {
