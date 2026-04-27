@@ -129,19 +129,20 @@ app.get('/api/countries', async (req, res) => {
     }
 });
 
-// Get regions (states or cities) by country ID
+// Get regions (states + direct cities) by country ID
 app.get('/api/regions/:countryId', async (req, res) => {
     const { countryId } = req.params;
     if (!validateId(countryId)) {
         return res.status(400).json({ error: 'Invalid ID format' });
     }
     try {
-        const states = await State.find({ countryId: countryId.toLowerCase() });
-        if (states.length > 0) {
-            return res.json({ type: 'states', data: states });
-        }
-        const cities = await City.find({ countryId: countryId.toLowerCase() });
-        res.json({ type: 'cities', data: cities });
+        const [states, allCities] = await Promise.all([
+            State.find({ countryId: countryId.toLowerCase() }).lean(),
+            City.find({ countryId: countryId.toLowerCase() }).lean(),
+        ]);
+        // Direct cities = cities with no stateId
+        const directCities = allCities.filter(c => !c.stateId || c.stateId === '');
+        res.json({ states, directCities });
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch regions' });
     }
