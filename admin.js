@@ -1085,40 +1085,59 @@ const admin = {
             <h2>Site Settings</h2>
             <p style="color:#7f8c8d; margin-bottom:20px;">These settings are saved to the database and applied to the live website immediately.</p>
 
-            <div style="background:#f9f9f9; padding:24px; border-radius:8px; border:1px solid #ddd; max-width:600px;">
+            <div style="background:#f9f9f9; padding:24px; border-radius:8px; border:1px solid #ddd; max-width:800px;">
 
-                <h3 style="margin-bottom:16px;"><i class="fa-solid fa-globe" style="color:#2563eb;"></i> Live Website URL</h3>
+                <h3 style="margin-bottom:16px;"><i class="fa-solid fa-globe" style="color:#2563eb;"></i> General Settings</h3>
                 <label style="font-size:0.85em; font-weight:bold;">Production Site URL</label>
-                <input type="url" id="s-site-url" value="${s.siteUrl || ''}" placeholder="https://your-frontend.up.railway.app"
-                    style="width:100%; padding:8px; margin:6px 0 4px; box-sizing:border-box;">
-                <p style="font-size:0.78em; color:#7f8c8d; margin-bottom:20px;">Used for the "View Live Website" button in the admin sidebar. Leave blank to hide the button.</p>
+                <input type="url" id="s-site-url" value="${s.siteUrl || ''}" placeholder="https://your-frontend.up.railway.app" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
+                
+                <label style="font-size:0.85em; font-weight:bold;">Custom Logo URL (Optional)</label>
+                <input type="url" id="s-custom-logo" value="${s.customLogoUrl || ''}" placeholder="https://example.com/logo.png" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
+                
+                <label style="font-size:0.85em; font-weight:bold;">Favicon URL (Optional - Icon on browser tab)</label>
+                <input type="url" id="s-favicon-url" value="${s.faviconUrl || ''}" placeholder="https://example.com/favicon.ico" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
+
+                <label style="font-size:0.85em; font-weight:bold;">Custom Home Page Message (Optional)</label>
+                <input type="text" id="s-home-message" value="${s.homeMessage || ''}" placeholder="e.g. Welcome to DealNamaa! Discover best offers." style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
+
+                <label style="display:flex; align-items:center; gap:8px; font-weight:bold; margin-bottom: 20px;">
+                    <input type="checkbox" id="s-show-stats" ${s.showStats ? 'checked' : ''}> Show Visitors & Deals Saved Stats on Main Website
+                </label>
 
                 <h3 style="margin-bottom:16px;"><i class="fa-brands fa-google" style="color:#4285F4;"></i> Google Analytics</h3>
                 <label style="font-size:0.85em; font-weight:bold;">Google Analytics Measurement ID</label>
-                <input type="text" id="s-ga-id" value="${s.gaId || ''}" placeholder="e.g. G-XXXXXXXXXX"
-                    style="width:100%; padding:8px; margin:6px 0 4px; box-sizing:border-box;">
-                <p style="font-size:0.78em; color:#7f8c8d; margin-bottom:20px;">Leave blank to disable Google Analytics. Get your ID from <a href="https://analytics.google.com" target="_blank">analytics.google.com</a>.</p>
+                <input type="text" id="s-ga-id" value="${s.gaId || ''}" placeholder="e.g. G-XXXXXXXXXX" style="width:100%; padding:8px; margin:6px 0 20px; box-sizing:border-box;">
 
                 <h3 style="margin-bottom:16px;"><i class="fa-solid fa-share-nodes" style="color:#e74c3c;"></i> Social Media Links</h3>
                 <label style="font-size:0.85em; font-weight:bold;">Facebook Page URL</label>
-                <input type="url" id="s-facebook" value="${s.facebookUrl || ''}" placeholder="https://facebook.com/yourpage"
-                    style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
-
+                <input type="url" id="s-facebook" value="${s.facebookUrl || ''}" placeholder="https://facebook.com/yourpage" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
                 <label style="font-size:0.85em; font-weight:bold;">Twitter / X Profile URL</label>
-                <input type="url" id="s-twitter" value="${s.twitterUrl || ''}" placeholder="https://twitter.com/yourhandle"
-                    style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
-
+                <input type="url" id="s-twitter" value="${s.twitterUrl || ''}" placeholder="https://twitter.com/yourhandle" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
                 <label style="font-size:0.85em; font-weight:bold;">Instagram Profile URL</label>
-                <input type="url" id="s-instagram" value="${s.instagramUrl || ''}" placeholder="https://instagram.com/yourhandle"
-                    style="width:100%; padding:8px; margin:6px 0 20px; box-sizing:border-box;">
+                <input type="url" id="s-instagram" value="${s.instagramUrl || ''}" placeholder="https://instagram.com/yourhandle" style="width:100%; padding:8px; margin:6px 0 20px; box-sizing:border-box;">
+
+                <h3 style="margin-bottom:16px;"><i class="fa-solid fa-address-book" style="color:#27ae60;"></i> Contact Info</h3>
+                <label style="font-size:0.85em; font-weight:bold;">Contact Email</label>
+                <input type="email" id="s-contact-email" value="${s.contactEmail || ''}" placeholder="hello@dealnamaa.com" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
+                <label style="font-size:0.85em; font-weight:bold;">Contact Phone</label>
+                <input type="text" id="s-contact-phone" value="${s.contactPhone || ''}" placeholder="+971 4 123 4567" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
+                <label style="font-size:0.85em; font-weight:bold;">Contact Address</label>
+                <textarea id="s-contact-address" rows="2" style="width:100%; padding:8px; margin:6px 0 20px; box-sizing:border-box;">${s.contactAddress || ''}</textarea>
+
+                <h3 style="margin-bottom:16px;"><i class="fa-solid fa-file-lines" style="color:#8e44ad;"></i> Dynamic Pages (HTML Supported)</h3>
+                <label style="font-size:0.85em; font-weight:bold;">About Us</label>
+                <textarea id="s-about-us" rows="4" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">${s.aboutUs || ''}</textarea>
+                <label style="font-size:0.85em; font-weight:bold;">Privacy Policy</label>
+                <textarea id="s-privacy-policy" rows="4" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">${s.privacyPolicy || ''}</textarea>
+                <label style="font-size:0.85em; font-weight:bold;">Terms of Service</label>
+                <textarea id="s-terms-service" rows="4" style="width:100%; padding:8px; margin:6px 0 20px; box-sizing:border-box;">${s.termsOfService || ''}</textarea>
 
                 <h3 style="margin-bottom:16px;"><i class="fa-solid fa-comment" style="color:#27ae60;"></i> Feedback Page</h3>
                 <label style="font-size:0.85em; font-weight:bold;">Feedback Page URL</label>
                 <input type="text" id="s-feedback" value="${s.feedbackUrl || '/feedback'}" placeholder="/feedback or https://forms.google.com/..."
                     style="width:100%; padding:8px; margin:6px 0 4px; box-sizing:border-box;">
-                <p style="font-size:0.78em; color:#7f8c8d; margin-bottom:20px;">Can be an internal path (e.g. /feedback) or an external URL like a Google Form.</p>
 
-                <button class="action-btn" style="background:#27ae60; width:100%; padding:12px; font-size:1em;" onclick="admin.saveSettings()">Save Settings</button>
+                <button class="action-btn" style="background:#27ae60; width:100%; padding:12px; font-size:1em; margin-top:20px;" onclick="admin.saveSettings()">Save Settings</button>
                 <p id="settings-msg" style="display:none; margin-top:12px; text-align:center; font-weight:bold;"></p>
             </div>
         `;
@@ -1127,10 +1146,20 @@ const admin = {
     saveSettings: async function() {
         const payload = {
             siteUrl: document.getElementById('s-site-url').value.trim(),
+            customLogoUrl: document.getElementById('s-custom-logo').value.trim(),
+            faviconUrl: document.getElementById('s-favicon-url').value.trim(),
+            homeMessage: document.getElementById('s-home-message').value.trim(),
+            showStats: document.getElementById('s-show-stats').checked,
             gaId: document.getElementById('s-ga-id').value.trim(),
             facebookUrl: document.getElementById('s-facebook').value.trim(),
             twitterUrl: document.getElementById('s-twitter').value.trim(),
             instagramUrl: document.getElementById('s-instagram').value.trim(),
+            contactEmail: document.getElementById('s-contact-email').value.trim(),
+            contactPhone: document.getElementById('s-contact-phone').value.trim(),
+            contactAddress: document.getElementById('s-contact-address').value.trim(),
+            aboutUs: document.getElementById('s-about-us').value.trim(),
+            privacyPolicy: document.getElementById('s-privacy-policy').value.trim(),
+            termsOfService: document.getElementById('s-terms-service').value.trim(),
             feedbackUrl: document.getElementById('s-feedback').value.trim() || '/feedback',
         };
         try {

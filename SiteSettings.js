@@ -15,6 +15,8 @@ const siteSettingsSchema = new mongoose.Schema({
     termsOfService: { type: String, default: '' },
     showStats: { type: Boolean, default: false },
     customLogoUrl: { type: String, default: '' },
+    homeMessage: { type: String, default: '' },
+    faviconUrl: { type: String, default: '' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('SiteSettings', siteSettingsSchema);

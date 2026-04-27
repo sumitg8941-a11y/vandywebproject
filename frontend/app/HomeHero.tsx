@@ -29,12 +29,14 @@ export default function HomeHero({
   latestOffers,
   expiringSoon,
   heroImages,
+  customHomeMessage,
 }: {
   countries: any[] | null;
   topRetailers: any[];
   latestOffers: any[];
   expiringSoon: any[];
   heroImages: any[];
+  customHomeMessage?: string;
 }) {
   const { t } = useLang();
 
@@ -48,7 +50,7 @@ export default function HomeHero({
               {t.newDeals}
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight drop-shadow whitespace-pre-line">
-              {t.heroTitle}
+              {customHomeMessage || t.heroTitle}
             </h1>
             <p className="text-lg md:text-xl mb-8 opacity-90 font-medium max-w-xl">
               {t.heroSub}

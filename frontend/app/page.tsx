@@ -47,12 +47,21 @@ async function getExpiringSoon() {
   } catch { return []; }
 }
 
+async function getSettings() {
+  try {
+    const res = await fetch(`${API}/api/settings`, { cache: 'no-store' });
+    if (!res.ok) throw new Error();
+    return res.json();
+  } catch { return {}; }
+}
+
 export default async function HomePage() {
-  const [countries, topRetailers, latestOffers, expiringSoon] = await Promise.all([
+  const [countries, topRetailers, latestOffers, expiringSoon, settings] = await Promise.all([
     getCountries(),
     getTopRetailers(),
     getLatestOffers(),
     getExpiringSoon(),
+    getSettings(),
   ]);
 
   const heroImages = latestOffers.filter((o: any) => o.image).slice(0, 5);
@@ -69,6 +78,7 @@ export default async function HomePage() {
         latestOffers={latestOffers}
         expiringSoon={expiringSoon}
         heroImages={heroImages}
+        customHomeMessage={settings?.homeMessage}
       />
       <div className="px-4 max-w-6xl mx-auto"><AdSlot format="horizontal" /></div>
       <PushNotification />
