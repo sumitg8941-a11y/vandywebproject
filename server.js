@@ -859,6 +859,95 @@ app.post('/api/track/retailer/:id', async (req, res) => {
     } catch (e) { res.status(500).send('Error'); }
 });
 
+app.post('/api/track/offer/:id', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
+    try {
+        await Offer.findOneAndUpdate({ id: id.toLowerCase() }, { $inc: { clicks: 1 } });
+        res.status(200).send('OK');
+    } catch (e) { res.status(500).send('Error'); }
+});
+
+// Rate offer
+app.post('/api/offer/:id/rate', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
+    try {
+        const { rating, previousRating } = req.body;
+        if (!rating || rating < 1 || rating > 5) return res.status(400).json({ error: 'Invalid rating' });
+        const offer = await Offer.findOne({ id: id.toLowerCase() });
+        if (!offer) return res.status(404).json({ error: 'Offer not found' });
+        
+        let newCount = offer.ratingCount;
+        let newRating = offer.rating;
+        
+        if (previousRating) {
+            // User is updating their rating
+            const totalRating = offer.rating * offer.ratingCount;
+            newRating = (totalRating - previousRating + rating) / offer.ratingCount;
+        } else {
+            // New rating
+            newCount = offer.ratingCount + 1;
+            newRating = ((offer.rating * offer.ratingCount) + rating) / newCount;
+        }
+        
+        offer.rating = newRating;
+        offer.ratingCount = newCount;
+        await offer.save();
+        
+        // Update global stats only for new ratings
+        if (!previousRating) {
+            await SiteStat.findOneAndUpdate(
+                { id: 'global' },
+                { $inc: { totalRatings: 1 } },
+                { upsert: true }
+            );
+        }
+        
+        res.json({ rating: newRating, ratingCount: newCount });
+    } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Save offer
+app.post('/api/offer/:id/save', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
+    try {
+        const offer = await Offer.findOneAndUpdate(
+            { id: id.toLowerCase() },
+            { $inc: { savedCount: 1 } },
+            { new: true }
+        );
+        await SiteStat.findOneAndUpdate({ id: 'global' }, { $inc: { totalSaves: 1 } }, { upsert: true });
+        res.json({ savedCount: offer.savedCount });
+    } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Unsave offer
+app.post('/api/offer/:id/unsave', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
+    try {
+        await Offer.findOneAndUpdate({ id: id.toLowerCase() }, { $inc: { savedCount: -1 } });
+        await SiteStat.findOneAndUpdate({ id: 'global' }, { $inc: { totalSaves: -1 } });
+        res.status(200).send('OK');
+    } catch (e) { res.status(500).send('Error'); }
+});
+
+// Social proof stats
+app.get('/api/social-proof', async (req, res) => {
+    try {
+        const stats = await SiteStat.findOne({ id: 'global' });
+        res.json({
+            visits: stats?.visits || 0,
+            totalSaves: stats?.totalSaves || 0,
+            avgRating: stats?.avgRating || 0,
+            totalRatings: stats?.totalRatings || 0
+        });
+    } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+
 // ==========================================
 // 🔒 ADMIN LOGIN ENDPOINT
 // ==========================================
