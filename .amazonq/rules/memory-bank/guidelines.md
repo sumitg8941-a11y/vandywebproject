@@ -346,4 +346,3 @@ Always use CSS variables — never hardcode colours:
 - **Never** hardcode `localhost:3000` in frontend code — use env vars
 - **Never** skip `validateId()` on route params — prevents injection attacks
 - **Never** edit `server.js` with PowerShell `Set-Content` or array slicing — use .NET `ReadAllText`/`WriteAllText`
-- **Never** commit `deploy.js` — it contains hardcoded server credentials

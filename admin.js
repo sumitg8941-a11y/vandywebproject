@@ -1273,12 +1273,7 @@ const admin = {
 
         alert(`Cleanup complete!\n✅ Deleted: ${successCount}\n❌ Failed: ${failCount}`);
         this.showTab('offers');
-    }
-};
-
-// Boot Admin Dashboard
-document.addEventListener('DOMContentLoaded', () => admin.init());
-
+    },
 
     resetOfferMetrics: async function(id) {
         if (!confirm('Reset all metrics (clicks, likes, dislikes, ratings, saves, time, pages) for this offer? This is for testing purposes only.')) return;
@@ -1291,4 +1286,8 @@ document.addEventListener('DOMContentLoaded', () => admin.init());
             alert('Metrics reset successfully! Refresh the page to see updated values.');
             this.showTab('offers');
         } catch(e) { alert('Error resetting metrics: ' + e.message); }
-    },
+    }
+};
+
+// Boot Admin Dashboard
+document.addEventListener('DOMContentLoaded', () => admin.init());

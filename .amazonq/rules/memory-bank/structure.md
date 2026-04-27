@@ -18,9 +18,10 @@ VandanaProject/
 │   ├── Retailer.js        # id, name, cityId, websiteUrl, image, category, clicks, totalTimeSeconds
 │   ├── Offer.js           # id, title, retailerId, validFrom, validUntil, pdfUrl, image, badge,
 │   │                      #   couponCode, couponUrl, isSponsored, externalAdLink, category,
-│   │                      #   clicks, likes, dislikes, totalTimeSeconds, maxPagesViewed
+│   │                      #   clicks, likes, dislikes, rating, ratingCount, savedCount,
+│   │                      #   totalTimeSeconds, maxPagesViewed
 │   ├── Feedback.js        # name, email, message, date
-│   ├── SiteStat.js        # id='global', visits
+│   ├── SiteStat.js        # id='global', visits, totalSaves, totalRatings, avgRating
 │   └── SiteSettings.js    # id='global', gaId, facebookUrl, twitterUrl, instagramUrl,
 │                          #   feedbackUrl, siteUrl
 │
@@ -30,7 +31,6 @@ VandanaProject/
 ├── migrate-to-r2.js       # One-time migration script
 ├── r2-cors-config.json    # R2 CORS configuration
 ├── seed.js                # Database seed script
-├── deploy.js              # SSH deployment script — NEVER COMMIT (hardcoded credentials)
 │
 ├── frontend/              # Next.js 16 frontend (separate process, port 3001)
 │   ├── app/               # App Router pages and components
@@ -116,6 +116,7 @@ Single-file Express server (~1250 lines). All routes defined inline in this orde
 | `POST /api/admin/offers` | JWT | Create offer |
 | `PUT /api/admin/offers/:id` | JWT | Update offer |
 | `DELETE /api/admin/offers/:id` | JWT | Delete offer |
+| `POST /api/admin/offers/:id/reset-metrics` | JWT | Reset clicks, likes, ratings, saves |
 
 ### Stats Route Date Filtering
 
@@ -153,7 +154,15 @@ app/
 ├── FindDealsButton.tsx    # 'use client' — hero CTA button, reads useLang()
 ├── Tracker.tsx            # 'use client' — fire-and-forget analytics, sessionStorage dedup
 │                          #   Props: type ('visit'|'country'|'city'|'retailer'|'offer'), id?
-└── SafeImage.tsx          # 'use client' — next/image wrapper with onError fallback to SVG placeholder
+├── SafeImage.tsx          # 'use client' — next/image wrapper with onError fallback to SVG placeholder
+├── SkeletonLoader.tsx     # 'use client' — professional loading states
+├── MobileNav.tsx          # 'use client' — accessible mobile menu
+├── PushNotification.tsx   # 'use client' — web push prompt popup
+├── SocialProof.tsx        # 'use client' — trust signals banner
+├── SaveButton.tsx         # 'use client' — bookmark offers to localStorage
+├── RatingWidget.tsx       # 'use client' — 5-star rating with hover preview
+├── error.tsx              # Top-level error boundary
+└── not-found.tsx          # Branded 404 page
 │
 ├── cities/[countryId]/
 │   └── page.tsx           # Unified grid: states (red "Region" pill) + direct cities (orange "City" pill)
@@ -172,9 +181,9 @@ app/
 │
 ├── view/[offerId]/
 │   ├── page.tsx           # SERVER — fetches offer+retailer, JSON-LD structured data
-│   └── OfferViewClient.tsx # 'use client' — like/dislike, flipbook, WhatsApp share,
+│   └── OfferViewClient.tsx # 'use client' — like/dislike/save/rate, flipbook, Web share,
 │                           #   retailer website link, offer click tracking on mount,
-│                           #   offer-stats tracking on unmount (keepalive: true)
+│                           #   offer-stats tracking on beforeunload (SendBeacon)
 │
 ├── search/
 │   ├── page.tsx           # Server wrapper (Suspense boundary)
@@ -247,4 +256,16 @@ R2_PUBLIC_URL=https://pub-45510cdb150f4139b1cb4be3a5cba4e6.r2.dev
 NEXT_PUBLIC_API_URL=https://dealnamaa-backend-production.up.railway.app
 API_URL=https://dealnamaa-backend-production.up.railway.app
 NEXT_PUBLIC_SITE_URL=https://<frontend-railway-url>
+```
+maa-offers
+R2_PUBLIC_URL=https://pub-45510cdb150f4139b1cb4be3a5cba4e6.r2.dev
+```
+
+### `frontend/.env.local`
+```
+NEXT_PUBLIC_API_URL=https://dealnamaa-backend-production.up.railway.app
+API_URL=https://dealnamaa-backend-production.up.railway.app
+NEXT_PUBLIC_SITE_URL=https://<frontend-railway-url>
+```
+rl>
 ```

@@ -86,6 +86,7 @@ Analytics dashboard with date range filter.
   - PDF Flyer (file upload or URL)
   - Cover Image (file upload or URL)
   - Badge text (e.g. "50% OFF")
+- **Reset Metrics**: Offers have a "Reset metrics" button to clear testing data (resets clicks, likes, ratings, saves, time, etc.).
 
 ### Feedback
 - Lists all user feedback submissions with date, name, email, message

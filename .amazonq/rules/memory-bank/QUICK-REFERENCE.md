@@ -46,6 +46,12 @@ npm install && npm run dev
 | `frontend/app/FollowButton.tsx` | Retailer follow (localStorage) |
 | `frontend/app/MyRetailers.tsx` | Followed retailers section on homepage |
 | `frontend/app/search/SearchClient.tsx` | Search with validity + category + city + retailer filters |
+| `frontend/app/SocialProof.tsx` | Trust signals banner |
+| `frontend/app/SaveButton.tsx` | Bookmark offers to localStorage |
+| `frontend/app/RatingWidget.tsx` | 5-star rating with hover preview |
+| `frontend/app/PushNotification.tsx` | Web push prompt popup |
+| `frontend/app/SkeletonLoader.tsx` | Professional loading states |
+| `frontend/app/error.tsx` | Top-level error boundary |
 
 ## Admin — Common Tasks
 
@@ -105,6 +111,8 @@ Tracking endpoints are rate-limited to 20 req/min per IP.
 | Key | Purpose |
 |-----|---------|
 | `dn_followed_retailers` | JSON array of followed retailer IDs |
+| `dn_saved_offers` | Array of saved offer IDs |
+| `dn_rating_{offerId}` | User's 1-5 star rating for an offer |
 
 ## sessionStorage Keys (Frontend)
 

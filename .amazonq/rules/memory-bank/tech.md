@@ -123,6 +123,7 @@ NEXT_PUBLIC_SITE_URL=https://<frontend-url>
 | JWT expiry | 12 hours |
 | `robots.txt` | Blocks `/admin` and `/api/` from all crawlers |
 | Tracking dedup | `Tracker` component uses `sessionStorage` — visit fires once per session, entity tracks fire once per session per ID |
+| Tracking reliability | `offer-stats` tracking fires reliably on `beforeunload` using `navigator.sendBeacon()` |
 
 ## Local Development
 
