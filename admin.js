@@ -9,6 +9,7 @@ const admin = {
         }
         document.getElementById('login-modal').style.display = 'none';
         this.showTab('countries');
+        this._loadSiteUrl();
         
         // Dynamically add the Feedback tab to the sidebar if it doesn't exist
         setTimeout(() => {
@@ -21,6 +22,21 @@ const admin = {
                 firstTab.parentNode.appendChild(btn);
             }
         }, 500);
+    },
+
+    _loadSiteUrl: async function() {
+        try {
+            const res = await fetch('/api/settings');
+            if (!res.ok) return;
+            const s = await res.json();
+            if (s.siteUrl) {
+                const url = s.siteUrl.trim();
+                const btn = document.getElementById('live-site-btn');
+                const link = document.getElementById('live-site-link');
+                if (btn) { btn.href = url; btn.style.display = 'inline-flex'; }
+                if (link) { link.href = url; link.style.display = 'flex'; }
+            }
+        } catch(e) {}
     },
 
     login: async function() {
@@ -1035,6 +1051,12 @@ const admin = {
 
             <div style="background:#f9f9f9; padding:24px; border-radius:8px; border:1px solid #ddd; max-width:600px;">
 
+                <h3 style="margin-bottom:16px;"><i class="fa-solid fa-globe" style="color:#2563eb;"></i> Live Website URL</h3>
+                <label style="font-size:0.85em; font-weight:bold;">Production Site URL</label>
+                <input type="url" id="s-site-url" value="${s.siteUrl || ''}" placeholder="https://your-frontend.up.railway.app"
+                    style="width:100%; padding:8px; margin:6px 0 4px; box-sizing:border-box;">
+                <p style="font-size:0.78em; color:#7f8c8d; margin-bottom:20px;">Used for the "View Live Website" button in the admin sidebar. Leave blank to hide the button.</p>
+
                 <h3 style="margin-bottom:16px;"><i class="fa-brands fa-google" style="color:#4285F4;"></i> Google Analytics</h3>
                 <label style="font-size:0.85em; font-weight:bold;">Google Analytics Measurement ID</label>
                 <input type="text" id="s-ga-id" value="${s.gaId || ''}" placeholder="e.g. G-XXXXXXXXXX"
@@ -1068,6 +1090,7 @@ const admin = {
 
     saveSettings: async function() {
         const payload = {
+            siteUrl: document.getElementById('s-site-url').value.trim(),
             gaId: document.getElementById('s-ga-id').value.trim(),
             facebookUrl: document.getElementById('s-facebook').value.trim(),
             twitterUrl: document.getElementById('s-twitter').value.trim(),
@@ -1085,6 +1108,7 @@ const admin = {
                 msg.style.display = 'block';
                 msg.style.color = '#27ae60';
                 msg.innerText = '✅ Settings saved successfully! Changes will appear on the website within 5 minutes.';
+                this._loadSiteUrl();
             } else {
                 msg.style.display = 'block';
                 msg.style.color = '#e74c3c';

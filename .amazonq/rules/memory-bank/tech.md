@@ -2,37 +2,37 @@
 
 ## Overview
 
-Two separate processes, both must be running for the site to work:
+Two separate Railway services:
 
-| Process | Runtime | Port | Start Command |
-|---------|---------|------|---------------|
-| Backend API | Node.js + Express | 3000 | `npm start` or `npm run dev` |
-| Frontend | Next.js 16 | 3001 | `cd frontend && npm run dev` |
-| Admin Panel | Served by backend | 3000 | (no separate start needed) |
-| Database | MongoDB | 27017 | `mongod` |
+| Process | Runtime | Port | URL |
+|---------|---------|------|-----|
+| Backend API | Node.js + Express | 8080 | `https://dealnamaa-backend-production.up.railway.app` |
+| Frontend | Next.js 16 | Railway-assigned | `https://<frontend>.up.railway.app` |
+| Admin Panel | Served by backend | 8080 | `https://dealnamaa-backend-production.up.railway.app/admin.html` |
+| Database | MongoDB Atlas | 27017 | `mongodb+srv://...cluster0dealnamaa.o9ps2d7.mongodb.net/dealnama` |
 
 ## Backend
 
 | Technology | Version | Purpose |
 |-----------|---------|---------|
-| Node.js | 18+ | Runtime |
+| Node.js | 22 | Runtime |
 | Express | ^5.2.1 | HTTP server and routing |
 | Mongoose | ^9.4.1 | MongoDB ODM |
-| MongoDB | ^7.1.1 | Database driver |
 | jsonwebtoken | ^9.0.3 | JWT auth for admin |
 | multer | ^2.1.1 | File upload handling |
+| @aws-sdk/client-s3 | latest | Cloudflare R2 uploads |
 | helmet | ^8.1.0 | HTTP security headers |
 | cors | ^2.8.6 | Cross-origin requests |
 | express-rate-limit | ^8.3.2 | Rate limiting (1000 req/15min per IP) |
 | dotenv | ^17.4.2 | Environment variable loading |
 | nodemon | ^3.1.14 | Dev auto-restart |
 
-**Module system**: CommonJS (`"type": "commonjs"` in package.json)
+**Module system**: CommonJS (`"type": "commonjs"`)
 
 **Scripts**:
 ```bash
 npm start        # node server.js
-npm run dev      # nodemon server.js (auto-restart on file changes)
+npm run dev      # nodemon server.js
 ```
 
 ## Frontend
@@ -45,73 +45,76 @@ npm run dev      # nodemon server.js (auto-restart on file changes)
 | Tailwind CSS | ^4 | Utility-first styling |
 | pdfjs-dist | ^5.6.205 | PDF rendering in flipbook |
 | react-pdf | ^10.4.1 | React wrapper for pdfjs |
-| Inter (Google Fonts) | — | Typography (admin panel) |
-| Poppins (Google Fonts) | — | Typography (frontend) |
-| Font Awesome | 6.4.0 | Icons (CDN, both frontend and admin) |
+| Poppins (Google Fonts) | — | Typography |
+| Font Awesome | 6.4.0 | Icons (CDN) |
 
 **Scripts**:
 ```bash
 cd frontend
 npm run dev      # next dev -p 3001
 npm run build    # next build
-npm start        # next start -p 3001
-npm run lint     # eslint
+npm start        # next start (Railway injects PORT)
 ```
 
 ## Admin Panel
 
-Pure vanilla stack — no build step, no framework:
+Pure vanilla stack — no build step:
 - HTML5 + inline CSS design system (CSS custom properties)
 - Vanilla JavaScript (ES2020+, async/await)
-- Font Awesome 6.4 (CDN)
-- Inter font (Google Fonts CDN)
+- Font Awesome 6.4 (CDN), Inter font (Google Fonts CDN)
 - Fetch API for all backend communication
 - JWT stored in `localStorage`
 
-## Database
-
-- **MongoDB** (local instance at `mongodb://127.0.0.1:27017/dealnama`)
-- **Mongoose** schemas with `{ timestamps: true }` on all models
-- All `id` fields are custom strings (lowercase, alphanumeric, hyphens) — NOT MongoDB ObjectIds
-- Indexes: unique on `id` field for all models
-
 ## File Storage
 
-- Uploaded files saved to `/uploads/` directory in project root
-- Naming: `{timestamp}-{random9digits}.{ext}`
-- Served at `/uploads/*` via Express static middleware
-- Frontend proxies `/uploads/*` to backend via Next.js rewrites (so images work on port 3001)
+- **Production**: Cloudflare R2 bucket `dealnamaa-offers`
+- **Public URL**: `https://pub-45510cdb150f4139b1cb4be3a5cba4e6.r2.dev`
+- **Dev fallback**: local `/uploads/` directory
+- **Naming**: `{timestamp}-{random9digits}.{ext}`
+- **Frontend proxy**: Next.js rewrites `/uploads/*` → backend (for local dev)
 
-## SEO Infrastructure
+## Deployment (Railway)
 
-- `frontend/app/sitemap.ts` — dynamic Next.js sitemap, fetches all entities from DB
-- `frontend/app/robots.ts` — dynamic robots.txt, blocks `/admin` and `/api/`
-- JSON-LD structured data on offer view pages (rendered server-side)
-- `generateMetadata` on all dynamic pages
-- Open Graph tags on all pages
+### Backend (`railway.json` at root)
+```json
+{ "build": { "builder": "NIXPACKS" }, "deploy": { "startCommand": "npm start" } }
+```
+
+### Frontend (`frontend/railway.json`)
+```json
+{ "build": { "builder": "NIXPACKS" }, "deploy": { "startCommand": "npm start" } }
+```
+
+Railway injects `PORT` automatically. Frontend `package.json` uses `"start": "next start"` (no port flag).
+
+### Required Railway Environment Variables
+
+**Backend service:**
+- `MONGO_URI`, `JWT_SECRET`, `ADMIN_USER`, `ADMIN_PASS`
+- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`
+- `NODE_ENV=production`
+
+**Frontend service:**
+- `NEXT_PUBLIC_API_URL=https://dealnamaa-backend-production.up.railway.app`
+- `API_URL=https://dealnamaa-backend-production.up.railway.app`
+- `NEXT_PUBLIC_SITE_URL=https://<frontend-url>`
 
 ## Security
 
-- `helmet` — sets secure HTTP headers
-- `express-rate-limit` — 1000 requests per 15 minutes per IP on all `/api` routes
-- `verifyAdmin` middleware — JWT verification, defined at top of server.js before all routes
-- `validateId()` helper — regex validates all URL params: `/^[a-z0-9_-]+$/`, max 50 chars
-- `express.static` restricted to only `/uploads`, `admin.html`, `admin.js` — project root NOT served
+- `helmet` — secure HTTP headers
+- `express-rate-limit` — 1000 req/15min per IP on all `/api` routes
+- `verifyAdmin` middleware — JWT verification, defined at top of server.js
+- `validateId()` — regex validates all URL params: `/^[a-z0-9_-]+$/`, max 50 chars
+- `express.static` restricted to only `/uploads`, `admin.html`, `admin.js`, `data.js`
 - JWT expires after 12 hours
-- Admin credentials in `.env` only — never hardcoded (fallback values exist but should be overridden)
 
-## Development Setup
-
-### Prerequisites
-- Node.js 18+
-- MongoDB running locally
-- Two terminal windows
+## Local Development
 
 ### Terminal 1 — Backend
 ```bash
 cd VandanaProject
 npm install
-# ensure .env exists with MONGO_URI, JWT_SECRET, ADMIN_USER, ADMIN_PASS
+# ensure .env exists
 npm run dev
 # Server: http://localhost:3000
 # Admin:  http://localhost:3000/admin.html
@@ -121,14 +124,9 @@ npm run dev
 ```bash
 cd VandanaProject/frontend
 npm install
-# ensure .env.local exists
+# ensure .env.local exists with API_URL=http://127.0.0.1:3000
 npm run dev
 # Frontend: http://localhost:3001
-```
-
-### Seed Database (optional)
-```bash
-node seed.js
 ```
 
 ## Next.js Configuration (`next.config.ts`)
@@ -136,25 +134,13 @@ node seed.js
 ```typescript
 images: {
   remotePatterns: [
-    { protocol: 'https', hostname: '**' },           // any HTTPS image
+    { protocol: 'https', hostname: '**' },
     { protocol: 'http', hostname: '127.0.0.1', port: '3000' },
     { protocol: 'http', hostname: 'localhost', port: '3000' },
   ],
   formats: ['image/avif', 'image/webp'],
 }
 rewrites: [
-  { source: '/uploads/:path*', destination: 'http://127.0.0.1:3000/uploads/:path*' }
+  { source: '/uploads/:path*', destination: `${API_URL}/uploads/:path*` }
 ]
 ```
-
-## TypeScript Configuration
-
-- `strict: true` in `tsconfig.json`
-- Path alias: `@/*` → `./src/*` (not actively used — app dir is used directly)
-- Target: ES2017, module: ESNext
-
-## Key Dependency Notes
-
-- `@next/third-parties` is installed but NOT used — GA is injected via `next/script` with dynamic ID from DB
-- `tmpsrc/` contains TypeScript source with its own types — this is dead code, never compiled or run
-- `ssh2` in backend dependencies — used by `deploy.js` for remote deployment
