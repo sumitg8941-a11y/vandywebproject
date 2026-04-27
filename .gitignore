@@ -14,5 +14,6 @@ coverage/
 .vercel
 *.pem
 *.key
+deploy.js
 # keep .env.example committed
 !.env.example

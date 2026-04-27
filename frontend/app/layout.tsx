@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Script from 'next/script'
 import LangToggle, { LangProvider } from './LangToggle'
 import NavLinks from './NavLinks'
+import MobileNav from './MobileNav'
 import FindDealsButton from './FindDealsButton'
 import Tracker from './Tracker'
 import './globals.css'
@@ -43,8 +44,21 @@ async function getSettings() {
   }
 }
 
+async function getFooterData() {
+  try {
+    const apiBaseUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const [countries, retailers] = await Promise.all([
+      fetch(`${apiBaseUrl}/api/countries`, { next: { revalidate: 3600 } }).then(r => r.ok ? r.json() : []),
+      fetch(`${apiBaseUrl}/api/retailers?limit=8&sort=clicks`, { next: { revalidate: 3600 } }).then(r => r.ok ? r.json() : []),
+    ]);
+    return { countries, retailers };
+  } catch {
+    return { countries: [], retailers: [] };
+  }
+}
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const settings = await getSettings();
+  const [settings, footerData] = await Promise.all([getSettings(), getFooterData()]);
   const gaId = settings.gaId || '';
   const facebookUrl = settings.facebookUrl || '';
   const twitterUrl = settings.twitterUrl || '';
@@ -91,13 +105,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link href="/search" className="text-gray-700 hover:text-red-600 transition text-xl">
                 <i className="fa-solid fa-magnifying-glass"></i>
               </Link>
-              <label htmlFor="mobile-menu-toggle" className="text-gray-700 hover:text-red-600 transition text-xl cursor-pointer">
-                <i className="fa-solid fa-bars"></i>
-              </label>
+              <MobileNav />
             </div>
           </div>
-
-          <input type="checkbox" id="mobile-menu-toggle" className="hidden peer" />
         </header>
 
         <Tracker type="visit" />
@@ -105,50 +115,91 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
         </main>
 
-        <footer className="bg-gray-900 text-gray-400 text-center p-8 mt-12">
-          <div className="flex justify-center space-x-6 mb-4 text-xl">
-            {facebookUrl ? (
-              <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition" aria-label="Facebook">
-                <i className="fa-brands fa-facebook"></i>
-              </a>
-            ) : (
-              <i className="fa-brands fa-facebook opacity-30"></i>
-            )}
-            {twitterUrl ? (
-              <a href={twitterUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition" aria-label="Twitter / X">
-                <i className="fa-brands fa-twitter"></i>
-              </a>
-            ) : (
-              <i className="fa-brands fa-twitter opacity-30"></i>
-            )}
-            {instagramUrl ? (
-              <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition" aria-label="Instagram">
-                <i className="fa-brands fa-instagram"></i>
-              </a>
-            ) : (
-              <i className="fa-brands fa-instagram opacity-30"></i>
-            )}
+        <footer className="bg-gray-900 text-gray-300 pt-12 pb-6 mt-12">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+              <div>
+                <h3 className="text-white font-bold text-lg mb-4">DealNamaa</h3>
+                <p className="text-sm mb-4">Your trusted source for the best deals, coupons, and flyers across the Middle East.</p>
+                <div className="flex space-x-4 text-xl">
+                  {facebookUrl && (
+                    <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition" aria-label="Facebook">
+                      <i className="fa-brands fa-facebook"></i>
+                    </a>
+                  )}
+                  {twitterUrl && (
+                    <a href={twitterUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition" aria-label="Twitter / X">
+                      <i className="fa-brands fa-twitter"></i>
+                    </a>
+                  )}
+                  {instagramUrl && (
+                    <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition" aria-label="Instagram">
+                      <i className="fa-brands fa-instagram"></i>
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {footerData.countries.length > 0 && (
+                <div>
+                  <h3 className="text-white font-bold text-sm mb-4 uppercase tracking-wider">Browse by Country</h3>
+                  <ul className="space-y-2 text-sm">
+                    {footerData.countries.slice(0, 6).map((c: any) => (
+                      <li key={c.id}>
+                        <Link href={`/cities/${c.id}`} className="hover:text-white transition">
+                          {c.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {footerData.retailers.length > 0 && (
+                <div>
+                  <h3 className="text-white font-bold text-sm mb-4 uppercase tracking-wider">Popular Retailers</h3>
+                  <ul className="space-y-2 text-sm">
+                    {footerData.retailers.map((r: any) => (
+                      <li key={r.id}>
+                        <Link href={`/offers/${r.id}`} className="hover:text-white transition">
+                          {r.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div>
+                <h3 className="text-white font-bold text-sm mb-4 uppercase tracking-wider">Quick Links</h3>
+                <ul className="space-y-2 text-sm">
+                  <li><Link href="/" className="hover:text-white transition">Home</Link></li>
+                  <li><Link href="/search" className="hover:text-white transition">Search Deals</Link></li>
+                  <li><Link href="/about" className="hover:text-white transition">About Us</Link></li>
+                  <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
+                  <li><Link href="/feedback" className="hover:text-white transition">Feedback</Link></li>
+                  <li><Link href="/terms" className="hover:text-white transition">Terms of Service</Link></li>
+                  <li><Link href="/privacy" className="hover:text-white transition">Privacy Policy</Link></li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-800 pt-6 text-center text-sm">
+              <p className="mb-2">&copy; {new Date().getFullYear()} DealNamaa. All rights reserved.</p>
+              <p className="text-xs text-gray-600">
+                Developed by{' '}
+                <a
+                  href="https://www.linkedin.com/in/sumit-gupta-4a493837"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Sumit Gupta's LinkedIn profile"
+                  className="text-gray-500 hover:text-white transition-colors duration-200 underline underline-offset-2"
+                >
+                  Sumit Gupta
+                </a>
+              </p>
+            </div>
           </div>
-          <div className="mb-4 flex justify-center space-x-4 text-sm">
-            <a href="/about" className="hover:text-white transition">About</a>
-            <a href="/contact" className="hover:text-white transition">Contact</a>
-            <a href="/terms" className="hover:text-white transition">Terms</a>
-            <a href="/privacy" className="hover:text-white transition">Privacy</a>
-            <a href="/feedback" className="hover:text-white transition">Feedback</a>
-          </div>
-          <p>&copy; {new Date().getFullYear()} DealNamaa. All rights reserved.</p>
-          <p className="mt-3 text-xs text-gray-600">
-            Developed by{' '}
-            <a
-              href="https://www.linkedin.com/in/sumit-gupta-4a493837"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Sumit Gupta's LinkedIn profile"
-              className="text-gray-500 hover:text-white transition-colors duration-200 underline underline-offset-2"
-            >
-              Sumit Gupta
-            </a>
-          </p>
         </footer>
         </LangProvider>
       </body>

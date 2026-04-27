@@ -2,8 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
+import SafeImage from '../SafeImage';
+import { SkeletonCard, SkeletonOfferCard } from '../SkeletonLoader';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -206,50 +207,70 @@ function SearchContent() {
             {results.retailers.length > 0 && (
               <div className="mb-8">
                 <h2 className="text-2xl font-bold mb-4 text-gray-800">Retailers</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {results.retailers.map((r: any) => (
-                    <Link href={`/offers/${r.id}`} key={r.id} className="bg-white p-4 rounded-lg shadow hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                      <div className="relative w-full h-16 mb-2">
-                        <Image src={r.image} alt={r.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-contain" loading="lazy" />
-                      </div>
-                      <p className="font-bold text-center text-sm">{r.name}</p>
-                      {r.category && <p className="text-xs text-gray-500 text-center mt-1">{r.category}</p>}
-                    </Link>
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {results.retailers.map((r: any) => (
+                      <Link href={`/offers/${r.id}`} key={r.id} className="bg-white p-4 rounded-lg shadow hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                        <div className="relative w-full h-16 mb-2">
+                          <SafeImage src={r.image} alt={r.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-contain" loading="lazy" />
+                        </div>
+                        <p className="font-bold text-center text-sm">{r.name}</p>
+                        {r.category && <p className="text-xs text-gray-500 text-center mt-1">{r.category}</p>}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {results.offers.length > 0 && (
               <div>
                 <h2 className="text-2xl font-bold mb-4 text-gray-800">Offers</h2>
-                <div className="space-y-4">
-                  {results.offers.map((o: any) => (
-                    <Link href={`/view/${o.id}`} key={o.id} className="block bg-white p-4 rounded-lg shadow hover:shadow-xl transition-all duration-300">
-                      <div className="flex gap-4">
-                        {o.image && (
-                          <div className="relative w-20 h-20 flex-shrink-0">
-                            <Image src={o.image} alt={o.title} fill sizes="80px" className="object-cover rounded" loading="lazy" />
+                {loading ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map(i => <SkeletonOfferCard key={i} />)}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {results.offers.map((o: any) => (
+                      <Link href={`/view/${o.id}`} key={o.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 group relative">
+                        {o.badge && (
+                          <div className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow">
+                            {o.badge}
                           </div>
                         )}
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg">{o.title}</h3>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {o.badge && <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded font-semibold">{o.badge}</span>}
-                            {o.category && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">{o.category}</span>}
-                          </div>
-                          {o.couponCode && <p className="text-sm text-gray-600 mt-2"><i className="fa-solid fa-ticket mr-1"></i>Code: <strong>{o.couponCode}</strong></p>}
+                        <div className="aspect-[3/4] bg-gray-50 relative">
+                          <SafeImage
+                            src={o.image}
+                            alt={o.title}
+                            fill
+                            sizes="(max-width: 768px) 50vw, 25vw"
+                            className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                        </div>
+                        <div className="p-3 border-t border-gray-100">
+                          <h3 className="text-xs font-bold text-gray-800 truncate mb-1">{o.title}</h3>
+                          {o.category && (
+                            <span className="inline-block text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                              {o.category}
+                            </span>
+                          )}
                           {o.validUntil && (
-                            <p className="text-xs text-gray-500 mt-2">
+                            <p className="text-xs text-gray-400 mt-1">
                               <i className="fa-regular fa-calendar mr-1"></i>
-                              Valid until: {new Date(o.validUntil).toLocaleDateString()}
+                              Until {new Date(o.validUntil).toLocaleDateString()}
                             </p>
                           )}
                         </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

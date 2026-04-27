@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Breadcrumbs from '../../Breadcrumbs';
 import PDFFlipbook from '../../PDFFlipbook';
 import SafeImage from '../../SafeImage';
+import SaveButton from '../../SaveButton';
+import RatingWidget from '../../RatingWidget';
 
 interface Props {
   offer: any;
@@ -40,14 +42,32 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
 
   // Track time spent when user leaves
   useEffect(() => {
-    return () => {
+    const trackStats = () => {
       const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      fetch(`${apiBaseUrl}/api/track/offer-stats/${offerId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ duration, maxPage: maxPageRef.current }),
-        keepalive: true,
-      }).catch(() => {});
+      const data = JSON.stringify({ duration, maxPage: maxPageRef.current });
+      
+      // Try sendBeacon first (more reliable for page unload)
+      if (navigator.sendBeacon) {
+        const blob = new Blob([data], { type: 'application/json' });
+        navigator.sendBeacon(`${apiBaseUrl}/api/track/offer-stats/${offerId}`, blob);
+      } else {
+        // Fallback to fetch with keepalive
+        fetch(`${apiBaseUrl}/api/track/offer-stats/${offerId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: data,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+
+    // Track on beforeunload (more reliable than unmount)
+    window.addEventListener('beforeunload', trackStats);
+
+    // Also track on unmount for SPA navigation
+    return () => {
+      window.removeEventListener('beforeunload', trackStats);
+      trackStats();
     };
   }, [offerId, apiBaseUrl]);
 
@@ -71,7 +91,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
   };
 
   const whatsappText = encodeURIComponent(
-    `🔥 Check out this deal: ${offer.title}\n${siteUrl}/view/${offerId}`
+    `🔥 Amazing deal alert! ${offer.title} at ${retailer?.name || 'this retailer'}\n\n💰 Help your friends save money too!\n${siteUrl}/view/${offerId}`
   );
 
   const expiryLabel = getExpiryLabel(offer.validUntil);
@@ -163,6 +183,9 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
             )}
 
             {/* Like / Dislike */}
+            <div className="mb-4">
+              <RatingWidget offerId={offerId} initialRating={offer.rating || 0} initialCount={offer.ratingCount || 0} />
+            </div>
             <div className="flex flex-wrap items-center gap-3 text-sm font-semibold">
               <span className="text-gray-500">Was this helpful?</span>
               <button
@@ -179,6 +202,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
               >
                 <i className="fa-regular fa-thumbs-down"></i> {offer.dislikes || 0}
               </button>
+              <SaveButton offerId={offerId} />
             </div>
           </div>
 
@@ -208,7 +232,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 bg-green-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-green-600 transition"
             >
-              <i className="fa-brands fa-whatsapp"></i> Share on WhatsApp
+              <i className="fa-brands fa-whatsapp"></i> Share & Help Friends Save
             </a>
             {retailer?.websiteUrl && (
               <a

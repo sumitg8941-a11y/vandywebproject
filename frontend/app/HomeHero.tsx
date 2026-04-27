@@ -4,6 +4,7 @@ import SafeImage from './SafeImage';
 import Link from 'next/link';
 import SearchBar from './SearchBar';
 import { useLang } from './LangToggle';
+import { SkeletonCard, SkeletonOfferCard } from './SkeletonLoader';
 
 function getDaysLeft(validUntil: string) {
   return Math.ceil((new Date(validUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -58,7 +59,7 @@ export default function HomeHero({
               {t.coveringCities}
             </p>
           </div>
-          {heroImages.length >= 4 && (
+          {heroImages.length >= 4 ? (
             <div className="hidden md:grid grid-cols-2 gap-2 flex-shrink-0 w-72 lg:w-96" style={{ gridTemplateRows: 'repeat(2, 1fr)' }}>
               {[...heroImages, ...heroImages].slice(0, 4).map((o: any, i: number) => (
                 <div key={i} className="relative rounded-xl overflow-hidden shadow-xl" style={{ height: '140px' }}>
@@ -67,24 +68,34 @@ export default function HomeHero({
                 </div>
               ))}
             </div>
+          ) : (
+            <div className="hidden md:flex items-center justify-center flex-shrink-0 w-72 lg:w-96">
+              <div className="text-white/20 text-center">
+                <i className="fa-solid fa-tags text-8xl mb-4"></i>
+                <p className="text-sm font-semibold">Hot deals loading...</p>
+              </div>
+            </div>
           )}
         </div>
       </div>
 
       {/* ── Countries ── */}
-      <div className="max-w-6xl mx-auto px-4 mt-12">
-        <h2 className="text-2xl font-black text-gray-800 mb-6 flex items-center gap-2">
-          <i className="fa-solid fa-globe text-red-600"></i> {t.selectCountry}
-        </h2>
+      <div className="max-w-6xl mx-auto px-4 mt-16">
+        <div className="text-center mb-8">
+          <span className="inline-block bg-red-100 text-red-600 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2">
+            Start Here
+          </span>
+          <h2 className="text-3xl font-black text-gray-900 mb-2">{t.selectCountry}</h2>
+          <p className="text-gray-600">Browse deals by location</p>
+        </div>
         {countries === null ? (
           <div className="text-center p-10 bg-red-50 text-red-700 rounded-xl border border-red-200">
             <i className="fa-solid fa-triangle-exclamation text-3xl mb-3"></i>
             <p className="font-bold">{t.backendError}</p>
           </div>
         ) : countries.length === 0 ? (
-          <div className="text-center p-10 bg-blue-50 text-blue-800 rounded-xl border border-blue-200">
-            <i className="fa-solid fa-database text-3xl mb-3"></i>
-            <p className="font-bold">{t.noCountries}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+            {[1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} />)}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
@@ -106,18 +117,17 @@ export default function HomeHero({
       </div>
 
       {/* ── Top Retailers ── */}
-      <div id="retailers" className="max-w-6xl mx-auto px-4 mt-14 scroll-mt-20">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-            <i className="fa-solid fa-store text-red-600"></i> {t.topRetailers}
-          </h2>
-          <Link href="/search" className="text-red-600 font-semibold hover:underline text-sm">
-            {t.viewAll} <i className="fa-solid fa-arrow-right ml-1"></i>
-          </Link>
+      <div id="retailers" className="max-w-6xl mx-auto px-4 mt-20 scroll-mt-20">
+        <div className="text-center mb-8">
+          <span className="inline-block bg-orange-100 text-orange-600 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2">
+            Popular Stores
+          </span>
+          <h2 className="text-3xl font-black text-gray-900 mb-2">{t.topRetailers}</h2>
+          <p className="text-gray-600">Shop from your favorite brands</p>
         </div>
         {topRetailers.length === 0 ? (
-          <div className="text-center p-10 bg-gray-50 text-gray-500 rounded-xl border border-gray-200">
-            <p>{t.noRetailers}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+            {[1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} />)}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
@@ -150,16 +160,15 @@ export default function HomeHero({
 
       {/* ── Expiring Soon ── */}
       {expiringSoon.length > 0 && (
-        <div className="max-w-6xl mx-auto px-4 mt-14">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-              <i className="fa-solid fa-clock text-orange-500"></i> {t.expiringWeek}
-              <span className="text-sm font-semibold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full ml-1">{t.dontMiss}</span>
-            </h2>
-            <Link href="/search" className="text-red-600 font-semibold hover:underline text-sm">
-              {t.viewAll} <i className="fa-solid fa-arrow-right ml-1"></i>
-            </Link>
-          </div>
+        <div className="bg-gradient-to-br from-orange-50 to-red-50 py-16 mt-20">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="text-center mb-8">
+              <span className="inline-block bg-orange-500 text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2 animate-pulse">
+                ⚡ Urgent
+              </span>
+              <h2 className="text-3xl font-black text-gray-900 mb-2">{t.expiringWeek}</h2>
+              <p className="text-gray-700 font-semibold">{t.dontMiss}</p>
+            </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
             {expiringSoon.map((o: any) => {
               const days = getDaysLeft(o.validUntil);
@@ -192,18 +201,17 @@ export default function HomeHero({
       )}
 
       {/* ── Latest Coupons & Offers ── */}
-      <div id="coupons" className="max-w-6xl mx-auto px-4 mt-14 scroll-mt-20 mb-16">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-            <i className="fa-solid fa-ticket text-red-600"></i> {t.latestOffers}
-          </h2>
-          <Link href="/search" className="text-red-600 font-semibold hover:underline text-sm">
-            {t.viewAll} <i className="fa-solid fa-arrow-right ml-1"></i>
-          </Link>
+      <div id="coupons" className="max-w-6xl mx-auto px-4 mt-20 scroll-mt-20 mb-16">
+        <div className="text-center mb-8">
+          <span className="inline-block bg-green-100 text-green-600 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2">
+            Fresh Deals
+          </span>
+          <h2 className="text-3xl font-black text-gray-900 mb-2">{t.latestOffers}</h2>
+          <p className="text-gray-600">Just added to our collection</p>
         </div>
         {latestOffers.length === 0 ? (
-          <div className="text-center p-10 bg-gray-50 text-gray-500 rounded-xl border border-gray-200">
-            <p>{t.noOffers}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+            {[1, 2, 3, 4].map(i => <SkeletonOfferCard key={i} />)}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
@@ -228,9 +236,9 @@ export default function HomeHero({
                     </div>
                     <div className="p-3 border-t border-gray-100">
                       <h3 className="text-xs font-bold text-gray-800 truncate mb-1">{o.title}</h3>
-                      {o.retailerId && (
+                      {o.retailerName && (
                         <p className="text-xs text-gray-500 truncate">
-                          <i className="fa-solid fa-store mr-1 text-red-400"></i>{o.retailerId}
+                          <i className="fa-solid fa-store mr-1 text-red-400"></i>{o.retailerName}
                         </p>
                       )}
                       {o.validUntil && (

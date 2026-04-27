@@ -1,6 +1,8 @@
 import GeoDetect from './GeoDetect';
 import MyRetailers from './MyRetailers';
 import HomeHero from './HomeHero';
+import SocialProof from './SocialProof';
+import PushNotification from './PushNotification';
 
 const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
@@ -24,17 +26,23 @@ async function getTopRetailers() {
 
 async function getLatestOffers() {
   try {
-    const res = await fetch(`${API}/api/offers?limit=8`, { cache: 'no-store' });
-    if (!res.ok) throw new Error();
-    return res.json();
+    const [offers, retailers] = await Promise.all([
+      fetch(`${API}/api/offers?limit=8`, { cache: 'no-store' }).then(r => r.json()),
+      fetch(`${API}/api/retailers`, { cache: 'no-store' }).then(r => r.json()),
+    ]);
+    const retailerMap = Object.fromEntries(retailers.map((r: any) => [r.id, r.name]));
+    return offers.map((o: any) => ({ ...o, retailerName: retailerMap[o.retailerId] || o.retailerId }));
   } catch { return []; }
 }
 
 async function getExpiringSoon() {
   try {
-    const res = await fetch(`${API}/api/offers/expiring-soon`, { cache: 'no-store' });
-    if (!res.ok) throw new Error();
-    return res.json();
+    const [offers, retailers] = await Promise.all([
+      fetch(`${API}/api/offers/expiring-soon`, { cache: 'no-store' }).then(r => r.json()),
+      fetch(`${API}/api/retailers`, { cache: 'no-store' }).then(r => r.json()),
+    ]);
+    const retailerMap = Object.fromEntries(retailers.map((r: any) => [r.id, r.name]));
+    return offers.map((o: any) => ({ ...o, retailerName: retailerMap[o.retailerId] || o.retailerId }));
   } catch { return []; }
 }
 
@@ -51,6 +59,7 @@ export default async function HomePage() {
   return (
     <div>
       <GeoDetect countries={(countries || []).map((c: any) => ({ id: c.id, name: c.name }))} />
+      <SocialProof />
       <MyRetailers />
       <HomeHero
         countries={countries}
@@ -59,6 +68,7 @@ export default async function HomePage() {
         expiringSoon={expiringSoon}
         heroImages={heroImages}
       />
+      <PushNotification />
     </div>
   );
 }

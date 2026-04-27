@@ -8,7 +8,7 @@ const admin = {
             return;
         }
         document.getElementById('login-modal').style.display = 'none';
-        this.showTab('countries');
+        this.showTab('dashboard');
         this._loadSiteUrl();
         
         // Dynamically add the Feedback tab to the sidebar if it doesn't exist
