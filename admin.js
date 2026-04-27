@@ -82,7 +82,7 @@ const admin = {
                     html = await this.renderOffers();
                     break;
                 case 'stats':
-                    html = await this.renderStats();
+                    html = await this.renderStats(this._statsSince || 0);
                     break;
                 case 'settings':
                     html = await this.renderSettings();
@@ -733,6 +733,14 @@ const admin = {
         }
     },
 
+    _statsSince: 0,
+
+    loadStats: async function(since) {
+        this._statsSince = since;
+        this.contentDiv.innerHTML = '<p style="padding:20px;">Loading stats...</p>';
+        this.contentDiv.innerHTML = await this.renderStats(since);
+    },
+
     renderStats: async function(since = 0) {
         try {
             const stats = await api.getStats(since);
@@ -825,7 +833,7 @@ const admin = {
                 <!-- Date Range Toggle -->
                 <div style="display:flex; gap:8px; margin-bottom:24px;">
                     ${[{label:'Last 7 days',val:7},{label:'Last 30 days',val:30},{label:'All time',val:0}].map(opt=>`
-                        <button onclick="admin.showTab('stats'); admin.renderStats(${opt.val}).then(h=>admin.contentDiv.innerHTML=h)"
+                        <button onclick="admin.loadStats(${opt.val})"
                             style="padding:8px 16px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; border:2px solid ${since===opt.val?'var(--red)':'var(--border)'}; background:${since===opt.val?'var(--red)':'white'}; color:${since===opt.val?'white':'var(--text-secondary)'}; transition:all .15s;">
                             ${opt.label}
                         </button>
