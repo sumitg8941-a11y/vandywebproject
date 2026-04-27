@@ -82,6 +82,10 @@ const admin = {
         let html = '';
         try {
             switch(tabName) {
+                case 'dashboard':
+                case 'stats':
+                    html = await this.renderStats(this._statsSince || 0, this._statsFrom, this._statsTo);
+                    break;
                 case 'countries':
                     html = await this.renderCountries();
                     break;
@@ -96,9 +100,6 @@ const admin = {
                     break;
                 case 'offers':
                     html = await this.renderOffers();
-                    break;
-                case 'stats':
-                    html = await this.renderStats(this._statsSince || 0, this._statsFrom, this._statsTo);
                     break;
                 case 'settings':
                     html = await this.renderSettings();
