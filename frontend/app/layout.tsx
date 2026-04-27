@@ -3,6 +3,8 @@ import { Poppins } from 'next/font/google'
 import Link from 'next/link'
 import Script from 'next/script'
 import LangToggle from './LangToggle'
+import NavLinks from './NavLinks'
+import FindDealsButton from './FindDealsButton'
 import './globals.css'
 
 const poppins = Poppins({
@@ -76,18 +78,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <span>DealNamaa</span>
             </Link>
 
-            <nav className="hidden md:flex items-center space-x-8 text-gray-700 font-semibold">
-              <Link href="/" className="hover:text-red-600 transition">Home</Link>
-              <Link href="/#retailers" className="hover:text-red-600 transition">Retailers</Link>
-              <Link href="/#coupons" className="hover:text-red-600 transition">Coupons</Link>
-              <Link href="/search" className="hover:text-red-600 transition">Search</Link>
-            </nav>
+            <NavLinks />
 
             <div className="hidden md:flex items-center gap-3">
               <LangToggle />
-              <Link href="/search" className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition text-sm">
-                <i className="fa-solid fa-magnifying-glass mr-2"></i>Find Deals
-              </Link>
+              <FindDealsButton />
             </div>
 
             <div className="flex md:hidden items-center gap-4">
@@ -101,20 +96,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
 
           <input type="checkbox" id="mobile-menu-toggle" className="hidden peer" />
-          <nav className="hidden peer-checked:block md:hidden bg-white border-t border-gray-100 px-4 py-3 space-y-1">
-            <Link href="/" className="block py-2 px-3 rounded-lg text-gray-700 font-semibold hover:bg-red-50 hover:text-red-600 transition">
-              <i className="fa-solid fa-house mr-3"></i>Home
-            </Link>
-            <Link href="/#retailers" className="block py-2 px-3 rounded-lg text-gray-700 font-semibold hover:bg-red-50 hover:text-red-600 transition">
-              <i className="fa-solid fa-store mr-3"></i>Retailers
-            </Link>
-            <Link href="/#coupons" className="block py-2 px-3 rounded-lg text-gray-700 font-semibold hover:bg-red-50 hover:text-red-600 transition">
-              <i className="fa-solid fa-ticket mr-3"></i>Coupons
-            </Link>
-            <Link href="/search" className="block py-2 px-3 rounded-lg text-gray-700 font-semibold hover:bg-red-50 hover:text-red-600 transition">
-              <i className="fa-solid fa-magnifying-glass mr-3"></i>Search
-            </Link>
-          </nav>
         </header>
 
         <main className="min-h-screen">
