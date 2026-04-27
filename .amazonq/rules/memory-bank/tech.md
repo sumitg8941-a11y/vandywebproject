@@ -23,7 +23,7 @@ Two separate Railway services:
 | @aws-sdk/client-s3 | latest | Cloudflare R2 uploads |
 | helmet | ^8.1.0 | HTTP security headers |
 | cors | ^2.8.6 | Cross-origin requests |
-| express-rate-limit | ^8.3.2 | Rate limiting (1000 req/15min per IP) |
+| express-rate-limit | ^8.3.2 | Rate limiting |
 | dotenv | ^17.4.2 | Environment variable loading |
 | nodemon | ^3.1.14 | Dev auto-restart |
 
@@ -59,11 +59,11 @@ npm start        # next start (Railway injects PORT)
 ## Admin Panel
 
 Pure vanilla stack — no build step:
-- HTML5 + inline CSS design system (CSS custom properties)
+- HTML5 + CSS design system (CSS custom properties defined in `admin.html` `<style>`)
 - Vanilla JavaScript (ES2020+, async/await)
 - Font Awesome 6.4 (CDN), Inter font (Google Fonts CDN)
 - Fetch API for all backend communication
-- JWT stored in `localStorage`
+- JWT stored in `localStorage` as `adminToken`
 
 ## File Storage
 
@@ -90,23 +90,39 @@ Railway injects `PORT` automatically. Frontend `package.json` uses `"start": "ne
 ### Required Railway Environment Variables
 
 **Backend service:**
-- `MONGO_URI`, `JWT_SECRET`, `ADMIN_USER`, `ADMIN_PASS`
-- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`
-- `NODE_ENV=production`
+```
+MONGO_URI=mongodb+srv://...
+JWT_SECRET=<96-char hex>
+ADMIN_USER=admin
+ADMIN_PASS=<password>
+R2_ACCOUNT_ID=...
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
+R2_BUCKET_NAME=dealnamaa-offers
+R2_PUBLIC_URL=https://pub-45510cdb150f4139b1cb4be3a5cba4e6.r2.dev
+NODE_ENV=production
+```
 
 **Frontend service:**
-- `NEXT_PUBLIC_API_URL=https://dealnamaa-backend-production.up.railway.app`
-- `API_URL=https://dealnamaa-backend-production.up.railway.app`
-- `NEXT_PUBLIC_SITE_URL=https://<frontend-url>`
+```
+NEXT_PUBLIC_API_URL=https://dealnamaa-backend-production.up.railway.app
+API_URL=https://dealnamaa-backend-production.up.railway.app
+NEXT_PUBLIC_SITE_URL=https://<frontend-url>
+```
 
 ## Security
 
-- `helmet` — secure HTTP headers
-- `express-rate-limit` — 1000 req/15min per IP on all `/api` routes
-- `verifyAdmin` middleware — JWT verification, defined at top of server.js
-- `validateId()` — regex validates all URL params: `/^[a-z0-9_-]+$/`, max 50 chars
-- `express.static` restricted to only `/uploads`, `admin.html`, `admin.js`, `data.js`
-- JWT expires after 12 hours
+| Layer | Detail |
+|-------|--------|
+| `helmet` | Secure HTTP headers on all responses |
+| General rate limit | 1000 req / 15 min per IP on all `/api` routes |
+| Tracking rate limit | 20 req / 1 min per IP on `/api/track/*` — prevents stat inflation |
+| `verifyAdmin` middleware | JWT verification, defined at top of `server.js` before all routes |
+| `validateId()` | Regex `/^[a-z0-9_-]+$/` max 50 chars — applied to every URL param before DB query |
+| `express.static` lockdown | Only serves `/uploads`, `admin.html`, `admin.js`, `data.js` — never `__dirname` |
+| JWT expiry | 12 hours |
+| `robots.txt` | Blocks `/admin` and `/api/` from all crawlers |
+| Tracking dedup | `Tracker` component uses `sessionStorage` — visit fires once per session, entity tracks fire once per session per ID |
 
 ## Local Development
 
@@ -114,7 +130,7 @@ Railway injects `PORT` automatically. Frontend `package.json` uses `"start": "ne
 ```bash
 cd VandanaProject
 npm install
-# ensure .env exists
+# ensure .env exists with all required vars
 npm run dev
 # Server: http://localhost:3000
 # Admin:  http://localhost:3000/admin.html
@@ -124,7 +140,10 @@ npm run dev
 ```bash
 cd VandanaProject/frontend
 npm install
-# ensure .env.local exists with API_URL=http://127.0.0.1:3000
+# ensure .env.local exists:
+# NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
+# API_URL=http://127.0.0.1:3000
+# NEXT_PUBLIC_SITE_URL=http://localhost:3001
 npm run dev
 # Frontend: http://localhost:3001
 ```
@@ -144,3 +163,16 @@ rewrites: [
   { source: '/uploads/:path*', destination: `${API_URL}/uploads/:path*` }
 ]
 ```
+
+## Critical: server.js File Encoding
+
+`server.js` uses **CRLF line endings + UTF-8 BOM**. The only safe way to edit it programmatically is:
+
+```powershell
+$c = [System.IO.File]::ReadAllText('server.js')
+$c2 = $c.Replace($oldString, $newString)
+[System.IO.File]::WriteAllText('server.js', $c2)
+```
+
+Never use PowerShell `Set-Content -NoNewline` or array slicing with `WriteAllLines` — both corrupt the file.
+`fsReplace` tool also fails on this file due to CRLF mismatch — always use the .NET method above.

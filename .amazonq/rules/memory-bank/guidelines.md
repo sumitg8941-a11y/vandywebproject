@@ -21,6 +21,22 @@
 
 ## Backend Patterns (`server.js`)
 
+### CRITICAL: Editing server.js
+
+`server.js` uses CRLF line endings + UTF-8 BOM. The only safe edit method is .NET `ReadAllText`/`WriteAllText`:
+
+```powershell
+$f = 'server.js'
+$c = [System.IO.File]::ReadAllText($f)
+$c2 = $c.Replace($oldString, $newString)
+[System.IO.File]::WriteAllText($f, $c2)
+```
+
+**Never use**:
+- PowerShell `Set-Content -NoNewline` — collapses entire file to one line
+- PowerShell array slicing + `WriteAllLines` — produces empty file
+- `fsReplace` tool — fails silently due to CRLF mismatch
+
 ### Route Structure
 Every route follows this exact pattern — no exceptions:
 
@@ -45,12 +61,11 @@ app.get('/api/something/:id', async (req, res) => {
 function validateId(id) {
     return /^[a-z0-9_-]+$/.test(id) && id.length <= 50;
 }
-// Use at the top of every route that takes an :id param
 if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
 ```
 
 ### Protected Routes — verifyAdmin Middleware
-`verifyAdmin` is defined at the TOP of server.js (before any routes) to avoid `const` hoisting issues:
+`verifyAdmin` is defined at the TOP of server.js (before any routes):
 
 ```js
 const verifyAdmin = (req, res, next) => {
@@ -68,8 +83,20 @@ const verifyAdmin = (req, res, next) => {
 };
 ```
 
+### Rate Limiting
+Two limiters are applied:
+```js
+// General — all /api routes
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 });
+app.use('/api', limiter);
+
+// Strict — tracking routes only (prevents stat inflation)
+const trackLimiter = rateLimit({ windowMs: 60 * 1000, max: 20 });
+app.use('/api/track', trackLimiter);
+```
+
 ### Expiry Filtering — Default Behaviour
-All public offer endpoints filter expired offers by default. Always include this pattern:
+All public offer endpoints filter expired offers by default:
 
 ```js
 const filter = { retailerId: retailerId.toLowerCase() };
@@ -87,15 +114,15 @@ const [retailers, offerCounts] = await Promise.all([
 ```
 
 ### Static File Security
-Only these three paths are served statically — never `express.static(__dirname)`:
+Only these paths are served statically — never `express.static(__dirname)`:
 ```js
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/admin.html', express.static(path.join(__dirname, 'admin.html')));
 app.use('/admin.js', express.static(path.join(__dirname, 'admin.js')));
+app.use('/data.js', express.static(path.join(__dirname, 'data.js')));
 ```
 
 ### Mongoose Models
-All models follow this pattern:
 ```js
 const mongoose = require('mongoose');
 const schema = new mongoose.Schema({
@@ -105,8 +132,8 @@ const schema = new mongoose.Schema({
 module.exports = mongoose.model('ModelName', schema);
 ```
 - Always `{ timestamps: true }` — gives `createdAt` and `updatedAt` for free
-- String fields that are IDs: always `lowercase: true, trim: true`
-- String fields that are user content: always `trim: true`
+- String ID fields: always `lowercase: true, trim: true`
+- String content fields: always `trim: true`
 - Numeric counters: always `default: 0`
 
 ---
@@ -114,15 +141,13 @@ module.exports = mongoose.model('ModelName', schema);
 ## Frontend Patterns (Next.js)
 
 ### Server vs Client Component Split
-The golden rule: **fetch data in server components, handle interactivity in client components**.
-
 ```
 page.tsx (server)          OfferViewClient.tsx ('use client')
     │                              │
     ├── fetch data                 ├── useState / useEffect
     ├── generateMetadata           ├── event handlers
     ├── JSON-LD script tag         ├── like/dislike
-    └── render <ClientComponent    └── flipbook / share
+    └── render <ClientComponent    └── flipbook / share / tracking
          offer={data} />
 ```
 
@@ -130,26 +155,18 @@ Never export `metadata` from a `'use client'` component — split the file inste
 
 ### API URL Pattern — Server vs Client
 ```ts
-// In server components (page.tsx, layout.tsx) — private, not in browser bundle
+// Server components (page.tsx, layout.tsx) — stays private, not in browser bundle
 const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
-// In client components ('use client') — must be NEXT_PUBLIC_
+// Client components ('use client') — must be NEXT_PUBLIC_
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 ```
 
 ### Async Params — Next.js 15+ Pattern
-Always await params — they are Promises in Next.js 15:
 ```ts
 // CORRECT
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    ...
-}
-
-// WRONG (old pattern — causes warnings)
-export default async function Page({ params }: { params: { id: string } }) {
-    const resolvedParams = await Promise.resolve(params); // don't do this
-    ...
 }
 ```
 
@@ -166,55 +183,65 @@ async function getData(id: string) {
 - Always `cache: 'no-store'` for dynamic content
 - Use `{ next: { revalidate: 300 } }` only for rarely-changing data (e.g., site settings)
 - Always return `null` on error — never throw from data fetching functions
-- Use `Promise.all` for parallel fetches
 
-### generateMetadata Pattern
-```ts
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-    const { id } = await params;
-    const data = await getData(id);
-    if (!data) return { title: 'Not Found' };
-    return {
-        title: `${data.name} | DealNamaa`,
-        description: `...`,
-        openGraph: { title: `...`, description: `...`, images: [...] },
-    };
-}
-```
+### Image Usage — Always SafeImage
+Never use `next/image` directly. Always use `SafeImage` from `./SafeImage`:
 
-### Image Component Usage
-Always use `next/image` with `fill` + `sizes` for responsive images:
 ```tsx
+import SafeImage from '../SafeImage';
+
 <div className="relative h-24 overflow-hidden">
-    <Image
+    <SafeImage
         src={item.image}
         alt={item.name}
         fill
         sizes="(max-width: 640px) 50vw, 20vw"
         className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
-        loading="lazy"   // use priority only for above-the-fold hero images
+        loading="lazy"
     />
 </div>
 ```
+
+`SafeImage` catches `onError` and swaps to an inline SVG "No Image" placeholder. Use `priority` (not `loading="lazy"`) only for above-the-fold hero images.
+
+### Tracking — Always Use Tracker Component
+Never call tracking endpoints directly from page components. Use `<Tracker>`:
+
+```tsx
+import Tracker from '../Tracker';
+
+// In JSX — renders null, fires once per session via sessionStorage dedup
+<Tracker type="retailer" id={retailerId} />
+```
+
+Types: `'visit'` (no id needed) | `'country'` | `'city'` | `'retailer'` | `'offer'`
+
+`visit` is already placed in `layout.tsx` — do not add it elsewhere.
+
+### Language System — Always useLang()
+Never use independent `useState` for language. Always consume from context:
+
+```tsx
+import { useLang } from './LangToggle';
+
+export default function MyComponent() {
+    const { t } = useLang();
+    return <h1>{t.heroTitle}</h1>;
+}
+```
+
+Adding new strings: add to both `en` and `ar` objects in `LangToggle.tsx` only.
 
 ### Tailwind Patterns
 - Cards: `bg-white rounded-xl shadow-sm border border-gray-100`
 - Hover lift: `hover:shadow-xl hover:-translate-y-1 transition-all duration-300`
 - Hero gradient: `bg-gradient-to-br from-red-700 via-red-600 to-orange-500`
 - Section max-width: `max-w-6xl mx-auto px-4`
-- Scroll anchor offset: `scroll-mt-20` (accounts for sticky header height)
+- Scroll anchor offset: `scroll-mt-20`
 - Responsive grid: `grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5`
 - Brand red: `red-600` / `red-700` for hover
 - Urgency orange: `orange-500`
 - Success green: `green-500` / `green-600`
-
-### WhatsApp Share Pattern
-```tsx
-const whatsappText = encodeURIComponent(`🔥 Check out this deal: ${title}\n${siteUrl}/view/${id}`);
-<a href={`https://wa.me/?text=${whatsappText}`} target="_blank" rel="noopener noreferrer">
-    <i className="fa-brands fa-whatsapp"></i> Share on WhatsApp
-</a>
-```
 
 ### Breadcrumbs
 Always include `<Breadcrumbs type="..." id="..." />` on all deep pages:
@@ -222,6 +249,14 @@ Always include `<Breadcrumbs type="..." id="..." />` on all deep pages:
 - `type="city"` — on retailers page
 - `type="retailer"` — on offers page
 - `type="offer"` — on offer view page
+
+### WhatsApp Share Pattern
+```tsx
+const whatsappText = encodeURIComponent(`🔥 Check out this deal: ${title}\n${siteUrl}/view/${id}`);
+<a href={`https://wa.me/?text=${whatsappText}`} target="_blank" rel="noopener noreferrer">
+    Share on WhatsApp
+</a>
+```
 
 ---
 
@@ -236,8 +271,25 @@ renderSomething: async function() {
 }
 ```
 
+### Adding a New Tab
+1. Add button in `admin.html` sidebar with `onclick="admin.showTab('tabname', event)"`
+2. Add `case 'tabname':` in `showTab()` switch in `admin.js`
+3. Create `renderTabname: async function()` in `admin.js`
+4. Add corresponding API endpoints in `server.js`
+
+### Stats Date Range
+```js
+// State
+admin._statsSince = 0;   // 0 = all time, 7 = last 7 days, 30 = last 30 days
+admin._statsFrom = null; // 'YYYY-MM-DD' for custom range
+admin._statsTo = null;   // 'YYYY-MM-DD' for custom range
+
+// Load
+admin.loadStats(since, from, to);  // pass null for since when using custom range
+admin.applyCustomStats();           // reads #stats-from and #stats-to inputs
+```
+
 ### API Calls from Admin
-All protected calls include the JWT header:
 ```js
 const res = await fetch('/api/admin/something', {
     method: 'POST',
@@ -252,22 +304,19 @@ if (!res.ok) throw new Error('Failed');
 
 ### File Upload Pattern
 ```js
-uploadFile: async function(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-        body: formData  // NO Content-Type header — browser sets multipart boundary
-    });
-    if (!res.ok) throw new Error('Upload failed');
-    const data = await res.json();
-    return data.url;  // returns '/uploads/timestamp-random.ext'
-}
+const formData = new FormData();
+formData.append('file', file);
+const res = await fetch('/api/admin/upload', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+    body: formData  // NO Content-Type header — browser sets multipart boundary
+});
+const data = await res.json();
+return data.url;  // '/uploads/timestamp-random.ext' or R2 URL
 ```
 
 ### Admin CSS Design System
-The admin uses CSS custom properties — always use variables, never hardcode colours:
+Always use CSS variables — never hardcode colours:
 ```css
 --red: #dc2626          /* primary action, active state */
 --green: #16a34a        /* success, save actions */
@@ -283,32 +332,18 @@ The admin uses CSS custom properties — always use variables, never hardcode co
 
 ---
 
-## Deployment
-
-The `deploy.js` script uses SSH2 to deploy to a remote server:
-```
-git clean -fd && git stash && git pull
-pm2 restart dealnamaa-backend
-cd frontend && npm run build && pm2 restart dealnamaa-frontend
-```
-
-**Important**: `deploy.js` contains a hardcoded server IP and credentials — **never commit this file** or update it to use environment variables before production use.
-
-Production process names (pm2):
-- `dealnamaa-backend` — Express server
-- `dealnamaa-frontend` — Next.js server
-
----
-
 ## What NOT To Do
 
 - **Never** use `express.static(__dirname)` — exposes `.env` and source files
 - **Never** define `verifyAdmin` after the routes that use it
 - **Never** export `metadata` from a `'use client'` component
-- **Never** use `Promise.resolve(params)` — await params directly
-- **Never** fetch all retailers without `?limit=N` on the homepage — DB grows over time
+- **Never** use `Promise.resolve(params)` — await params directly in Next.js 15+
+- **Never** use `next/image` directly — always use `SafeImage` for fallback handling
+- **Never** call tracking endpoints directly — always use `<Tracker>` component
+- **Never** use independent `useState` for language — always use `useLang()` from context
 - **Never** show expired offers to users — always filter `validUntil >= new Date()`
 - **Never** use `NEXT_PUBLIC_` env vars in server components for internal URLs
 - **Never** hardcode `localhost:3000` in frontend code — use env vars
 - **Never** skip `validateId()` on route params — prevents injection attacks
-- **Never** touch `tmpsrc/` — it is dead code and should eventually be deleted
+- **Never** edit `server.js` with PowerShell `Set-Content` or array slicing — use .NET `ReadAllText`/`WriteAllText`
+- **Never** commit `deploy.js` — it contains hardcoded server credentials

@@ -1,239 +1,183 @@
-# Admin Interface Quick Reference
+# Admin Interface Guide
 
 ## Access
 
-**URL**: `http://localhost:3000/admin.html`  
-**Authentication**: JWT-based login  
-**Default Credentials**: Set in `.env` file (`ADMIN_USER` and `ADMIN_PASS`)
+**Production URL**: `https://dealnamaa-backend-production.up.railway.app/admin.html`
+**Local URL**: `http://localhost:3000/admin.html`
+**Authentication**: JWT-based login (12-hour token)
+**Credentials**: Set in `.env` as `ADMIN_USER` and `ADMIN_PASS`
 
 ## Architecture
 
-### Files
-- **admin.html**: Main interface HTML structure
-- **admin.js**: Client-side JavaScript logic
-- **server.js**: Backend API endpoints
+| File | Purpose |
+|------|---------|
+| `admin.html` | Sidebar layout, CSS design system, login modal |
+| `admin.js` | All tab rendering logic, form handlers, API calls |
+| `data.js` | API helper functions (`api.getCountries()`, `api.getStats()`, etc.) |
+| `server.js` | Backend API endpoints consumed by admin |
 
-### Technology Stack
-- Vanilla JavaScript (no framework)
-- Fetch API for backend communication
-- JWT tokens stored in localStorage
-- Express static middleware for serving
+**Stack**: Vanilla JS (ES2020+), Fetch API, JWT in `localStorage`, no build step.
 
-## Features
+## Sidebar Structure
 
-### 1. Countries Management
-- View all countries
-- Add new country (ID, name, image)
-- Upload country flag/image
-- Delete countries
+```
+Overview
+  └── Dashboard          ← default tab on login
 
-### 2. Cities Management
-- View all cities
-- Add new city (ID, name, country, image)
-- Link cities to countries
-- Delete cities
+Content
+  ├── Countries
+  ├── States
+  ├── Cities
+  ├── Retailers
+  └── Offers & PDFs
 
-### 3. Retailers Management
-- View all retailers
-- Add new retailer (ID, name, website, city, logo)
-- Upload retailer logos
-- Delete retailers
+Insights
+  └── Feedback
 
-### 4. Offers & PDFs Management
-- View all offers
-- Add new offer with:
-  - Title and ID
-  - Validity dates (from/until)
-  - PDF flyer upload
-  - Cover image upload
-  - Badge text
-  - Retailer association
-- Edit existing offers
-- Delete offers
+System
+  └── Site Settings
 
-### 5. Statistics Dashboard
-- Total website visits
-- Top clicked retailers
-- Top clicked offers
-- Real-time analytics from MongoDB
+Footer
+  ├── View Live Website  ← hidden until siteUrl is set in Site Settings
+  └── Sign Out
+```
 
-### 6. Feedback Viewer
-- View user feedback submissions
-- See user name, email, and message
-- Date-sorted feedback list
+## Tab Reference
 
-## API Endpoints Used
+### Dashboard
+Analytics dashboard with date range filter.
 
-### Authentication
-- `POST /api/admin/login` - Admin login
+**Date range options**:
+- Last 7 days / Last 30 days / All time — click to apply immediately
+- Custom — reveals two date pickers (From / To) + Apply button
+- Active range button turns red; Custom button shows selected range when active
 
-### Public Endpoints
-- `GET /api/countries` - List countries
-- `GET /api/cities` - List all cities
-- `GET /api/retailers` - List all retailers
-- `GET /api/offers` - List all offers
-- `GET /api/stats` - Get statistics
+**KPI Cards**: Total Visits, Active Offers, Conversion Rate, Avg Engagement Time, Avg Pages Viewed, Monthly Growth
 
-### Protected Endpoints (Require JWT)
-- `POST /api/upload` - Upload files
-- `POST /api/countries` - Create country
-- `POST /api/cities` - Create city
-- `POST /api/retailers` - Create retailer
-- `POST /api/offers` - Create offer
-- `PUT /api/offers/:id` - Update offer
-- `DELETE /api/countries/:id` - Delete country
-- `DELETE /api/cities/:id` - Delete city
-- `DELETE /api/retailers/:id` - Delete retailer
-- `DELETE /api/offers/:id` - Delete offer
-- `GET /api/admin/feedback` - Get all feedback
+**Sections**: Geographic Performance (top countries + cities), Top Retailers, Top Offers, PDF Engagement Analytics, Category Performance, Conversion Insights
+
+### Countries
+- Table: ID, Name, Image thumbnail, Edit / Delete actions
+- Add / Edit form: Country Code (e.g. `ae`), Country Name, image upload or URL
+- Edit pre-fills the form; ID becomes read-only during edit
+
+### States
+- Optional — only needed for Country → State → City hierarchy (e.g. India, USA)
+- Table: ID, Name, Country, Image, Edit / Delete
+- Add / Edit form: State Code, State Name, Country dropdown, image upload or URL
+
+### Cities
+- Table: ID, City Name, Country, State (shows "—" if direct city), Edit / Delete
+- Add / Edit form: City Code, City Name, Country dropdown, State dropdown (optional), image upload or URL
+- State dropdown dynamically filters when country changes (`admin.loadStatesForCity()`)
+
+### Retailers
+- Table: ID, Name, City Code, Edit / Delete
+- Add / Edit form: Retailer ID, Name, Official Website URL (optional), City dropdown, logo upload or URL
+
+### Offers & PDFs
+- **Active Offers** table: Title, Retailer, Validity range, Edit / Delete
+- **Expired Offers** section (orange): checkbox per row, Select All, bulk Delete Selected
+- Add / Edit form fields:
+  - Offer ID (unique, lowercase)
+  - Title
+  - Valid From / Valid Until (date pickers)
+  - Retailer (dropdown)
+  - PDF Flyer (file upload or URL)
+  - Cover Image (file upload or URL)
+  - Badge text (e.g. "50% OFF")
+
+### Feedback
+- Lists all user feedback submissions with date, name, email, message
+- Sort: Newest First / Oldest First (dropdown)
+- Delete individual entries with trash icon
+
+### Site Settings
+All settings saved to MongoDB `sitesettings` collection, applied to live site immediately.
+
+| Field | Purpose |
+|-------|---------|
+| Production Site URL | Drives "View Live Website" button in sidebar. Leave blank to hide button. |
+| Google Analytics ID | e.g. `G-XXXXXXXXXX`. Leave blank to disable GA. |
+| Facebook URL | Footer social icon link |
+| Twitter / X URL | Footer social icon link |
+| Instagram URL | Footer social icon link |
+| Feedback Page URL | Default `/feedback`. Can be external Google Form URL. |
 
 ## File Upload System
 
-### Supported File Types
-- **Images**: JPG, PNG, GIF, WebP
-- **Documents**: PDF
+**Supported types**: JPG, PNG, GIF, WebP, PDF
 
-### Upload Process
-1. User selects file in admin form
-2. File sent to `/api/upload` endpoint
-3. Multer middleware processes upload
-4. File saved to `/uploads` directory
-5. Server returns file URL
-6. URL stored in MongoDB with entity
+**Flow**:
+1. User selects file in form
+2. Admin JS sends `FormData` to `POST /api/admin/upload` with JWT header
+3. Server processes via multer → uploads to Cloudflare R2
+4. Returns `{ url: 'https://pub-....r2.dev/filename.ext' }`
+5. URL stored in MongoDB with the entity
 
-### File Storage
-- **Location**: `/uploads` directory in project root
-- **Naming**: `timestamp-randomnumber.extension`
-- **Access**: Served via Express static middleware
+**Local dev fallback**: If R2 credentials are missing, file saves to `/uploads/` and returns `/uploads/filename.ext`
 
-## Security Features
+## Security
 
-### JWT Authentication
-- Token generated on successful login
-- Token stored in localStorage
-- Token sent in Authorization header: `Bearer <token>`
-- Token expires after 12 hours
-
-### Input Validation
-- ID format validation (lowercase, alphanumeric, hyphens)
-- Required field checks
-- File type validation
-- Size limits on uploads (10kb for JSON, configurable for files)
-
-### Rate Limiting
-- 1000 requests per 15 minutes per IP
-- Applied to all `/api` routes
+- JWT token stored in `localStorage` as `adminToken`
+- All protected requests include `Authorization: Bearer <token>` header
+- Token expires after 12 hours — logout and re-login to refresh
+- Rate limit: 1000 req/15min general, 20 req/min on tracking endpoints
 
 ## Common Tasks
 
-### Adding a New Country
-1. Click "Manage Countries"
-2. Click "+ Add Country"
-3. Enter country code (e.g., "kw")
-4. Enter country name (e.g., "Kuwait")
-5. Upload flag image or provide URL
-6. Click "Save Country"
+### Add a Country
+Countries → + Add Country → fill Code + Name + image → Save Country
 
-### Adding a New Offer
-1. Click "Manage Offers & PDFs"
-2. Click "+ Add New Offer"
-3. Fill in offer details:
-   - Offer ID (unique)
-   - Title
-   - Valid from/until dates
-   - Select retailer
-   - Upload PDF flyer (optional)
-   - Upload cover image (optional)
-   - Add badge text (optional)
-4. Click "Save Offer"
+### Add a State (optional)
+States → + Add State → fill Code + Name + select Country + image → Save State
+Only needed if that country uses State → City hierarchy.
 
-### Editing an Offer
-1. Click "Manage Offers & PDFs"
-2. Find offer in table
-3. Click "Edit" button
-4. Modify fields as needed
-5. Click "Update Offer"
+### Add a City
+Cities → + Add City → fill Code + Name + select Country + optionally select State + image → Save City
 
-### Viewing Statistics
-1. Click "Statistics" in sidebar
-2. View total visits
-3. See top retailers by clicks
-4. See top offers by clicks
+### Add a Retailer
+Retailers → + Add Retailer → fill ID + Name + Website URL + select City + logo → Save Retailer
+
+### Add an Offer
+Offers & PDFs → + Add New Offer → fill all fields → Save Offer
+- PDF and cover image are optional
+- Badge is optional (e.g. "Up to 50% OFF")
+
+### Edit an Offer
+Offers & PDFs → click Edit on any active offer row → modify fields → Update Offer
+
+### Bulk Delete Expired Offers
+Offers & PDFs → scroll to Expired Offers section → Select All → Delete Selected → confirm
+
+### View Analytics
+Dashboard tab → select date range → review KPI cards and charts
+
+### Set Live Site URL
+Site Settings → Production Site URL → paste Railway frontend URL → Save Settings
+The "View Live Website" link in the sidebar footer will appear immediately.
 
 ## Troubleshooting
 
-### Login Issues
-- **Problem**: "Invalid credentials"
-- **Solution**: Check `.env` file for correct `ADMIN_USER` and `ADMIN_PASS`
-
-### File Upload Fails
-- **Problem**: "Failed to upload file"
-- **Solution**: 
-  - Check `/uploads` directory exists
-  - Verify file size is reasonable
-  - Check file type is supported
-  - Ensure JWT token is valid
-
-### Data Not Loading
-- **Problem**: "Loading data from MongoDB..."
-- **Solution**:
-  - Verify MongoDB is running
-  - Check `MONGO_URI` in `.env`
-  - Check server.js console for errors
-
-### Token Expired
-- **Problem**: "Invalid Token" or "Access Denied"
-- **Solution**: Logout and login again (tokens expire after 12 hours)
+| Problem | Solution |
+|---------|---------|
+| "Invalid credentials" on login | Check `ADMIN_USER` / `ADMIN_PASS` in Railway env vars or `.env` |
+| "Invalid Token" / "Access Denied" | Token expired — logout and login again |
+| File upload fails | Check R2 credentials in env vars; check `/uploads` dir exists for local dev |
+| Data shows "Loading..." forever | MongoDB connection issue — check `MONGO_URI`, check Atlas IP allowlist (0.0.0.0/0) |
+| "View Live Website" button missing | Set Production Site URL in Site Settings |
+| Stats all showing 0 | Tracking was recently fixed — data accumulates from user visits going forward |
+| Dashboard date filter not working | Must be on Dashboard tab — filter buttons are inside the tab content |
 
 ## Development Notes
 
-### Modifying Admin Interface
-1. Edit `admin.html` for structure changes
-2. Edit `admin.js` for functionality changes
-3. No build step required - changes are immediate
-4. Refresh browser to see updates
+### Modifying Admin
+- Edit `admin.html` for layout/structure changes
+- Edit `admin.js` for logic/rendering changes
+- No build step — refresh browser to see changes
 
-### Adding New Admin Features
-1. Add new tab button in `admin.html` sidebar
-2. Create render function in `admin.js` (e.g., `renderNewFeature()`)
-3. Add case in `showTab()` switch statement
-4. Create corresponding API endpoints in `server.js`
-
-### Styling
-- Uses inline styles and CSS classes from `styles.css` (if present)
-- Can be enhanced with external CSS framework
-- Current design is functional and responsive
-
-## Best Practices
-
-1. **Always backup database** before bulk deletions
-2. **Test file uploads** with small files first
-3. **Use descriptive IDs** (lowercase, hyphenated)
-4. **Set realistic validity dates** for offers
-5. **Optimize images** before uploading (reduce file size)
-6. **Keep JWT token secure** (don't share localStorage)
-7. **Logout when done** to invalidate token
-
-## Future Enhancements
-
-Potential improvements for the admin interface:
-
-1. **Bulk Operations**: Upload multiple offers at once
-2. **Image Optimization**: Automatic image compression
-3. **Search/Filter**: Find entities quickly in large tables
-4. **Sorting**: Sort tables by different columns
-5. **Pagination**: Handle large datasets efficiently
-6. **Preview**: Preview offers before publishing
-7. **Scheduling**: Schedule offers to go live automatically
-8. **Audit Log**: Track who changed what and when
-9. **Role-Based Access**: Different permission levels
-10. **Dark Mode**: Theme toggle for admin interface
-
-## Support
-
-For issues or questions:
-1. Check server.js console logs
-2. Check browser console for JavaScript errors
-3. Verify MongoDB connection
-4. Review API endpoint responses in Network tab
-5. Consult project documentation in `.amazonq/rules/memory-bank/`
+### Adding a New Tab
+1. Add `<button class="tab-btn" onclick="admin.showTab('tabname', event)">` in `admin.html` sidebar
+2. Add `case 'tabname': html = await this.renderTabname(); break;` in `showTab()` in `admin.js`
+3. Create `renderTabname: async function() { ... return htmlString; }` in `admin.js`
+4. Add API endpoints in `server.js` using the .NET `ReadAllText`/`WriteAllText` edit method
