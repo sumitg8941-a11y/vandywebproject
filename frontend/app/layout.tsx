@@ -148,7 +148,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <a href="/contact" className="hover:text-white transition">Contact</a>
             <a href="/terms" className="hover:text-white transition">Terms</a>
             <a href="/privacy" className="hover:text-white transition">Privacy</a>
-            <a href={feedbackUrl} className="hover:text-white transition">Feedback</a>
+            <a href="/feedback" className="hover:text-white transition">Feedback</a>
           </div>
           <p>&copy; {new Date().getFullYear()} DealNamaa. All rights reserved.</p>
         </footer>
