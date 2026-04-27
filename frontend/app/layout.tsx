@@ -5,6 +5,7 @@ import Script from 'next/script'
 import LangToggle, { LangProvider } from './LangToggle'
 import NavLinks from './NavLinks'
 import FindDealsButton from './FindDealsButton'
+import Tracker from './Tracker'
 import './globals.css'
 
 const poppins = Poppins({
@@ -99,6 +100,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <input type="checkbox" id="mobile-menu-toggle" className="hidden peer" />
         </header>
 
+        <Tracker type="visit" />
         <main className="min-h-screen">
           {children}
         </main>

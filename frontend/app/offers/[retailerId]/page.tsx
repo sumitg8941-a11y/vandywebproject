@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
 import CouponReveal from '../../CouponReveal';
 import FollowButton from '../../FollowButton';
+import Tracker from '../../Tracker';
 
 const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
@@ -97,6 +98,7 @@ export default async function OffersPage({ params }: { params: Promise<{ retaile
       </div>
 
       <div className="max-w-6xl mx-auto p-6 mt-4">
+        <Tracker type="retailer" id={retailerId} />
         <Breadcrumbs type="retailer" id={retailerId} />
       </div>
 

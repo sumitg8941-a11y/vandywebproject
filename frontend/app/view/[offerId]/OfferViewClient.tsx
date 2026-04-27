@@ -33,6 +33,11 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dealnamaa.com';
 
+  // Track offer click on mount
+  useEffect(() => {
+    fetch(`${apiBaseUrl}/api/track/offer/${offerId}`, { method: 'POST' }).catch(() => {});
+  }, [offerId, apiBaseUrl]);
+
   // Track time spent when user leaves
   useEffect(() => {
     return () => {

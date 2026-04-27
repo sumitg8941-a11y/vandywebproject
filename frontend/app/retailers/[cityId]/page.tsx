@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
+import Tracker from '../../Tracker';
 
 async function getRetailers(cityId: string) {
   try {
@@ -61,6 +62,7 @@ export default async function RetailersPage({ params }: { params: Promise<{ city
       </div>
 
       <div className="max-w-6xl mx-auto p-6 mt-4">
+        <Tracker type="city" id={cityId} />
         <Breadcrumbs type="city" id={cityId} />
       </div>
 

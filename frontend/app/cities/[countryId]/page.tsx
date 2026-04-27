@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
+import Tracker from '../../Tracker';
 
 async function getRegions(countryId: string) {
   try {
@@ -101,6 +102,7 @@ export default async function CitiesPage({ params }: { params: Promise<{ country
       </div>
 
       <div className="max-w-6xl mx-auto px-4 mt-6">
+        <Tracker type="country" id={countryId} />
         <Breadcrumbs type="country" id={countryId} />
       </div>
 
