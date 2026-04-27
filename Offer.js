@@ -13,7 +13,7 @@ const offerSchema = new mongoose.Schema({
     maxPagesViewed: { type: Number, default: 0 }, // Farthest page reached
     rating: { type: Number, default: 0, min: 0, max: 5 },
     ratingCount: { type: Number, default: 0 },
-    savedCount: { type: Number, default: 0 }
+    savedCount: { type: Number, default: 0 },
     image: { type: String, default: '' },
     badge: { type: String, trim: true },
     isSponsored: { type: Boolean, default: false }, // Ad Integration: Highlights and pins to the top
