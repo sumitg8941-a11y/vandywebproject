@@ -1336,39 +1336,45 @@ const admin = {
         }
         
         const stats = window._lastStatsData;
-        let csvContent = "data:text/csv;charset=utf-8,";
+        const rows = [];
         
-        csvContent += "=== DEALNAMAA METRICS EXPORT ===\\n\\n";
+        rows.push(["=== DEALNAMAA METRICS EXPORT ==="]);
+        rows.push([]);
         
-        csvContent += "--- OVERVIEW ---\\n";
-        csvContent += `Total Visits,${stats.visits || 0}\\n`;
-        csvContent += `Active Offers,${(stats.totals || {}).activeOffers || 0}\\n`;
-        csvContent += `Conversion Rate,${stats.conversionRate || 0}%\\n`;
-        csvContent += `Offers With Clicks,${stats.offersWithClicks || 0}\\n`;
-        csvContent += `Average Engagement Time,${stats.avgEngagementTime || 0} seconds\\n`;
-        csvContent += `Average PDF Pages Viewed,${stats.avgPagesViewed || 0}\\n\\n`;
+        rows.push(["--- OVERVIEW ---"]);
+        rows.push(["Metric", "Value"]);
+        rows.push(["Total Visits", stats.visits || 0]);
+        rows.push(["Active Offers", (stats.totals || {}).activeOffers || 0]);
+        rows.push(["Conversion Rate", `${stats.conversionRate || 0}%`]);
+        rows.push(["Offers With Clicks", stats.offersWithClicks || 0]);
+        rows.push(["Average Engagement Time", `${stats.avgEngagementTime || 0} seconds`]);
+        rows.push(["Average PDF Pages Viewed", stats.avgPagesViewed || 0]);
+        rows.push([]);
         
-        csvContent += "--- TOP OFFERS ---\\n";
-        csvContent += "Title,Retailer,Clicks\\n";
+        rows.push(["--- TOP OFFERS ---"]);
+        rows.push(["Title", "Retailer ID", "Total Clicks"]);
         (stats.topOffers || []).forEach(o => {
-            csvContent += `"${o.title.replace(/"/g, '""')}","${o.retailerId}",${o.clicks}\\n`;
+            rows.push([`"${o.title.replace(/"/g, '""')}"`, o.retailerId, o.clicks]);
         });
-        csvContent += "\\n";
+        rows.push([]);
         
-        csvContent += "--- PDF ENGAGEMENT ---\\n";
-        csvContent += "Title,Max Pages Viewed,Total Time (Seconds)\\n";
+        rows.push(["--- PDF ENGAGEMENT ---"]);
+        rows.push(["Title", "Max Pages Viewed", "Total Time (Seconds)"]);
         (stats.offersWithPDFViews || []).forEach(o => {
-            csvContent += `"${o.title.replace(/"/g, '""')}",${o.maxPagesViewed},${o.totalTimeSeconds}\\n`;
+            rows.push([`"${o.title.replace(/"/g, '""')}"`, o.maxPagesViewed, o.totalTimeSeconds]);
         });
-        csvContent += "\\n";
 
-        const encodedUri = encodeURI(csvContent);
+        const csvContent = rows.map(e => e.join(",")).join("\r\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
+        link.setAttribute("href", url);
         link.setAttribute("download", `dealnamaa_metrics_${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
 };
 
