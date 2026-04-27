@@ -39,7 +39,10 @@ export async function generateMetadata({ params }: { params: Promise<{ countryId
   };
 }
 
-function RegionCard({ href, image, name, tag }: { href: string; image: string; name: string; tag?: string }) {
+function RegionCard({ href, image, name, tag, tagColor = 'red' }: { href: string; image: string; name: string; tag?: string; tagColor?: 'red' | 'orange' }) {
+  const pillCls = tagColor === 'orange'
+    ? 'bg-orange-100 text-orange-600'
+    : 'bg-red-100 text-red-600';
   return (
     <Link href={href}>
       <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-100 group">
@@ -54,7 +57,11 @@ function RegionCard({ href, image, name, tag }: { href: string; image: string; n
         </div>
         <div className="p-3 text-center">
           <h3 className="text-sm font-bold text-gray-800">{name}</h3>
-          {tag && <p className="text-xs text-red-600 font-semibold mt-1">{tag}</p>}
+          {tag && (
+            <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 ${pillCls}`}>
+              {tag}
+            </span>
+          )}
         </div>
       </div>
     </Link>
@@ -107,16 +114,16 @@ export default async function CitiesPage({ params }: { params: Promise<{ country
         </div>
       )}
 
-      {/* States section */}
-      {hasStates && (
+      {/* Unified grid — states first, then direct cities */}
+      {!isEmpty && (
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="bg-red-100 text-red-600 rounded-lg p-2">
-              <i className="fa-solid fa-map text-lg"></i>
+              <i className="fa-solid fa-map-location-dot text-lg"></i>
             </div>
             <div>
-              <h2 className="text-2xl font-black text-gray-900">Browse by State</h2>
-              <p className="text-sm text-gray-500">Select a state to see its cities and deals</p>
+              <h2 className="text-2xl font-black text-gray-900">Where are you shopping?</h2>
+              <p className="text-sm text-gray-500">Pick your region or city to see local deals</p>
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
@@ -126,48 +133,18 @@ export default async function CitiesPage({ params }: { params: Promise<{ country
                 href={`/cities/state/${s.id}`}
                 image={s.image}
                 name={s.name}
-                tag="View cities →"
+                tag="Region"
+                tagColor="red"
               />
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Divider when both exist */}
-      {hasStates && hasDirectCities && (
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex items-center gap-4 my-2">
-            <div className="flex-1 border-t border-gray-200"></div>
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">or browse directly</span>
-            <div className="flex-1 border-t border-gray-200"></div>
-          </div>
-        </div>
-      )}
-
-      {/* Direct cities section */}
-      {hasDirectCities && (
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-orange-100 text-orange-600 rounded-lg p-2">
-              <i className="fa-solid fa-city text-lg"></i>
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-gray-900">
-                {hasStates ? 'Other Cities' : 'Browse by City'}
-              </h2>
-              <p className="text-sm text-gray-500">
-                {hasStates ? 'Cities not grouped under a state' : 'Select your city to find local deals'}
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
             {directCities.map((c: any) => (
               <RegionCard
                 key={c.id}
                 href={`/retailers/${c.id}`}
                 image={c.image}
                 name={c.name}
-                tag="View retailers →"
+                tag="City"
+                tagColor="orange"
               />
             ))}
           </div>
