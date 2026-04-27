@@ -345,6 +345,8 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
           onClose={() => setIsFlipbookOpen(false)}
           title={offer.title}
           shareUrl={`${siteUrl}/view/${offerId}`}
+          retailerUrl={offer.retailerUrl || offer.couponUrl}
+          offerId={offer.id}
         />
       )}
     </div>

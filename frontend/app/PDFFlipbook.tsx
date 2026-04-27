@@ -12,9 +12,11 @@ interface PDFFlipbookProps {
   onClose: () => void;
   title: string;
   shareUrl?: string;
+  retailerUrl?: string;
+  offerId?: string;
 }
 
-export default function PDFFlipbook({ pdfUrl, onClose, title, shareUrl }: PDFFlipbookProps) {
+export default function PDFFlipbook({ pdfUrl, onClose, title, shareUrl, retailerUrl, offerId }: PDFFlipbookProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
 
@@ -57,6 +59,18 @@ export default function PDFFlipbook({ pdfUrl, onClose, title, shareUrl }: PDFFli
       <div className="flex justify-between items-center px-4 py-3 border-b border-gray-800 text-white gap-3">
         <div className="font-bold text-sm md:text-base truncate flex-1 pr-2">{title}</div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Go to Deal Button */}
+          {retailerUrl && retailerUrl !== '#' && offerId && (
+            <a
+              href={`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000'}/api/redirect/offer/${offerId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white text-xs font-bold px-3 py-2 rounded-lg transition shadow-md border border-red-500/50"
+            >
+              <i className="fa-solid fa-cart-shopping"></i>
+              <span className="hidden sm:inline">Shop Now</span>
+            </a>
+          )}
           {/* Share */}
           <button
             onClick={handleShare}
@@ -102,6 +116,25 @@ export default function PDFFlipbook({ pdfUrl, onClose, title, shareUrl }: PDFFli
             width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 40, 900) : 900}
           />
         </Document>
+
+        {retailerUrl && retailerUrl !== '#' && offerId && (
+          <a
+            href={`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000'}/api/redirect/offer/${offerId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-8 w-full max-w-[900px] bg-gradient-to-r from-red-600 to-orange-500 rounded-xl p-4 shadow-2xl border border-red-400 flex flex-col sm:flex-row items-center justify-between text-white transition-transform hover:scale-[1.02]"
+          >
+            <div className="mb-3 sm:mb-0 text-center sm:text-left">
+              <div className="font-black text-xl flex items-center gap-2 justify-center sm:justify-start">
+                <i className="fa-solid fa-bolt text-yellow-300"></i> Go to Retailer & Shop this Deal!
+              </div>
+              <div className="text-sm font-medium opacity-90">Click here to be redirected to the official store.</div>
+            </div>
+            <div className="bg-white text-red-600 font-bold px-6 py-3 rounded-lg shadow-sm flex items-center gap-2">
+              <i className="fa-solid fa-cart-shopping"></i> Shop Now
+            </div>
+          </a>
+        )}
       </div>
 
       {/* Bottom nav */}
