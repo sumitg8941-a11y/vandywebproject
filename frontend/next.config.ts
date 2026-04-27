@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
-const backendUrl = process.env.API_URL || 'http://127.0.0.1:3000';
+const backendUrl = (process.env.API_URL || 'http://127.0.0.1:3000').replace(/\/$/, '');
+const uploadsDestination = backendUrl.startsWith('http') ? `${backendUrl}/uploads/:path*` : `http://127.0.0.1:3000/uploads/:path*`;
 
 const nextConfig: NextConfig = {
   images: {
@@ -29,7 +30,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/uploads/:path*',
-        destination: `${backendUrl}/uploads/:path*`,
+        destination: uploadsDestination,
       },
     ];
   },
