@@ -135,6 +135,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <a href="/feedback" className="hover:text-white transition">Feedback</a>
           </div>
           <p>&copy; {new Date().getFullYear()} DealNamaa. All rights reserved.</p>
+          <p className="mt-3 text-xs text-gray-600">
+            Developed by{' '}
+            <a
+              href="https://www.linkedin.com/in/sumit-gupta-4a493837"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Sumit Gupta's LinkedIn profile"
+              className="text-gray-500 hover:text-white transition-colors duration-200 underline underline-offset-2"
+            >
+              Sumit Gupta
+            </a>
+          </p>
         </footer>
         </LangProvider>
       </body>
