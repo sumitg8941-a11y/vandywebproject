@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Breadcrumbs from '../../Breadcrumbs';
 import Tracker from '../../Tracker';
 import SafeImage from '../../SafeImage';
+import AdSlot from '../../AdSlot';
 
 async function getRetailers(cityId: string) {
   try {
@@ -65,6 +66,8 @@ export default async function RetailersPage({ params }: { params: Promise<{ city
         <Tracker type="city" id={cityId} />
         <Breadcrumbs type="city" id={cityId} />
       </div>
+
+      <div className="max-w-6xl mx-auto px-6"><AdSlot format="horizontal" /></div>
 
       {/* Retailers Grid */}
       <div className="max-w-6xl mx-auto p-6 mt-2">

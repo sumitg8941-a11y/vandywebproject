@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import SafeImage from '../SafeImage';
 import { SkeletonCard, SkeletonOfferCard } from '../SkeletonLoader';
+import AdSlot from '../AdSlot';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -198,6 +199,8 @@ function SearchContent() {
           </div>
 
           <div className="flex-1">
+            <AdSlot format="horizontal" className="mb-6" />
+
             {(results.retailers.length > 0 || results.offers.length > 0) && (
               <div className="mb-4 text-gray-600">
                 Found <strong>{results.retailers.length}</strong> retailer(s) and <strong>{results.offers.length}</strong> offer(s)

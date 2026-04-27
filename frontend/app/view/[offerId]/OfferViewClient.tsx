@@ -7,6 +7,7 @@ import PDFFlipbook from '../../PDFFlipbook';
 import SafeImage from '../../SafeImage';
 import SaveButton from '../../SaveButton';
 import RatingWidget from '../../RatingWidget';
+import AdSlot from '../../AdSlot';
 
 interface Props {
   offer: any;
@@ -322,6 +323,8 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
             </button>
           </div>
         </div>
+
+        <AdSlot format="horizontal" className="my-6" />
 
         {/* Flyer Image */}
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 md:p-8 flex justify-center">
