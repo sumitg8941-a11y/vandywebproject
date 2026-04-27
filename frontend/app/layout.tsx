@@ -69,7 +69,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <head>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-        {settings?.faviconUrl && <link rel="icon" href={settings.faviconUrl} />}
+        {(settings?.faviconUrl || settings?.customLogoUrl) && <link rel="icon" href={settings?.faviconUrl || settings?.customLogoUrl} />}
       </head>
       <body className={`${poppins.className} bg-gray-50 text-gray-900`}>
         <LangProvider>
