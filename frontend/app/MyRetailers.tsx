@@ -65,7 +65,7 @@ export default function MyRetailers() {
               </div>
               <div className="p-3 text-center border-t border-red-50">
                 <h3 className="text-sm font-bold text-gray-800 truncate">{r.name}</h3>
-                {r.offerCount > 0 ? (
+                {(r.offerCount ?? 0) > 0 ? (
                   <p className="text-xs text-red-600 font-semibold mt-1">
                     <i className="fa-solid fa-tag mr-1"></i>{r.offerCount} {r.offerCount === 1 ? 'offer' : 'offers'}
                   </p>
