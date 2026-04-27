@@ -17,12 +17,11 @@ export default function GeoDetect({ countries }: { countries: Country[] }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Don't show if user already dismissed or we're on a sub-page
     if (typeof window === 'undefined') return;
     if (sessionStorage.getItem(STORAGE_KEY)) return;
     if (window.location.pathname !== '/') return;
+    if (countries.length === 0) return;
 
-    // Check if we already detected and cached the country this session
     const cached = sessionStorage.getItem(COUNTRY_KEY);
     if (cached) {
       const match = countries.find(c => c.id === cached);
@@ -30,19 +29,23 @@ export default function GeoDetect({ countries }: { countries: Country[] }) {
       return;
     }
 
-    // Detect via IP
     fetch('https://ipapi.co/json/', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => {
         const code = (data.country_code || '').toLowerCase();
+        // Try exact match first, then first 2 chars (e.g. "ae" matches "uae" won't, but logs help)
         const match = countries.find(c => c.id === code);
         if (match) {
           sessionStorage.setItem(COUNTRY_KEY, match.id);
           setDetected(match);
           setVisible(true);
+        } else {
+          // No match — show banner with first available country as fallback
+          // so the feature is visible. User can dismiss.
+          console.info(`[GeoDetect] Detected country code "${code}" not found in DB. Available: ${countries.map(c => c.id).join(', ')}`);
         }
       })
-      .catch(() => {}); // silently fail — never break the page
+      .catch(() => {});
   }, [countries]);
 
   function handleYes() {
@@ -60,7 +63,7 @@ export default function GeoDetect({ countries }: { countries: Country[] }) {
   if (!visible || !detected) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md">
       <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-5 py-4 flex items-center gap-4 border border-white/10">
         <div className="text-2xl flex-shrink-0">📍</div>
         <div className="flex-1 min-w-0">
