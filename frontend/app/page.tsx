@@ -75,39 +75,39 @@ export default async function HomePage() {
       {/* ── My Retailers (personalised, localStorage) ── */}
       <MyRetailers />
       {/* ── Hero ── */}
-      <div className="relative text-white overflow-hidden" style={{ minHeight: '420px' }}>
-        {/* Mosaic background */}
-        {heroImages.length > 0 ? (
-          <div className="absolute inset-0 grid grid-cols-4 grid-rows-2">
-            {[...heroImages, ...heroImages].slice(0, 8).map((o: any, i: number) => (
-              <div key={i} className="relative overflow-hidden">
-                <Image src={o.image} alt="" fill sizes="25vw" className="object-cover" priority={i < 4} />
-              </div>
-            ))}
-            {/* Dark overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80" />
-          </div>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-red-700 via-red-600 to-orange-500" />
-        )}
+      <div className="bg-gradient-to-br from-red-700 via-red-600 to-orange-500 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 py-14 md:py-20 flex flex-col md:flex-row items-center gap-10">
 
-        <div className="relative z-10 max-w-6xl mx-auto px-4 py-16 md:py-24 flex flex-col items-center text-center">
-          <span className="inline-block bg-yellow-400 text-gray-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-4">
-            🔥 New deals every week
-          </span>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 drop-shadow-lg leading-tight">
-            Find the Best<br />Deals Near You
-          </h1>
-          <p className="text-lg md:text-xl mb-8 opacity-90 font-medium max-w-xl">
-            Browse thousands of flyers, coupons, and exclusive offers from top retailers — all in one place.
-          </p>
-          <div className="w-full max-w-xl">
+          {/* Left: text + search — always solid, always readable */}
+          <div className="flex-1 text-white text-center md:text-left">
+            <span className="inline-block bg-yellow-400 text-gray-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-4">
+              🔥 New deals every week
+            </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight drop-shadow">
+              Find the Best<br />Deals Near You
+            </h1>
+            <p className="text-lg md:text-xl mb-8 opacity-90 font-medium max-w-xl">
+              Browse thousands of flyers, coupons, and exclusive offers from top retailers — all in one place.
+            </p>
             <SearchBar />
+            <p className="mt-4 text-sm opacity-70">
+              <i className="fa-solid fa-location-dot mr-1"></i>
+              Covering retailers across multiple cities &amp; regions
+            </p>
           </div>
-          <p className="mt-4 text-sm opacity-70">
-            <i className="fa-solid fa-location-dot mr-1"></i>
-            Covering retailers across multiple cities &amp; regions
-          </p>
+
+          {/* Right: mosaic — decorative, hidden on mobile */}
+          {heroImages.length >= 4 && (
+            <div className="hidden md:grid grid-cols-2 gap-2 flex-shrink-0 w-72 lg:w-96" style={{ gridTemplateRows: 'repeat(2, 1fr)' }}>
+              {[...heroImages, ...heroImages].slice(0, 4).map((o: any, i: number) => (
+                <div key={i} className="relative rounded-xl overflow-hidden shadow-xl" style={{ height: '140px' }}>
+                  <Image src={o.image} alt="" fill sizes="200px" className="object-cover" priority={i < 2} />
+                  <div className="absolute inset-0 bg-black/10 rounded-xl" />
+                </div>
+              ))}
+            </div>
+          )}
+
         </div>
       </div>
 
