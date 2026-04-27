@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const backendUrl = process.env.API_URL || 'http://127.0.0.1:3000';
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -27,7 +29,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/uploads/:path*',
-        destination: 'http://127.0.0.1:3000/uploads/:path*',
+        destination: `${backendUrl}/uploads/:path*`,
       },
     ];
   },

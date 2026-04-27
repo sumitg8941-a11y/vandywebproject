@@ -4,7 +4,9 @@ const mongoose = require('mongoose');
 const countrySchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true, lowercase: true, trim: true },
     name: { type: String, required: true, trim: true },
-    image: { type: String, required: true }
+    image: { type: String, required: true },
+    visits: { type: Number, default: 0 }, // Track country page visits
+    offerViews: { type: Number, default: 0 } // Track offers viewed from this country
 }, { timestamps: true }); // Automatically adds createdAt and updatedAt fields securely
 
 module.exports = mongoose.model('Country', countrySchema);

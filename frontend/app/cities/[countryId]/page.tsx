@@ -5,29 +5,29 @@ import Breadcrumbs from '../../Breadcrumbs';
 
 async function getRegions(countryId: string) {
   try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const apiBaseUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
     const res = await fetch(`${apiBaseUrl}/api/regions/${countryId}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch regions');
+    if (!res.ok) throw new Error();
     return res.json();
-  } catch (error) {
+  } catch {
     return { type: 'cities', data: [] };
   }
 }
 
 async function getCountry(countryId: string) {
   try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
-    const res = await fetch(`${apiBaseUrl}/api/breadcrumbs/city/${countryId}`, { cache: 'no-store' });
-    const data = await res.json();
-    return data.country || null;
+    const apiBaseUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const res = await fetch(`${apiBaseUrl}/api/countries`, { cache: 'no-store' });
+    const countries = await res.json();
+    return countries.find((c: any) => c.id === countryId) || null;
   } catch {
     return null;
   }
 }
 
-export async function generateMetadata({ params }: { params: { countryId: string } }): Promise<Metadata> {
-  const resolvedParams = await Promise.resolve(params);
-  const country = await getCountry(resolvedParams.countryId);
+export async function generateMetadata({ params }: { params: Promise<{ countryId: string }> }): Promise<Metadata> {
+  const { countryId } = await params;
+  const country = await getCountry(countryId);
   const name = country?.name || 'Region';
   return {
     title: `${name} - Cities & Deals`,
@@ -39,9 +39,9 @@ export async function generateMetadata({ params }: { params: { countryId: string
   };
 }
 
-export default async function CitiesPage({ params }: { params: { countryId: string } }) {
-  const resolvedParams = await Promise.resolve(params);
-  const regions = await getRegions(resolvedParams.countryId);
+export default async function CitiesPage({ params }: { params: Promise<{ countryId: string }> }) {
+  const { countryId } = await params;
+  const regions = await getRegions(countryId);
   const isStates = regions.type === 'states';
   const items = regions.data;
 
@@ -61,7 +61,7 @@ export default async function CitiesPage({ params }: { params: { countryId: stri
       </div>
 
       <div className="max-w-6xl mx-auto p-6 mt-4">
-        <Breadcrumbs type="country" id={resolvedParams.countryId} />
+        <Breadcrumbs type="country" id={countryId} />
       </div>
 
       {/* Regions Grid */}
@@ -71,7 +71,7 @@ export default async function CitiesPage({ params }: { params: { countryId: stri
         {items.length === 0 ? (
           <div className="text-center p-10 bg-yellow-100 text-yellow-800 rounded-lg">
             <h2 className="text-2xl font-bold"><i className="fa-solid fa-triangle-exclamation"></i> No {isStates ? 'States' : 'Cities'} Found</h2>
-            <p>We couldn't find any {isStates ? 'states' : 'cities'} for this country. Please check back later or add some via the admin panel.</p>
+            <p>We couldn&apos;t find any {isStates ? 'states' : 'cities'} for this country. Please check back later or add some via the admin panel.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">

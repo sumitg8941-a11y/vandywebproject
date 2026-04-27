@@ -3,50 +3,367 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - DealNamaa</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>Admin Dashboard — DealNamaa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f0f2f5;
+            --sidebar-bg: #0f172a;
+            --sidebar-hover: #1e293b;
+            --sidebar-active: #dc2626;
+            --sidebar-text: #94a3b8;
+            --sidebar-text-active: #ffffff;
+            --header-bg: #ffffff;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --red: #dc2626;
+            --red-light: #fef2f2;
+            --green: #16a34a;
+            --green-light: #f0fdf4;
+            --orange: #ea580c;
+            --orange-light: #fff7ed;
+            --blue: #2563eb;
+            --blue-light: #eff6ff;
+            --yellow: #ca8a04;
+            --yellow-light: #fefce8;
+            --purple: #7c3aed;
+            --purple-light: #f5f3ff;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+            --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
+            --sidebar-width: 240px;
+            --header-height: 60px;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+
+        /* ── Login Modal ── */
+        #login-modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(15,23,42,0.92); z-index: 9999;
+            justify-content: center; align-items: center;
+        }
+        .login-box {
+            background: white; border-radius: 16px; padding: 40px;
+            width: 380px; box-shadow: 0 25px 50px rgba(0,0,0,.3);
+        }
+        .login-box .login-logo {
+            text-align: center; margin-bottom: 28px;
+        }
+        .login-box .login-logo i { font-size: 2.5rem; color: var(--red); }
+        .login-box h2 { font-size: 1.4rem; font-weight: 700; text-align: center; margin-bottom: 4px; }
+        .login-box p { text-align: center; color: var(--text-secondary); font-size: .875rem; margin-bottom: 24px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: .8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+        .form-input {
+            width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); font-size: .95rem; font-family: inherit;
+            transition: border-color .2s;
+        }
+        .form-input:focus { outline: none; border-color: var(--red); }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border: none; border-radius: var(--radius-sm); font-size: .875rem; font-weight: 600; cursor: pointer; transition: all .2s; font-family: inherit; }
+        .btn-primary { background: var(--red); color: white; }
+        .btn-primary:hover { background: #b91c1c; }
+        .btn-success { background: var(--green); color: white; }
+        .btn-success:hover { background: #15803d; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-secondary { background: var(--bg); color: var(--text-primary); border: 1.5px solid var(--border); }
+        .btn-secondary:hover { background: var(--border); }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-full { width: 100%; justify-content: center; padding: 12px; }
+        #login-error { color: var(--red); font-size: .85rem; text-align: center; margin-top: 12px; display: none; font-weight: 500; }
+
+        /* ── Layout ── */
+        .app-header {
+            position: fixed; top: 0; left: var(--sidebar-width); right: 0;
+            height: var(--header-height); background: var(--header-bg);
+            border-bottom: 1px solid var(--border); z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px; box-shadow: var(--shadow);
+        }
+        .header-title { font-size: 1rem; font-weight: 600; color: var(--text-secondary); }
+        .header-title span { color: var(--text-primary); }
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+
+        .admin-sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: var(--sidebar-width); background: var(--sidebar-bg);
+            display: flex; flex-direction: column; z-index: 200; overflow-y: auto;
+        }
+        .sidebar-brand {
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+        .sidebar-brand .brand-name {
+            font-size: 1.1rem; font-weight: 800; color: white;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .sidebar-brand .brand-name i { color: var(--red); font-size: 1.2rem; }
+        .sidebar-brand .brand-sub { font-size: .7rem; color: var(--sidebar-text); margin-top: 2px; letter-spacing: .08em; text-transform: uppercase; }
+
+        .sidebar-section-label {
+            padding: 16px 20px 6px;
+            font-size: .65rem; font-weight: 700; color: #475569;
+            text-transform: uppercase; letter-spacing: .1em;
+        }
+        .tab-btn {
+            display: flex; align-items: center; gap: 12px;
+            width: 100%; padding: 11px 20px;
+            background: none; border: none; cursor: pointer;
+            color: var(--sidebar-text); font-size: .875rem; font-weight: 500;
+            font-family: inherit; text-align: left; transition: all .15s;
+            border-left: 3px solid transparent;
+        }
+        .tab-btn i { width: 18px; text-align: center; font-size: .9rem; }
+        .tab-btn:hover { background: var(--sidebar-hover); color: white; }
+        .tab-btn.active { background: rgba(220,38,38,.12); color: white; border-left-color: var(--red); }
+        .tab-btn.active i { color: var(--red); }
+
+        .sidebar-footer {
+            margin-top: auto; padding: 16px 20px;
+            border-top: 1px solid rgba(255,255,255,.06);
+        }
+        .sidebar-footer a {
+            display: flex; align-items: center; gap: 10px;
+            color: var(--sidebar-text); font-size: .8rem; text-decoration: none;
+            padding: 8px 0; transition: color .15s;
+        }
+        .sidebar-footer a:hover { color: white; }
+
+        .admin-content {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            padding: 28px; min-height: calc(100vh - var(--header-height));
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--card-bg); border-radius: var(--radius);
+            border: 1px solid var(--border); box-shadow: var(--shadow);
+        }
+        .card-header {
+            padding: 18px 20px 0; display: flex;
+            align-items: center; justify-content: space-between;
+        }
+        .card-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+        .card-body { padding: 20px; }
+
+        /* ── KPI Cards ── */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card {
+            background: var(--card-bg); border-radius: var(--radius);
+            border: 1px solid var(--border); padding: 20px;
+            box-shadow: var(--shadow); position: relative; overflow: hidden;
+        }
+        .kpi-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px; background: var(--kpi-color, var(--red));
+        }
+        .kpi-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; margin-bottom: 12px;
+            background: var(--kpi-bg, var(--red-light));
+            color: var(--kpi-color, var(--red));
+        }
+        .kpi-value { font-size: 1.8rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
+        .kpi-label { font-size: .75rem; color: var(--text-secondary); margin-top: 4px; font-weight: 500; }
+        .kpi-sub { font-size: .7rem; color: var(--text-muted); margin-top: 6px; }
+
+        /* ── Tables ── */
+        .table-wrap { overflow-x: auto; }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+        .admin-table th {
+            padding: 10px 14px; text-align: left; font-size: .7rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+            color: var(--text-secondary); background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+        .admin-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .admin-table tr:last-child td { border-bottom: none; }
+        .admin-table tr:hover td { background: #fafafa; }
+        .admin-table .rank { font-weight: 800; color: var(--text-muted); font-size: .8rem; }
+
+        /* ── Badges ── */
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 600; }
+        .badge-red { background: var(--red-light); color: var(--red); }
+        .badge-green { background: var(--green-light); color: var(--green); }
+        .badge-orange { background: var(--orange-light); color: var(--orange); }
+        .badge-blue { background: var(--blue-light); color: var(--blue); }
+        .badge-yellow { background: var(--yellow-light); color: var(--yellow); }
+        .badge-purple { background: var(--purple-light); color: var(--purple); }
+        .badge-gray { background: #f1f5f9; color: #64748b; }
+
+        /* ── Progress bar ── */
+        .progress-bar { height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; margin-top: 4px; }
+        .progress-fill { height: 100%; border-radius: 999px; background: var(--red); transition: width .4s; }
+
+        /* ── Section header ── */
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .section-title { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); }
+        .section-sub { font-size: .8rem; color: var(--text-secondary); margin-top: 2px; }
+
+        /* ── Forms ── */
+        .form-card { background: var(--card-bg); border: 1.5px solid var(--red); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; display: none; }
+        .form-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: .75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+        .form-group .form-input, .form-group select, .form-group input[type=date] {
+            width: 100%; padding: 9px 12px; border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); font-size: .875rem; font-family: inherit;
+            background: white; transition: border-color .2s;
+        }
+        .form-group .form-input:focus, .form-group select:focus, .form-group input[type=date]:focus {
+            outline: none; border-color: var(--red);
+        }
+        .form-actions { display: flex; gap: 10px; margin-top: 4px; }
+        .upload-hint { font-size: .72rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* ── Alert ── */
+        .alert { padding: 12px 16px; border-radius: var(--radius-sm); font-size: .875rem; font-weight: 500; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+        .alert-warning { background: var(--orange-light); color: var(--orange); border: 1px solid #fed7aa; }
+        .alert-success { background: var(--green-light); color: var(--green); border: 1px solid #bbf7d0; }
+        .alert-info { background: var(--blue-light); color: var(--blue); border: 1px solid #bfdbfe; }
+
+        /* ── Expiry indicator ── */
+        .expiry-urgent { color: var(--red); font-weight: 700; }
+        .expiry-soon { color: var(--orange); font-weight: 600; }
+        .expiry-ok { color: var(--green); }
+
+        /* ── Thumbnail ── */
+        .thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
+        .thumb-sm { width: 32px; height: 32px; border-radius: 6px; object-fit: contain; border: 1px solid var(--border); background: white; padding: 2px; }
+
+        /* ── Loading ── */
+        .loading { padding: 60px; text-align: center; color: var(--text-muted); }
+        .loading i { font-size: 2rem; margin-bottom: 12px; display: block; }
+
+        /* ── Stat row ── */
+        .stat-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-row-rank { width: 24px; height: 24px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 800; color: var(--text-secondary); flex-shrink: 0; }
+        .stat-row-rank.gold { background: #fef3c7; color: #92400e; }
+        .stat-row-rank.silver { background: #f1f5f9; color: #475569; }
+        .stat-row-rank.bronze { background: #fff7ed; color: #9a3412; }
+        .stat-row-info { flex: 1; min-width: 0; }
+        .stat-row-name { font-size: .875rem; font-weight: 600; truncate: true; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .stat-row-sub { font-size: .72rem; color: var(--text-muted); }
+        .stat-row-value { font-size: .875rem; font-weight: 700; color: var(--text-primary); flex-shrink: 0; }
+
+        /* ── Two-col grid ── */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    </style>
 </head>
 <body>
 
-    <div id="login-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center;">
-        <div style="background:white; padding:40px; border-radius:8px; text-align:center; width: 350px;">
-            <h2 style="margin-bottom: 20px;"><i class="fa-solid fa-lock"></i> Admin Login</h2>
-            <input type="text" id="login-user" placeholder="Username" style="margin:10px 0; padding:10px; width:100%; box-sizing: border-box;"><br>
-            <input type="password" id="login-pass" placeholder="Password" style="margin:10px 0; padding:10px; width:100%; box-sizing: border-box;"><br>
-            <button onclick="admin.login()" class="action-btn" style="width:100%; margin-top:10px; background:#27ae60;">Login</button>
-            <p id="login-error" style="color:#e74c3c; display:none; margin-top:15px; font-weight: bold;">Invalid Credentials</p>
+<!-- Login Modal -->
+<div id="login-modal" style="display:none;">
+    <div class="login-box">
+        <div class="login-logo">
+            <i class="fa-solid fa-tags"></i>
         </div>
+        <h2>DealNamaa Admin</h2>
+        <p>Sign in to manage your platform</p>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="login-user" class="form-input" placeholder="Enter username" autocomplete="username">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="login-pass" class="form-input" placeholder="Enter password" autocomplete="current-password"
+                onkeydown="if(event.key==='Enter') admin.login()">
+        </div>
+        <button onclick="admin.login()" class="btn btn-primary btn-full">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign In
+        </button>
+        <p id="login-error">Invalid credentials. Please try again.</p>
+    </div>
+</div>
+
+<!-- Sidebar -->
+<aside class="admin-sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-name"><i class="fa-solid fa-tags"></i> DealNamaa</div>
+        <div class="brand-sub">Admin Dashboard</div>
     </div>
 
-    <header class="app-header">
-        <div class="logo">
-            <i class="fa-solid fa-shield-halved"></i> DealNamaa Admin
-        </div>
-        <div class="header-actions">
-            <button onclick="admin.logout()" class="admin-btn" style="background: #e74c3c; border-color: #c0392b; margin-right: 10px;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-            <a href="http://localhost:3001" target="_blank" class="admin-btn"><i class="fa-solid fa-globe"></i> View Website</a>
-        </div>
-    </header>
+    <div class="sidebar-section-label">Overview</div>
+    <button class="tab-btn active" onclick="admin.showTab('stats', event)">
+        <i class="fa-solid fa-chart-line"></i> Dashboard
+    </button>
 
-    <div class="admin-container">
-        <aside class="admin-sidebar">
-            <button class="tab-btn active" onclick="admin.showTab('countries', event)"><i class="fa-solid fa-flag"></i> Manage Countries</button>
-            <button class="tab-btn" onclick="admin.showTab('cities', event)"><i class="fa-solid fa-city"></i> Manage Cities</button>
-            <button class="tab-btn" onclick="admin.showTab('retailers', event)"><i class="fa-solid fa-store"></i> Manage Retailers</button>
-            <button class="tab-btn" onclick="admin.showTab('offers', event)"><i class="fa-solid fa-tags"></i> Manage Offers & PDFs</button>
-            <button class="tab-btn" onclick="admin.showTab('stats', event)"><i class="fa-solid fa-chart-line"></i> Statistics</button>
-        </aside>
+    <div class="sidebar-section-label">Content</div>
+    <button class="tab-btn" onclick="admin.showTab('countries', event)">
+        <i class="fa-solid fa-globe"></i> Countries
+    </button>
+    <button class="tab-btn" onclick="admin.showTab('cities', event)">
+        <i class="fa-solid fa-city"></i> Cities
+    </button>
+    <button class="tab-btn" onclick="admin.showTab('retailers', event)">
+        <i class="fa-solid fa-store"></i> Retailers
+    </button>
+    <button class="tab-btn" onclick="admin.showTab('offers', event)">
+        <i class="fa-solid fa-tags"></i> Offers &amp; PDFs
+    </button>
 
-        <main class="admin-content" id="admin-main">
-            <!-- Admin content injected here -->
-        </main>
+    <div class="sidebar-section-label">Insights</div>
+    <button class="tab-btn" onclick="admin.showTab('feedback', event)">
+        <i class="fa-solid fa-comments"></i> Feedback
+    </button>
+
+    <div class="sidebar-section-label">System</div>
+    <button class="tab-btn" onclick="admin.showTab('settings', event)">
+        <i class="fa-solid fa-gear"></i> Site Settings
+    </button>
+
+    <div class="sidebar-footer">
+        <a href="http://localhost:3001" target="_blank">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> View Live Website
+        </a>
+        <a href="#" onclick="admin.logout(); return false;" style="color:#f87171;">
+            <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+        </a>
     </div>
+</aside>
 
-    <!-- Scripts -->
-    <!-- Load the database so admin panel can read it -->
-    <script src="data.js"></script>
-    <script src="admin.js"></script>
+<!-- Header -->
+<header class="app-header">
+    <div class="header-title">
+        <span id="header-tab-name">Dashboard</span>
+    </div>
+    <div class="header-actions">
+        <a href="http://localhost:3001" target="_blank" class="btn btn-secondary" style="font-size:.8rem;">
+            <i class="fa-solid fa-globe"></i> Live Site
+        </a>
+        <button onclick="admin.logout()" class="btn btn-danger" style="font-size:.8rem;">
+            <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="admin-content" id="admin-main">
+    <div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>
+</main>
+
+<script src="data.js"></script>
+<script src="admin.js"></script>
 </body>
 </html>

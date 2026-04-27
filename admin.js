@@ -81,6 +81,9 @@ const admin = {
                 case 'stats':
                     html = await this.renderStats();
                     break;
+                case 'settings':
+                    html = await this.renderSettings();
+                    break;
                 case 'feedback':
                     html = await this.renderFeedback();
                     break;
@@ -370,8 +373,51 @@ const admin = {
         const offers = await api.getAllOffers();
         const retailers = await api.getAllRetailers();
         
-        let rows = offers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${o.validFrom ? new Date(o.validFrom).toISOString().split('T')[0] : ''} to ${o.validUntil ? new Date(o.validUntil).toISOString().split('T')[0] : ''}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
+        // Separate active and expired offers
+        const now = new Date();
+        const activeOffers = offers.filter(o => new Date(o.validUntil) >= now);
+        const expiredOffers = offers.filter(o => new Date(o.validUntil) < now);
+        
+        let rows = activeOffers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${o.validFrom ? new Date(o.validFrom).toISOString().split('T')[0] : ''} to ${o.validUntil ? new Date(o.validUntil).toISOString().split('T')[0] : ''}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
         let retailerOptions = retailers.map(r => `<option value="${r.id}">${r.name} (${r.cityId})</option>`).join('');
+
+        let expiredSection = '';
+        if (expiredOffers.length > 0) {
+            let expiredRows = expiredOffers.map(o => `
+                <tr style="background:#fff7ed;">
+                    <td><input type="checkbox" class="expired-offer-checkbox" data-offer-id="${o.id || o._id}" data-pdf="${o.pdfUrl || ''}" data-image="${o.image || ''}"></td>
+                    <td>${o.title}</td>
+                    <td>${o.retailerId.toUpperCase()}</td>
+                    <td style="color:#ea580c; font-weight:600;">Expired ${Math.floor((now - new Date(o.validUntil)) / (1000 * 60 * 60 * 24))} days ago</td>
+                    <td><button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td>
+                </tr>
+            `).join('');
+            
+            expiredSection = `
+                <div style="margin-top:30px; padding:20px; background:#fff7ed; border:2px solid #ea580c; border-radius:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="color:#ea580c; margin:0;"><i class="fa-solid fa-clock"></i> Expired Offers (${expiredOffers.length})</h3>
+                        <div>
+                            <button class="action-btn" style="background:#ea580c;" onclick="admin.selectAllExpired()">Select All</button>
+                            <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="admin.deleteSelectedExpired()"><i class="fa-solid fa-trash"></i> Delete Selected</button>
+                        </div>
+                    </div>
+                    <p style="color:#9a3412; font-size:0.9em; margin-bottom:15px;">⚠️ Deleting expired offers will permanently remove them and their associated files from storage.</p>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;"><input type="checkbox" id="select-all-expired" onclick="admin.toggleAllExpired(this)"></th>
+                                <th>Title</th>
+                                <th>Retailer</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>${expiredRows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
 
         return `
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -410,7 +456,10 @@ const admin = {
                 </div>
             </div>
             
-            <table class="admin-table" style="margin-top:20px;"><thead><tr><th>Title</th><th>Retailer</th><th>Validity</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+            <h3 style="margin-top:30px;">Active Offers (${activeOffers.length})</h3>
+            <table class="admin-table" style="margin-top:10px;"><thead><tr><th>Title</th><th>Retailer</th><th>Validity</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No active offers</td></tr>'}</tbody></table>
+            
+            ${expiredSection}
         `;
     },
 
@@ -541,28 +590,345 @@ const admin = {
     renderStats: async function() {
         try {
             const stats = await api.getStats();
-            let topRetHtml = stats.topRetailers.map(r => `<li>${r.name} - <b>${r.clicks} clicks</b></li>`).join('');
-            let topOffHtml = stats.topOffers.map(o => `<li>${o.title} - <b>${o.clicks} clicks</b></li>`).join('');
+            
+            // Format numbers with safe defaults
+            const formatNum = (n) => (n || 0).toLocaleString();
+            const formatTime = (seconds) => {
+                if (seconds < 60) return `${seconds}s`;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}m ${secs}s`;
+            };
+            
+            // Top retailers HTML
+            let topRetHtml = (stats.topRetailers || []).slice(0, 5).map((r, i) => `
+                <div class="stat-row">
+                    <div class="stat-row-rank ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}">${i + 1}</div>
+                    <div class="stat-row-info">
+                        <div class="stat-row-name">${r.name}</div>
+                        <div class="stat-row-sub">${r.category || 'General'}</div>
+                    </div>
+                    <div class="stat-row-value">${formatNum(r.clicks)} clicks</div>
+                </div>
+            `).join('');
+            
+            // Top offers HTML
+            let topOffHtml = (stats.topOffers || []).slice(0, 5).map((o, i) => `
+                <div class="stat-row">
+                    <div class="stat-row-rank ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}">${i + 1}</div>
+                    <div class="stat-row-info">
+                        <div class="stat-row-name">${o.title}</div>
+                        <div class="stat-row-sub">${o.retailerId.toUpperCase()}</div>
+                    </div>
+                    <div class="stat-row-value">${formatNum(o.clicks)} clicks</div>
+                </div>
+            `).join('');
+            
+            // Top countries HTML
+            let topCountriesHtml = (stats.topCountries || []).slice(0, 5).map((c, i) => `
+                <div class="stat-row">
+                    <div class="stat-row-rank ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}">${i + 1}</div>
+                    <div class="stat-row-info">
+                        <div class="stat-row-name">${c.name}</div>
+                        <div class="stat-row-sub">${c.id.toUpperCase()}</div>
+                    </div>
+                    <div class="stat-row-value">${formatNum(c.visits)} visits</div>
+                </div>
+            `).join('');
+            
+            // Top cities HTML
+            let topCitiesHtml = (stats.topCities || []).slice(0, 5).map((c, i) => `
+                <div class="stat-row">
+                    <div class="stat-row-rank ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}">${i + 1}</div>
+                    <div class="stat-row-info">
+                        <div class="stat-row-name">${c.name}</div>
+                        <div class="stat-row-sub">${c.countryId.toUpperCase()}</div>
+                    </div>
+                    <div class="stat-row-value">${formatNum(c.visits)} visits</div>
+                </div>
+            `).join('');
+            
+            // PDF engagement HTML
+            let pdfEngagementHtml = (stats.offersWithPDFViews || []).slice(0, 5).map((o, i) => `
+                <div class="stat-row">
+                    <div class="stat-row-rank">${i + 1}</div>
+                    <div class="stat-row-info">
+                        <div class="stat-row-name">${o.title}</div>
+                        <div class="stat-row-sub">Max page: ${o.maxPagesViewed}</div>
+                    </div>
+                    <div class="stat-row-value">${formatTime(o.totalTimeSeconds || 0)}</div>
+                </div>
+            `).join('');
+            
+            // Category performance HTML
+            let categoryHtml = (stats.offersByCategory || []).slice(0, 5).map((cat, i) => `
+                <div class="stat-row">
+                    <div class="stat-row-rank">${i + 1}</div>
+                    <div class="stat-row-info">
+                        <div class="stat-row-name">${cat._id || 'Uncategorized'}</div>
+                        <div class="stat-row-sub">${cat.count} offers</div>
+                    </div>
+                    <div class="stat-row-value">${formatNum(cat.totalClicks)} clicks</div>
+                </div>
+            `).join('');
             
             return `
-                <h2>Platform Statistics</h2>
-                <div style="background:#2c3e50; color:white; padding:20px; border-radius:8px; margin-bottom:20px; display:inline-block;">
-                    <h3 style="margin-bottom:5px;">Total Website Visits</h3>
-                    <h1 style="font-size:3rem; color:#27ae60;">${stats.visits}</h1>
+                <h2>Marketing Analytics Dashboard</h2>
+                <p style="color:#64748b; margin-bottom:24px;">Comprehensive insights to optimize your platform performance</p>
+                
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card" style="--kpi-color:#dc2626; --kpi-bg:#fef2f2;">
+                        <div class="kpi-icon"><i class="fa-solid fa-eye"></i></div>
+                        <div class="kpi-value">${formatNum(stats.visits || 0)}</div>
+                        <div class="kpi-label">Total Visits</div>
+                        <div class="kpi-sub">All-time website traffic</div>
+                    </div>
+                    
+                    <div class="kpi-card" style="--kpi-color:#16a34a; --kpi-bg:#f0fdf4;">
+                        <div class="kpi-icon"><i class="fa-solid fa-tags"></i></div>
+                        <div class="kpi-value">${formatNum((stats.totals || {}).activeOffers || 0)}</div>
+                        <div class="kpi-label">Active Offers</div>
+                        <div class="kpi-sub">+${(stats.totals || {}).offersAddedLast7Days || 0} this week</div>
+                    </div>
+                    
+                    <div class="kpi-card" style="--kpi-color:#2563eb; --kpi-bg:#eff6ff;">
+                        <div class="kpi-icon"><i class="fa-solid fa-percentage"></i></div>
+                        <div class="kpi-value">${stats.conversionRate || 0}%</div>
+                        <div class="kpi-label">Conversion Rate</div>
+                        <div class="kpi-sub">${formatNum(stats.offersWithClicks || 0)} offers clicked</div>
+                    </div>
+                    
+                    <div class="kpi-card" style="--kpi-color:#ea580c; --kpi-bg:#fff7ed;">
+                        <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+                        <div class="kpi-value">${formatTime(stats.avgEngagementTime || 0)}</div>
+                        <div class="kpi-label">Avg. Engagement</div>
+                        <div class="kpi-sub">Time spent per offer</div>
+                    </div>
+                    
+                    <div class="kpi-card" style="--kpi-color:#7c3aed; --kpi-bg:#f5f3ff;">
+                        <div class="kpi-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                        <div class="kpi-value">${stats.avgPagesViewed || 0}</div>
+                        <div class="kpi-label">Avg. Pages Viewed</div>
+                        <div class="kpi-sub">PDF engagement depth</div>
+                    </div>
+                    
+                    <div class="kpi-card" style="--kpi-color:#ca8a04; --kpi-bg:#fefce8;">
+                        <div class="kpi-icon"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="kpi-value">+${(stats.totals || {}).offersAddedLast30Days || 0}</div>
+                        <div class="kpi-label">Monthly Growth</div>
+                        <div class="kpi-sub">New offers added</div>
+                    </div>
                 </div>
                 
-                <div style="display:flex; gap:20px;">
-                    <div style="flex:1; background:#f9f9f9; padding:20px; border-radius:8px; border:1px solid #ddd;">
-                        <h3>Top Clicked Retailers</h3>
-                        <ul style="margin-top:10px; padding-left:20px; line-height:1.8;">${topRetHtml || '<li>No data yet</li>'}</ul>
+                <!-- Geographic Performance -->
+                <div class="card" style="margin-top:24px;">
+                    <div class="card-header">
+                        <h3 style="font-size:1.1rem; font-weight:700; color:#0f172a;">
+                            <i class="fa-solid fa-globe" style="color:#2563eb;"></i> Geographic Performance
+                        </h3>
                     </div>
-                    <div style="flex:1; background:#f9f9f9; padding:20px; border-radius:8px; border:1px solid #ddd;">
-                        <h3>Top Clicked Offers</h3>
-                        <ul style="margin-top:10px; padding-left:20px; line-height:1.8;">${topOffHtml || '<li>No data yet</li>'}</ul>
+                    <div class="card-body">
+                        <div class="grid-2">
+                            <div>
+                                <h4 style="font-size:0.9rem; font-weight:600; color:#64748b; margin-bottom:12px;">Top Countries by Visits</h4>
+                                ${topCountriesHtml || '<p style="color:#94a3b8; text-align:center; padding:20px;">No data yet</p>'}
+                            </div>
+                            <div>
+                                <h4 style="font-size:0.9rem; font-weight:600; color:#64748b; margin-bottom:12px;">Top Cities by Visits</h4>
+                                ${topCitiesHtml || '<p style="color:#94a3b8; text-align:center; padding:20px;">No data yet</p>'}
+                            </div>
+                        </div>
+                        <div style="margin-top:20px; padding:16px; background:#eff6ff; border-radius:8px; border:1px solid #bfdbfe;">
+                            <p style="font-size:0.85rem; color:#1e40af; margin:0;">
+                                <i class="fa-solid fa-lightbulb"></i> <strong>Insight:</strong> 
+                                ${stats.topCountryName || 'N/A'} is your most visited region. Consider adding more retailers from this area.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Top Performers -->
+                <div class="grid-2" style="margin-top:24px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 style="font-size:1rem; font-weight:700; color:#0f172a;">
+                                <i class="fa-solid fa-store" style="color:#16a34a;"></i> Top Retailers
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            ${topRetHtml || '<p style="color:#94a3b8; text-align:center; padding:20px;">No data yet</p>'}
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 style="font-size:1rem; font-weight:700; color:#0f172a;">
+                                <i class="fa-solid fa-fire" style="color:#dc2626;"></i> Top Offers
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            ${topOffHtml || '<p style="color:#94a3b8; text-align:center; padding:20px;">No data yet</p>'}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PDF Engagement -->
+                <div class="card" style="margin-top:24px;">
+                    <div class="card-header">
+                        <h3 style="font-size:1.1rem; font-weight:700; color:#0f172a;">
+                            <i class="fa-solid fa-file-pdf" style="color:#7c3aed;"></i> PDF Engagement Analytics
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px;">
+                            <div style="text-align:center; padding:16px; background:#f5f3ff; border-radius:8px;">
+                                <div style="font-size:2rem; font-weight:800; color:#7c3aed;">${stats.avgPagesViewed || 0}</div>
+                                <div style="font-size:0.8rem; color:#6b21a8; margin-top:4px;">Avg Pages Viewed</div>
+                            </div>
+                            <div style="text-align:center; padding:16px; background:#fef2f2; border-radius:8px;">
+                                <div style="font-size:2rem; font-weight:800; color:#dc2626;">${(stats.offersWithPDFViews || []).length}</div>
+                                <div style="font-size:0.8rem; color:#991b1b; margin-top:4px;">PDFs with Views</div>
+                            </div>
+                            <div style="text-align:center; padding:16px; background:#f0fdf4; border-radius:8px;">
+                                <div style="font-size:2rem; font-weight:800; color:#16a34a;">${formatTime(stats.avgEngagementTime || 0)}</div>
+                                <div style="font-size:0.8rem; color:#15803d; margin-top:4px;">Avg Time Spent</div>
+                            </div>
+                        </div>
+                        <h4 style="font-size:0.9rem; font-weight:600; color:#64748b; margin-bottom:12px;">Most Engaged PDFs</h4>
+                        ${pdfEngagementHtml || '<p style="color:#94a3b8; text-align:center; padding:20px;">No PDF views yet</p>'}
+                    </div>
+                </div>
+                
+                <!-- Category Performance -->
+                <div class="card" style="margin-top:24px;">
+                    <div class="card-header">
+                        <h3 style="font-size:1.1rem; font-weight:700; color:#0f172a;">
+                            <i class="fa-solid fa-layer-group" style="color:#ea580c;"></i> Category Performance
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        ${categoryHtml || '<p style="color:#94a3b8; text-align:center; padding:20px;">No categories yet</p>'}
+                        <div style="margin-top:20px; padding:16px; background:#fff7ed; border-radius:8px; border:1px solid #fed7aa;">
+                            <p style="font-size:0.85rem; color:#9a3412; margin:0;">
+                                <i class="fa-solid fa-chart-bar"></i> <strong>Tip:</strong> 
+                                Focus marketing efforts on top-performing categories to maximize ROI.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conversion Insights -->
+                <div class="card" style="margin-top:24px;">
+                    <div class="card-header">
+                        <h3 style="font-size:1.1rem; font-weight:700; color:#0f172a;">
+                            <i class="fa-solid fa-bullseye" style="color:#16a34a;"></i> Conversion Insights
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:16px;">
+                            <div style="padding:20px; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
+                                <div style="font-size:2.5rem; font-weight:800; color:#16a34a;">${stats.conversionRate || 0}%</div>
+                                <div style="font-size:0.9rem; color:#15803d; margin-top:4px; font-weight:600;">Overall Conversion Rate</div>
+                                <div style="font-size:0.75rem; color:#4ade80; margin-top:8px;">
+                                    ${formatNum(stats.offersWithClicks || 0)} of ${formatNum((stats.totals || {}).activeOffers || 0)} offers have clicks
+                                </div>
+                            </div>
+                            <div style="padding:20px; background:#fef2f2; border-radius:8px; border:1px solid #fecaca; text-align:center;">
+                                <div style="font-size:2rem; font-weight:800; color:#dc2626;">${formatNum(stats.offersWithoutClicks || 0)}</div>
+                                <div style="font-size:0.8rem; color:#991b1b; margin-top:4px;">Zero Clicks</div>
+                            </div>
+                            <div style="padding:20px; background:#eff6ff; border-radius:8px; border:1px solid #bfdbfe; text-align:center;">
+                                <div style="font-size:2rem; font-weight:800; color:#2563eb;">${stats.expiringIn30 || 0}</div>
+                                <div style="font-size:0.8rem; color:#1e40af; margin-top:4px;">Expiring Soon</div>
+                            </div>
+                        </div>
+                        <div style="margin-top:20px; padding:16px; background:#fef2f2; border-radius:8px; border:1px solid #fecaca;">
+                            <p style="font-size:0.85rem; color:#991b1b; margin:0;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Action Required:</strong> 
+                                ${formatNum(stats.offersWithoutClicks || 0)} offers have zero engagement. Consider improving titles, images, or removing them.
+                            </p>
+                        </div>
                     </div>
                 </div>
             `;
-        } catch(e) { return `<p>Error loading stats</p>`; }
+        } catch(e) {
+            console.error('Stats render error:', e);
+            return `<p style="color:#dc2626;">Error loading stats: ${e.message}</p>`;
+        }
+    },
+
+    renderSettings: async function() {
+        let s = {};
+        try {
+            const res = await fetch('/api/settings');
+            if (res.ok) s = await res.json();
+        } catch(e) {}
+
+        return `
+            <h2>Site Settings</h2>
+            <p style="color:#7f8c8d; margin-bottom:20px;">These settings are saved to the database and applied to the live website immediately.</p>
+
+            <div style="background:#f9f9f9; padding:24px; border-radius:8px; border:1px solid #ddd; max-width:600px;">
+
+                <h3 style="margin-bottom:16px;"><i class="fa-brands fa-google" style="color:#4285F4;"></i> Google Analytics</h3>
+                <label style="font-size:0.85em; font-weight:bold;">Google Analytics Measurement ID</label>
+                <input type="text" id="s-ga-id" value="${s.gaId || ''}" placeholder="e.g. G-XXXXXXXXXX"
+                    style="width:100%; padding:8px; margin:6px 0 4px; box-sizing:border-box;">
+                <p style="font-size:0.78em; color:#7f8c8d; margin-bottom:20px;">Leave blank to disable Google Analytics. Get your ID from <a href="https://analytics.google.com" target="_blank">analytics.google.com</a>.</p>
+
+                <h3 style="margin-bottom:16px;"><i class="fa-solid fa-share-nodes" style="color:#e74c3c;"></i> Social Media Links</h3>
+                <label style="font-size:0.85em; font-weight:bold;">Facebook Page URL</label>
+                <input type="url" id="s-facebook" value="${s.facebookUrl || ''}" placeholder="https://facebook.com/yourpage"
+                    style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
+
+                <label style="font-size:0.85em; font-weight:bold;">Twitter / X Profile URL</label>
+                <input type="url" id="s-twitter" value="${s.twitterUrl || ''}" placeholder="https://twitter.com/yourhandle"
+                    style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
+
+                <label style="font-size:0.85em; font-weight:bold;">Instagram Profile URL</label>
+                <input type="url" id="s-instagram" value="${s.instagramUrl || ''}" placeholder="https://instagram.com/yourhandle"
+                    style="width:100%; padding:8px; margin:6px 0 20px; box-sizing:border-box;">
+
+                <h3 style="margin-bottom:16px;"><i class="fa-solid fa-comment" style="color:#27ae60;"></i> Feedback Page</h3>
+                <label style="font-size:0.85em; font-weight:bold;">Feedback Page URL</label>
+                <input type="text" id="s-feedback" value="${s.feedbackUrl || '/feedback'}" placeholder="/feedback or https://forms.google.com/..."
+                    style="width:100%; padding:8px; margin:6px 0 4px; box-sizing:border-box;">
+                <p style="font-size:0.78em; color:#7f8c8d; margin-bottom:20px;">Can be an internal path (e.g. /feedback) or an external URL like a Google Form.</p>
+
+                <button class="action-btn" style="background:#27ae60; width:100%; padding:12px; font-size:1em;" onclick="admin.saveSettings()">Save Settings</button>
+                <p id="settings-msg" style="display:none; margin-top:12px; text-align:center; font-weight:bold;"></p>
+            </div>
+        `;
+    },
+
+    saveSettings: async function() {
+        const payload = {
+            gaId: document.getElementById('s-ga-id').value.trim(),
+            facebookUrl: document.getElementById('s-facebook').value.trim(),
+            twitterUrl: document.getElementById('s-twitter').value.trim(),
+            instagramUrl: document.getElementById('s-instagram').value.trim(),
+            feedbackUrl: document.getElementById('s-feedback').value.trim() || '/feedback',
+        };
+        try {
+            const res = await fetch('/api/admin/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                body: JSON.stringify(payload)
+            });
+            const msg = document.getElementById('settings-msg');
+            if (res.ok) {
+                msg.style.display = 'block';
+                msg.style.color = '#27ae60';
+                msg.innerText = '✅ Settings saved successfully! Changes will appear on the website within 5 minutes.';
+            } else {
+                msg.style.display = 'block';
+                msg.style.color = '#e74c3c';
+                msg.innerText = '❌ Failed to save settings. Please try again.';
+            }
+        } catch(e) {
+            alert('Error saving settings: ' + e.message);
+        }
     },
 
     renderFeedback: async function() {
@@ -623,6 +989,50 @@ const admin = {
             alert('Offer deleted successfully!');
             this.showTab('offers');
         } catch(e) { alert('Error deleting offer: ' + e.message); }
+    },
+
+    toggleAllExpired: function(checkbox) {
+        document.querySelectorAll('.expired-offer-checkbox').forEach(cb => cb.checked = checkbox.checked);
+    },
+
+    selectAllExpired: function() {
+        document.querySelectorAll('.expired-offer-checkbox').forEach(cb => cb.checked = true);
+        document.getElementById('select-all-expired').checked = true;
+    },
+
+    deleteSelectedExpired: async function() {
+        const checkboxes = document.querySelectorAll('.expired-offer-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('Please select at least one expired offer to delete.');
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to permanently delete ${checkboxes.length} expired offer(s) and their files?\n\nThis action cannot be undone!`)) {
+            return;
+        }
+
+        const offerIds = Array.from(checkboxes).map(cb => cb.dataset.offerId);
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const offerId of offerIds) {
+            try {
+                const res = await fetch(`/api/admin/offers/${offerId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+                });
+                if (res.ok) {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+            } catch (e) {
+                failCount++;
+            }
+        }
+
+        alert(`Cleanup complete!\n✅ Deleted: ${successCount}\n❌ Failed: ${failCount}`);
+        this.showTab('offers');
     }
 };
 

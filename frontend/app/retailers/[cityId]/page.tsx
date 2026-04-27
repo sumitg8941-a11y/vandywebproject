@@ -5,20 +5,20 @@ import Breadcrumbs from '../../Breadcrumbs';
 
 async function getRetailers(cityId: string) {
   try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const apiBaseUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
     const [retailers, offerCounts] = await Promise.all([
       fetch(`${apiBaseUrl}/api/retailers/${cityId}`, { cache: 'no-store' }).then(r => r.json()),
       fetch(`${apiBaseUrl}/api/offer-counts`, { cache: 'no-store' }).then(r => r.json()),
     ]);
     return retailers.map((r: any) => ({ ...r, offerCount: offerCounts[r.id] || 0 }));
-  } catch (error) {
+  } catch {
     return [];
   }
 }
 
 async function getCity(cityId: string) {
   try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const apiBaseUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
     const res = await fetch(`${apiBaseUrl}/api/breadcrumbs/city/${cityId}`, { cache: 'no-store' });
     const data = await res.json();
     return data.city || null;
@@ -27,9 +27,9 @@ async function getCity(cityId: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { cityId: string } }): Promise<Metadata> {
-  const resolvedParams = await Promise.resolve(params);
-  const city = await getCity(resolvedParams.cityId);
+export async function generateMetadata({ params }: { params: Promise<{ cityId: string }> }): Promise<Metadata> {
+  const { cityId } = await params;
+  const city = await getCity(cityId);
   const name = city?.name || 'City';
   return {
     title: `Retailers in ${name}`,
@@ -41,9 +41,9 @@ export async function generateMetadata({ params }: { params: { cityId: string } 
   };
 }
 
-export default async function RetailersPage({ params }: { params: { cityId: string } }) {
-  const resolvedParams = await Promise.resolve(params);
-  const retailers = await getRetailers(resolvedParams.cityId);
+export default async function RetailersPage({ params }: { params: Promise<{ cityId: string }> }) {
+  const { cityId } = await params;
+  const retailers = await getRetailers(cityId);
 
   return (
     <div>
@@ -61,7 +61,7 @@ export default async function RetailersPage({ params }: { params: { cityId: stri
       </div>
 
       <div className="max-w-6xl mx-auto p-6 mt-4">
-        <Breadcrumbs type="city" id={resolvedParams.cityId} />
+        <Breadcrumbs type="city" id={cityId} />
       </div>
 
       {/* Retailers Grid */}
@@ -71,7 +71,7 @@ export default async function RetailersPage({ params }: { params: { cityId: stri
         {retailers.length === 0 ? (
           <div className="text-center p-10 bg-yellow-100 text-yellow-800 rounded-lg">
             <h2 className="text-2xl font-bold"><i className="fa-solid fa-triangle-exclamation"></i> No Retailers Found</h2>
-            <p>We couldn't find any retailers for this city. Please check back later.</p>
+            <p>We couldn&apos;t find any retailers for this city. Please check back later.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">

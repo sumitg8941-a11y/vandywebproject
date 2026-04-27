@@ -1,142 +1,197 @@
 # Project Structure
 
-## Architecture Overview
-DealNamaa follows a monorepo structure with a Node.js/Express backend and a Next.js frontend, both sharing the same workspace root.
-
-## Directory Structure
+## Root Layout
 
 ```
 VandanaProject/
-├── frontend/                    # Next.js 16 frontend application
-│   ├── app/                     # Next.js App Router pages
-│   │   ├── about/              # About page
-│   │   ├── admin/              # Admin dashboard
-│   │   ├── cities/             # City listing pages
-│   │   ├── contact/            # Contact page
-│   │   ├── offers/             # Offer detail pages
-│   │   ├── privacy/            # Privacy policy
-│   │   ├── retailers/          # Retailer pages
-│   │   ├── search/             # Search results
-│   │   ├── terms/              # Terms of service
-│   │   ├── view/               # Offer viewer
-│   │   ├── Breadcrumbs.tsx     # Navigation breadcrumbs component
-│   │   ├── SearchBar.tsx       # Global search component
-│   │   ├── layout.tsx          # Root layout
-│   │   ├── page.tsx            # Homepage
-│   │   └── globals.css         # Global styles
-│   ├── public/                 # Static assets
-│   ├── .next/                  # Next.js build output
-│   ├── next.config.ts          # Next.js configuration
-│   ├── tsconfig.json           # TypeScript configuration
-│   ├── package.json            # Frontend dependencies
-│   └── README.md               # Frontend documentation
+├── server.js              # Express backend — single entry point, all API routes
+├── admin.html             # Admin dashboard UI (vanilla HTML/CSS/JS)
+├── admin.js               # Admin dashboard client logic
+├── data.js                # API client helpers + seed data constants (used by admin.js)
+├── .env                   # Environment variables (never commit)
+├── package.json           # Backend dependencies and scripts
 │
-├── uploads/                    # User-uploaded files (PDFs, images)
+├── Mongoose Models (root level, CommonJS)
+│   ├── Country.js
+│   ├── State.js
+│   ├── City.js
+│   ├── Retailer.js
+│   ├── Offer.js
+│   ├── Feedback.js
+│   ├── SiteStat.js
+│   └── SiteSettings.js
 │
-├── .amazonq/                   # Amazon Q configuration
-│   └── rules/
-│       └── memory-bank/        # Project documentation
+├── uploads/               # User-uploaded files (PDFs, images) — served at /uploads/*
 │
-├── server.js                   # Main Express server entry point
-├── app.js                      # Empty (legacy)
+├── frontend/              # Next.js 16 frontend (separate process, port 3001)
+│   ├── app/               # App Router pages and components
+│   ├── public/            # Static assets (SVGs only — sitemap/robots are dynamic)
+│   ├── .env.local         # Frontend env vars
+│   ├── next.config.ts     # Next.js config (image domains, rewrites)
+│   └── package.json       # Frontend dependencies
 │
-├── Country.js                  # Country model (Mongoose schema)
-├── State.js                    # State model
-├── City.js                     # City model
-├── Retailer.js                 # Retailer model
-├── Offer.js                    # Offer model
-├── SiteStat.js                 # Site statistics model
-├── Feedback.js                 # User feedback model
+├── tmpsrc/                # DEAD CODE — abandoned TypeScript rewrite, never wired in
 │
-├── data.js                     # Data seeding utilities
-├── seed.js                     # Database seeding script
-├── download_and_seed.js        # Download and seed automation
-├── scraper.js                  # Web scraping utilities
-├── deploy.js                   # Deployment script
-│
-├── admin.html                  # Admin dashboard interface
-├── admin.js                    # Admin dashboard logic
-│
-├── .env                        # Environment variables
-├── package.json                # Backend dependencies
-└── .gitignore                  # Git ignore rules
+└── .amazonq/rules/memory-bank/   # Project documentation
 ```
 
-## Core Components
+## Backend Structure (`server.js`)
 
-### Backend (Express API)
-- **server.js**: Main application server with all API routes
-- **Database Models**: Mongoose schemas for data entities
-- **Middleware**: Security (Helmet, CORS), rate limiting, JWT authentication
-- **File Uploads**: Multer-based file handling for offer materials
-- **Admin Interface**: admin.html and admin.js provide web-based management dashboard
+Single-file Express server. All routes are defined inline in this order:
 
-### Frontend (Next.js)
-- **App Router**: File-based routing with React Server Components
-- **Pages**: Dynamic routes for geographic navigation and content display
-- **Components**: Reusable UI elements (SearchBar, Breadcrumbs)
-- **Styling**: Tailwind CSS v4 with PostCSS
+1. Security middleware (helmet, cors, rate-limit)
+2. `verifyAdmin` middleware (JWT check — defined early, used by protected routes)
+3. MongoDB connection
+4. Static file serving (ONLY `/uploads`, `admin.html`, `admin.js`)
+5. Model imports
+6. Public API routes
+7. Admin-protected API routes
+8. Upload routes (multer)
+9. CRUD routes
+10. Error handler + server start
 
-### Data Layer
-- **MongoDB**: Primary database via Mongoose ODM
-- **Models**: Country → State → City → Retailer → Offer hierarchy
-- **Analytics**: SiteStat and Feedback collections
+### API Route Groups
 
-## Architectural Patterns
+| Prefix | Auth | Purpose |
+|--------|------|---------|
+| `GET /api/health` | None | Health check |
+| `GET /api/countries` | None | List countries |
+| `GET /api/regions/:countryId` | None | States or cities for a country |
+| `GET /api/cities/:countryId` | None | Cities for a country |
+| `GET /api/retailers/:cityId` | None | Retailers for a city (supports `?limit=N&sort=clicks`) |
+| `GET /api/retailers` | None | All retailers (supports `?limit=N&sort=clicks`) |
+| `GET /api/retailer/:id` | None | Single retailer |
+| `GET /api/offer/:id` | None | Single offer |
+| `GET /api/offers/:retailerId` | None | Offers for retailer (active only, `?includeExpired=true` to bypass) |
+| `GET /api/offers` | None | All offers (`?limit=N`, `?includeExpired=true`) |
+| `GET /api/offers/expiring-soon` | None | Offers expiring within 7 days |
+| `GET /api/offer-counts` | None | Active offer count per retailer (map: `{retailerId: count}`) |
+| `GET /api/search` | None | Full-text search with filters |
+| `GET /api/search/filters` | None | Available filter options |
+| `GET /api/breadcrumbs/:type/:id` | None | Breadcrumb hierarchy (type: city/state/retailer/offer) |
+| `GET /api/settings` | None | Public site settings (GA ID, social URLs) |
+| `POST /api/offer/:id/like` | None | Increment likes |
+| `POST /api/offer/:id/dislike` | None | Increment dislikes |
+| `GET /api/redirect/offer/:id` | None | Tracked outbound redirect with UTM params |
+| `POST /api/track/visit` | None | Increment global visit counter |
+| `POST /api/track/retailer/:id` | None | Increment retailer click counter |
+| `POST /api/track/offer/:id` | None | Increment offer click counter |
+| `POST /api/track/offer-stats/:id` | None | Record time spent + max page |
+| `GET /api/stats` | None | Rich stats dashboard data |
+| `POST /api/admin/login` | None | Returns JWT token |
+| `PUT /api/admin/settings` | JWT | Update site settings |
+| `GET /api/admin/feedback` | JWT | All feedback submissions |
+| `POST /api/upload` | JWT | File upload (multer) |
+| `POST /api/admin/upload` | JWT | File upload alias |
+| `POST /api/countries` | JWT | Create country |
+| `POST /api/admin/countries` | JWT | Create country (alias) |
+| `PUT /api/admin/countries/:id` | JWT | Update country |
+| `DELETE /api/countries/:id` | JWT | Delete country |
+| `POST /api/cities` | JWT | Create city |
+| `POST /api/admin/cities` | JWT | Create city (alias) |
+| `PUT /api/admin/cities/:id` | JWT | Update city |
+| `DELETE /api/cities/:id` | JWT | Delete city |
+| `POST /api/retailers` | JWT | Create retailer |
+| `POST /api/admin/retailers` | JWT | Create retailer (alias) |
+| `PUT /api/admin/retailers/:id` | JWT | Update retailer |
+| `DELETE /api/retailers/:id` | JWT | Delete retailer |
+| `POST /api/offers` | JWT | Create offer |
+| `POST /api/admin/offers` | JWT | Create offer (alias) |
+| `PUT /api/offers/:id` | JWT | Update offer |
+| `PUT /api/admin/offers/:id` | JWT | Update offer (alias) |
+| `DELETE /api/offers/:id` | JWT | Delete offer |
 
-### Geographic Hierarchy
+## Frontend Structure (`frontend/app/`)
+
+Next.js 16 App Router. All pages are server components by default; client components are explicitly marked `'use client'`.
+
 ```
-Country (e.g., India)
-  └── State/Region (e.g., Maharashtra)
-      └── City (e.g., Mumbai)
-          └── Retailer (e.g., D-Mart)
-              └── Offer (e.g., Weekly Sale)
+app/
+├── layout.tsx             # Root layout — header, footer, GA injection, settings fetch
+├── page.tsx               # Homepage — countries, top retailers, expiring soon, latest offers
+├── globals.css            # Tailwind import + smooth scroll
+├── robots.ts              # Dynamic robots.txt (blocks /admin, /api)
+├── sitemap.ts             # Dynamic sitemap from live DB
+├── SearchBar.tsx          # Hero search form (server component, native form submit)
+├── Breadcrumbs.tsx        # 'use client' — fetches breadcrumb hierarchy on mount
+├── PDFFlipbook.tsx        # 'use client' — PDF viewer modal using pdfjs-dist
+│
+├── cities/[countryId]/
+│   └── page.tsx           # Shows states or cities for a country
+│
+├── retailers/[cityId]/
+│   └── page.tsx           # Shows retailers for a city with offer counts
+│
+├── offers/[retailerId]/
+│   └── page.tsx           # Shows all active offers for a retailer
+│
+├── view/[offerId]/
+│   ├── page.tsx           # SERVER component — fetches offer+retailer, renders JSON-LD
+│   └── OfferViewClient.tsx # 'use client' — like/dislike, flipbook, WhatsApp share, time tracking
+│
+├── search/
+│   ├── page.tsx           # Server wrapper — exports metadata
+│   └── SearchClient.tsx   # 'use client' — live search with filters, URL sync
+│
+├── about/page.tsx
+├── contact/page.tsx
+├── privacy/page.tsx
+└── terms/page.tsx
 ```
 
-### API Design
-- RESTful endpoints with resource-based URLs
-- JWT authentication for admin routes
-- Input validation on all user-provided data
-- Rate limiting on API routes (1000 requests per 15 minutes)
+## Data Flow
 
-### Frontend Architecture
-- Server-side rendering for SEO optimization
-- Client-side navigation for performance
-- Component-based UI with TypeScript
-- Responsive design with Tailwind CSS
+```
+Browser (port 3001)
+    │
+    ├── Next.js Server Components ──fetch──► Express API (port 3000)
+    │       └── uses API_URL (server-side, private)                │
+    │                                                               ▼
+    └── Next.js Client Components ──fetch──► Express API (port 3000)
+            └── uses NEXT_PUBLIC_API_URL (browser-visible)         │
+                                                                    ▼
+                                                              MongoDB
+                                                         (dealnamaa database)
+```
 
-## Key Relationships
+## Environment Variables
 
-### Data Flow
-1. User navigates: Country → State/Region → City → Retailer
-2. Frontend fetches data from Express API
-3. API queries MongoDB via Mongoose models
-4. Results rendered with Next.js components
+### Root `.env`
+```
+PORT=3000
+NODE_ENV=development
+MONGO_URI=mongodb://127.0.0.1:27017/dealnama
+JWT_SECRET=<96-char hex>
+ADMIN_USER=admin
+ADMIN_PASS=<password>
+```
 
-### Admin Workflow
-1. Admin authenticates via JWT (admin.html interface)
-2. Uploads files (PDFs, images) to /uploads
-3. Creates/updates entities via protected API routes
-4. Changes immediately reflected in user-facing pages
+### `frontend/.env.local`
+```
+NEXT_PUBLIC_API_URL=http://localhost:3000   # browser-visible, used in client components
+NEXT_PUBLIC_SITE_URL=http://localhost:3001  # used for OG tags and share URLs
+API_URL=http://127.0.0.1:3000              # server-side only, not in browser bundle
+```
 
-### Analytics Pipeline
-1. User interactions trigger tracking endpoints
-2. Server updates counters in MongoDB
-3. Admin dashboard aggregates statistics
-4. Top performers calculated via sorting queries
+## Key Architectural Decisions
 
-## Project Cleanup Notes
+- **`express.static` is locked down** — only serves `/uploads`, `admin.html`, `admin.js`. The project root is NOT served (prevents `.env` exposure).
+- **`verifyAdmin` is defined before all routes** — avoids `const` hoisting crash.
+- **Offer expiry filtering** — all public endpoints filter `validUntil >= today` by default. Pass `?includeExpired=true` to bypass (admin use only).
+- **Server components use `API_URL`** (private), client components use `NEXT_PUBLIC_API_URL` — internal URL not leaked to browser bundle.
+- **Offer view page is split** — `page.tsx` (server) handles SEO/metadata/JSON-LD, `OfferViewClient.tsx` (client) handles interactivity.
+- **`tmpsrc/`** is dead code — an abandoned TypeScript rewrite. Safe to delete. Never imported anywhere.
+- **Next.js rewrites** proxy `/uploads/*` from port 3001 to port 3000 so images work in both dev and prod.
 
-### Removed Legacy Files (2025)
-The following legacy files were removed as they were not integrated with the current Next.js frontend:
-- **index.html**: Empty legacy frontend file
-- **d4d.html**: External D4D Online service viewer (not part of DealNamaa)
-- **flipbook.js**: Unused PDF flipbook JavaScript library
-- **styles.css**: Legacy CSS file (replaced by Tailwind CSS in Next.js)
+## MongoDB Collections
 
-### Current Admin Interface
-The admin dashboard is served via:
-- **admin.html**: Web-based admin interface (accessible at root/admin.html)
-- **admin.js**: Client-side admin logic with JWT authentication
-- Uses modern fetch API to communicate with Express backend
-- Provides CRUD operations for all entities and file upload management
+| Collection | Key Fields |
+|-----------|-----------|
+| `countries` | id, name, image |
+| `states` | id, name, countryId, image |
+| `cities` | id, name, countryId, stateId?, image |
+| `retailers` | id, name, cityId, websiteUrl, image, category, clicks, totalTimeSeconds |
+| `offers` | id, title, retailerId, validFrom, validUntil, pdfUrl, image, badge, isSponsored, externalAdLink, category, couponCode, couponUrl, clicks, likes, dislikes, totalTimeSeconds, maxPagesViewed |
+| `feedbacks` | name, email, message, date |
+| `sitestats` | id='global', visits |
+| `sitesettings` | id='global', gaId, facebookUrl, twitterUrl, instagramUrl, feedbackUrl |

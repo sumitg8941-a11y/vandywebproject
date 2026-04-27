@@ -146,7 +146,7 @@ const api = {
         return await res.json();
     },
     getAllOffers: async () => {
-        const res = await fetch('/api/offers');
+        const res = await fetch('/api/offers?includeExpired=true');
         if (!res.ok) throw new Error('Database connection failed');
         return await res.json();
     },
