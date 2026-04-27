@@ -186,6 +186,8 @@ export default function HomeHero({
                     <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
                       <SafeImage src={o.image} alt={o.title} fill sizes="(max-width: 640px) 50vw, 25vw"
                         className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                    </div>
+                    <div className="p-3 border-t border-gray-100">
                       <h3 className="text-xs font-bold text-gray-800 truncate">{o.title}</h3>
                       <p className="text-xs text-orange-600 font-semibold mt-1">
                         <i className="fa-regular fa-calendar mr-1"></i>
@@ -196,6 +198,7 @@ export default function HomeHero({
                 </Link>
               );
             })}
+          </div>
           </div>
         </div>
       )}
