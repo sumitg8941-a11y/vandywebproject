@@ -17,6 +17,7 @@ const siteSettingsSchema = new mongoose.Schema({
     customLogoUrl: { type: String, default: '' },
     homeMessage: { type: String, default: '' },
     faviconUrl: { type: String, default: '' },
+    adSenseId: { type: String, default: '' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('SiteSettings', siteSettingsSchema);

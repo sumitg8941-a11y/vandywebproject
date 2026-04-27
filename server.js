@@ -313,7 +313,7 @@ app.get('/api/settings', async (req, res) => {
 // Admin: Update site settings
 app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
     try {
-        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl', 'siteUrl', 'contactEmail', 'contactPhone', 'contactAddress', 'privacyPolicy', 'aboutUs', 'termsOfService', 'showStats', 'customLogoUrl', 'homeMessage', 'faviconUrl'];
+        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl', 'siteUrl', 'contactEmail', 'contactPhone', 'contactAddress', 'privacyPolicy', 'aboutUs', 'termsOfService', 'showStats', 'customLogoUrl', 'homeMessage', 'faviconUrl', 'adSenseId'];
         const update = {};
         allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
         const settings = await SiteSettings.findOneAndUpdate(
@@ -966,7 +966,7 @@ app.post('/api/admin/login', (req, res) => {
 // Admin: Update site settings
 app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
     try {
-        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl', 'siteUrl', 'contactEmail', 'contactPhone', 'contactAddress', 'privacyPolicy', 'aboutUs', 'termsOfService', 'showStats', 'customLogoUrl', 'homeMessage', 'faviconUrl'];
+        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl', 'siteUrl', 'contactEmail', 'contactPhone', 'contactAddress', 'privacyPolicy', 'aboutUs', 'termsOfService', 'showStats', 'customLogoUrl', 'homeMessage', 'faviconUrl', 'adSenseId'];
         const update = {};
         allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
         const settings = await SiteSettings.findOneAndUpdate(

@@ -1104,9 +1104,12 @@ const admin = {
                     <input type="checkbox" id="s-show-stats" ${s.showStats ? 'checked' : ''}> Show Visitors & Deals Saved Stats on Main Website
                 </label>
 
-                <h3 style="margin-bottom:16px;"><i class="fa-brands fa-google" style="color:#4285F4;"></i> Google Analytics</h3>
+                <h3 style="margin-bottom:16px;"><i class="fa-brands fa-google" style="color:#4285F4;"></i> Google Analytics & AdSense</h3>
                 <label style="font-size:0.85em; font-weight:bold;">Google Analytics Measurement ID</label>
-                <input type="text" id="s-ga-id" value="${s.gaId || ''}" placeholder="e.g. G-XXXXXXXXXX" style="width:100%; padding:8px; margin:6px 0 20px; box-sizing:border-box;">
+                <input type="text" id="s-ga-id" value="${s.gaId || ''}" placeholder="e.g. G-XXXXXXXXXX" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
+
+                <label style="font-size:0.85em; font-weight:bold;">Google AdSense Client ID (Auto Ads)</label>
+                <input type="text" id="s-adsense-id" value="${s.adSenseId || ''}" placeholder="e.g. ca-pub-1234567890123456" style="width:100%; padding:8px; margin:6px 0 20px; box-sizing:border-box;">
 
                 <h3 style="margin-bottom:16px;"><i class="fa-solid fa-share-nodes" style="color:#e74c3c;"></i> Social Media Links</h3>
                 <label style="font-size:0.85em; font-weight:bold;">Facebook Page URL</label>
