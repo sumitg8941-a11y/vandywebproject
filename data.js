@@ -128,6 +128,11 @@ const api = {
         if (!res.ok) throw new Error('Database connection failed');
         return await res.json();
     },
+    getAllStates: async () => {
+        const res = await fetch('/api/states');
+        if (!res.ok) throw new Error('Database connection failed');
+        return await res.json();
+    },
     addCountry: async (countryData) => {
         const res = await fetch('/api/admin/countries', {
             method: 'POST',

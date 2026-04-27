@@ -520,6 +520,20 @@ app.get('/api/states', async (req, res) => {
     }
 });
 
+// Get cities by state ID
+app.get('/api/cities/state/:stateId', async (req, res) => {
+    const { stateId } = req.params;
+    if (!validateId(stateId)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+    }
+    try {
+        const cities = await City.find({ stateId: stateId.toLowerCase() });
+        res.json(cities);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch cities' });
+    }
+});
+
 // Admin: Get all cities
 app.get('/api/cities', async (req, res) => {
     try {
@@ -989,6 +1003,17 @@ app.put('/api/admin/countries/:id', verifyAdmin, async (req, res) => {
     try {
         const updated = await Country.findOneAndUpdate({ id: id.toLowerCase() }, req.body, { new: true });
         if (!updated) return res.status(404).json({ error: 'Country not found' });
+        res.json(updated);
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// Admin: Update existing State
+app.put('/api/admin/states/:id', verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
+    try {
+        const updated = await State.findOneAndUpdate({ id: id.toLowerCase() }, req.body, { new: true });
+        if (!updated) return res.status(404).json({ error: 'State not found' });
         res.json(updated);
     } catch (err) { res.status(400).json({ error: err.message }); }
 });

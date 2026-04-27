@@ -1,29 +1,57 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import Breadcrumbs from '../../../Breadcrumbs';
 
-// Fetch cities from your Node.js Backend API by stateId
 async function getCitiesByState(stateId: string) {
   try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const apiBaseUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
     const res = await fetch(`${apiBaseUrl}/api/cities/state/${stateId}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch cities');
+    if (!res.ok) return [];
     return res.json();
-  } catch (error) {
+  } catch {
     return [];
   }
 }
 
-export default async function StateCitiesPage({ params }: { params: { stateId: string } }) {
-  const resolvedParams = await Promise.resolve(params);
-  const cities = await getCitiesByState(resolvedParams.stateId);
+async function getState(stateId: string) {
+  try {
+    const apiBaseUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    const res = await fetch(`${apiBaseUrl}/api/breadcrumbs/state/${stateId}`, { cache: 'no-store' });
+    const data = await res.json();
+    return data.state || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ stateId: string }> }): Promise<Metadata> {
+  const { stateId } = await params;
+  const state = await getState(stateId);
+  const name = state?.name || 'State';
+  return {
+    title: `${name} - Cities & Deals`,
+    description: `Browse cities and top retail offers in ${name} on DealNamaa.`,
+    openGraph: {
+      title: `${name} - Cities & Deals | DealNamaa`,
+      description: `Browse cities and top retail offers in ${name} on DealNamaa.`,
+    },
+  };
+}
+
+export default async function StateCitiesPage({ params }: { params: Promise<{ stateId: string }> }) {
+  const { stateId } = await params;
+  const [cities, state] = await Promise.all([getCitiesByState(stateId), getState(stateId)]);
 
   return (
     <div>
-      {/* Hero Banner Section */}
       <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white text-center py-20 px-4 shadow-md">
-        <h1 className="text-4xl md:text-5xl font-black mb-4 drop-shadow-md uppercase tracking-tight">Choose Your City</h1>
-        <p className="text-xl md:text-2xl mb-8 font-medium opacity-95 drop-shadow-sm">Find the best local deals and offers near you.</p>
+        <h1 className="text-4xl md:text-5xl font-black mb-4 drop-shadow-md uppercase tracking-tight">
+          Cities in {state?.name || 'this State'}
+        </h1>
+        <p className="text-xl md:text-2xl mb-8 font-medium opacity-95 drop-shadow-sm">
+          Find the best local deals and offers near you.
+        </p>
         <div className="flex justify-center mt-6">
           <Link href="/">
             <button className="bg-yellow-400 text-gray-900 px-6 py-2 rounded-md font-bold hover:bg-yellow-500 transition shadow-sm">
@@ -34,17 +62,16 @@ export default async function StateCitiesPage({ params }: { params: { stateId: s
       </div>
 
       <div className="max-w-6xl mx-auto p-6 mt-4">
-        <Breadcrumbs type="state" id={resolvedParams.stateId} />
+        <Breadcrumbs type="state" id={stateId} />
       </div>
 
-      {/* Cities Grid */}
       <div className="max-w-6xl mx-auto p-6 mt-2">
         <h2 className="text-3xl font-bold mb-8 text-gray-800 border-b pb-2">Cities in this State</h2>
-        
+
         {cities.length === 0 ? (
           <div className="text-center p-10 bg-yellow-100 text-yellow-800 rounded-lg">
             <h2 className="text-2xl font-bold"><i className="fa-solid fa-triangle-exclamation"></i> No Cities Found</h2>
-            <p>We couldn't find any cities for this state. Please check back later or add some via the admin panel.</p>
+            <p>No cities have been added to this state yet. Check back later.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
@@ -52,12 +79,12 @@ export default async function StateCitiesPage({ params }: { params: { stateId: s
               <Link href={`/retailers/${c.id || c._id}`} key={c.id || c._id}>
                 <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-100 group">
                   <div className="overflow-hidden h-24 relative">
-                    <Image 
-                      src={c.image} 
-                      alt={c.name} 
+                    <Image
+                      src={c.image}
+                      alt={c.name}
                       fill
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
                   <div className="p-4 text-center">

@@ -69,6 +69,9 @@ const admin = {
                 case 'countries':
                     html = await this.renderCountries();
                     break;
+                case 'states':
+                    html = await this.renderStates();
+                    break;
                 case 'cities':
                     html = await this.renderCities();
                     break;
@@ -189,15 +192,148 @@ const admin = {
         }
     },
 
+    renderStates: async function() {
+        const states = await api.getAllStates();
+        const countries = await api.getCountries();
+        const countryMap = {};
+        countries.forEach(c => { countryMap[c.id] = c.name; });
+
+        let rows = states.map(s => `
+            <tr>
+                <td>${s.id.toUpperCase()}</td>
+                <td>${s.name}</td>
+                <td>${countryMap[s.countryId] || s.countryId.toUpperCase()}</td>
+                <td><img src="${s.image}" width="50" style="border-radius:4px;"></td>
+                <td>
+                    <button class="action-btn" onclick="admin.editState('${s.id}')">Edit</button>
+                    <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteState('${s.id}')">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+
+        let countryOptions = countries.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+        return `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>States / Provinces</h2>
+                <button class="action-btn" style="background:#27ae60;" onclick="document.getElementById('add-state-form').style.display='block'">+ Add State</button>
+            </div>
+            <p style="color:#64748b; font-size:0.9em; margin:8px 0 16px;">States are optional. Add them only for countries that have a State → City hierarchy (e.g. India, USA, Australia). Countries with direct City access don’t need states.</p>
+
+            <div id="add-state-form" style="display:none; background:#f9f9f9; padding:20px; border-radius:8px; margin-top:15px; border:1px solid #ddd;">
+                <h3>Add New State</h3>
+                <div style="margin-top:10px;">
+                    <label>State Code (e.g., mh for Maharashtra):</label><br>
+                    <input type="text" id="new-state-id" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="e.g., mh">
+
+                    <label>State Name:</label><br>
+                    <input type="text" id="new-state-name" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="e.g., Maharashtra">
+
+                    <label>Belongs to Country:</label><br>
+                    <select id="new-state-country" style="width:100%; padding:8px; margin-bottom:10px;">
+                        ${countryOptions}
+                    </select>
+
+                    <label>Upload Cover Image (Optional):</label><br>
+                    <input type="file" id="new-state-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
+                    <input type="text" id="new-state-image" style="width:100%; padding:8px; margin-bottom:15px;" placeholder="OR provide Image URL">
+
+                    <button class="action-btn" onclick="admin.saveState()">Save State</button>
+                    <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('new-state-id').readOnly=false; document.getElementById('add-state-form').style.display='none'; document.querySelector('#add-state-form h3').innerText='Add New State';">Cancel</button>
+                </div>
+            </div>
+
+            <table class="admin-table">
+                <thead><tr><th>ID</th><th>Name</th><th>Country</th><th>Image</th><th>Actions</th></tr></thead>
+                <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No states added yet</td></tr>'}</tbody>
+            </table>
+        `;
+    },
+
+    saveState: async function() {
+        const id = document.getElementById('new-state-id').value.toLowerCase();
+        const name = document.getElementById('new-state-name').value;
+        const countryId = document.getElementById('new-state-country').value;
+        let image = document.getElementById('new-state-image').value;
+        const imageFile = document.getElementById('new-state-image-file').files[0];
+        const isEdit = document.getElementById('new-state-id').readOnly;
+
+        if (!id || !name || !countryId) { alert('Please fill in all required fields.'); return; }
+        try {
+            if (imageFile) image = await this.uploadFile(imageFile);
+            if (!image) image = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&q=80';
+            if (isEdit) {
+                const res = await fetch(`/api/admin/states/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                    body: JSON.stringify({ name, countryId, image })
+                });
+                if (!res.ok) throw new Error('Failed to update state');
+                alert('State updated successfully!');
+            } else {
+                const res = await fetch('/api/states', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                    body: JSON.stringify({ id, name, countryId, image })
+                });
+                if (!res.ok) throw new Error('Failed to save state');
+                alert('State saved!');
+            }
+            document.getElementById('new-state-id').readOnly = false;
+            this.showTab('states');
+        } catch(e) { alert('Error: ' + e.message); }
+    },
+
+    editState: async function(id) {
+        try {
+            const states = await api.getAllStates();
+            const state = states.find(s => s.id === id);
+            if (!state) throw new Error('State not found');
+            document.getElementById('add-state-form').style.display = 'block';
+            document.getElementById('new-state-id').value = state.id;
+            document.getElementById('new-state-id').readOnly = true;
+            document.getElementById('new-state-name').value = state.name;
+            document.getElementById('new-state-country').value = state.countryId;
+            document.getElementById('new-state-image').value = state.image || '';
+            document.querySelector('#add-state-form h3').innerText = 'Edit State';
+            window.scrollTo(0, 0);
+        } catch(e) { alert('Error loading state: ' + e.message); }
+    },
+
+    deleteState: async function(id) {
+        if (!confirm('Delete this state? Cities linked to it will become direct cities under the country.')) return;
+        try {
+            const res = await fetch(`/api/states/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } });
+            if (!res.ok) throw new Error('Failed to delete');
+            alert('State deleted!');
+            this.showTab('states');
+        } catch(e) { alert('Error: ' + e.message); }
+    },
+
+    loadStatesForCity: async function(countryId) {
+        const states = await api.getAllStates();
+        const filtered = states.filter(s => s.countryId === countryId);
+        const select = document.getElementById('new-city-state');
+        if (!select) return;
+        select.innerHTML = '<option value="">— No State (direct city) —</option>' +
+            filtered.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    },
+
     renderCities: async function() {
         const allCities = await api.getAllCities();
         const countries = await api.getCountries();
-        
+        const allStates = await api.getAllStates();
+
+        // Build a map of stateId -> stateName for display
+        const stateMap = {};
+        allStates.forEach(s => { stateMap[s.id] = s.name; });
+
         let rows = allCities.map(c => `
             <tr>
                 <td>${c.id.toUpperCase()}</td>
                 <td>${c.name}</td>
                 <td>${c.countryId.toUpperCase()}</td>
+                <td>${c.stateId ? stateMap[c.stateId] || c.stateId.toUpperCase() : '<span style="color:#94a3b8;">—</span>'}</td>
                 <td>
                     <button class="action-btn" onclick="admin.editCity('${c.id}')">Edit</button>
                     <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteCity('${c.id}')">Delete</button>
@@ -223,8 +359,14 @@ const admin = {
                     <input type="text" id="new-city-name" style="width:100%; padding:8px; margin-bottom:10px;">
                     
                     <label>Belongs to Country:</label><br>
-                    <select id="new-city-country" style="width:100%; padding:8px; margin-bottom:10px;">
+                    <select id="new-city-country" style="width:100%; padding:8px; margin-bottom:10px;" onchange="admin.loadStatesForCity(this.value)">
                         ${countryOptions}
+                    </select>
+
+                    <label>Belongs to State (optional — only if country has states):</label><br>
+                    <select id="new-city-state" style="width:100%; padding:8px; margin-bottom:10px;">
+                        <option value="">— No State (direct city) —</option>
+                        ${allStates.map(s => `<option value="${s.id}">${s.name} (${s.countryId.toUpperCase()})</option>`).join('')}
                     </select>
                     
                     <label>Upload Cover Image (Optional):</label><br>
@@ -235,7 +377,7 @@ const admin = {
                     <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('new-city-id').readOnly=false; document.getElementById('add-city-form').style.display='none'; document.querySelector('#add-city-form h3').innerText='Add New City';">Cancel</button>
                 </div>
             </div>
-            <table class="admin-table"><thead><tr><th>ID</th><th>City Name</th><th>Country Code</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+            <table class="admin-table"><thead><tr><th>ID</th><th>City Name</th><th>Country</th><th>State</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
         `;
     },
 
@@ -243,6 +385,7 @@ const admin = {
         const id = document.getElementById('new-city-id').value.toLowerCase();
         const name = document.getElementById('new-city-name').value;
         const countryId = document.getElementById('new-city-country').value;
+        const stateId = document.getElementById('new-city-state').value || '';
         let image = document.getElementById('new-city-image').value;
         const imageFile = document.getElementById('new-city-image-file').files[0];
         const isEdit = document.getElementById('new-city-id').readOnly;
@@ -254,12 +397,12 @@ const admin = {
                     const res = await fetch(`/api/admin/cities/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                        body: JSON.stringify({ name, countryId, image })
+                        body: JSON.stringify({ name, countryId, stateId, image })
                     });
                     if (!res.ok) throw new Error('Failed to update city');
                     alert('City updated successfully!');
                 } else {
-                    await api.addCity({ id, name, countryId, image });
+                    await api.addCity({ id, name, countryId, stateId, image });
                     alert('City saved!');
                 }
                 document.getElementById('new-city-id').readOnly = false;
@@ -281,6 +424,9 @@ const admin = {
             document.getElementById('new-city-name').value = city.name;
             document.getElementById('new-city-country').value = city.countryId;
             document.getElementById('new-city-image').value = city.image || '';
+            // Load states for this country then set the stateId
+            await this.loadStatesForCity(city.countryId);
+            document.getElementById('new-city-state').value = city.stateId || '';
             document.querySelector('#add-city-form h3').innerText = 'Edit City';
             window.scrollTo(0, 0);
         } catch(e) {
