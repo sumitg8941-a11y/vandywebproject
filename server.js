@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
@@ -27,6 +27,10 @@ const limiter = rateLimit({
     message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api', limiter);
+
+// Stricter rate limit for tracking endpoints — prevents stat inflation
+const trackLimiter = rateLimit({ windowMs: 60 * 1000, max: 20, message: 'Too many requests' });
+app.use('/api/track', trackLimiter);
 
 app.use(express.json({ limit: '10kb' }));
 

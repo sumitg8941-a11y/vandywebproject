@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
 import PDFFlipbook from '../../PDFFlipbook';
+import SafeImage from '../../SafeImage';
 
 interface Props {
   offer: any;
@@ -226,7 +226,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
         {/* Flyer Image */}
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 md:p-8 flex justify-center">
           <div className="relative w-full max-w-2xl" style={{ aspectRatio: '3/4' }}>
-            <Image
+            <SafeImage
               src={offer.image}
               alt={offer.title}
               fill

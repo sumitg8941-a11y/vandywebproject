@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
 import Tracker from '../../Tracker';
+import SafeImage from '../../SafeImage';
 
 async function getRegions(countryId: string) {
   try {
@@ -48,7 +48,7 @@ function RegionCard({ href, image, name, tag, tagColor = 'red' }: { href: string
     <Link href={href}>
       <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-100 group">
         <div className="overflow-hidden h-24 relative">
-          <Image
+          <SafeImage
             src={image}
             alt={name}
             fill

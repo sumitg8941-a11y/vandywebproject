@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
 import Tracker from '../../Tracker';
+import SafeImage from '../../SafeImage';
 
 async function getRetailers(cityId: string) {
   try {
@@ -81,7 +81,7 @@ export default async function RetailersPage({ params }: { params: Promise<{ city
               <Link href={`/offers/${r.id || r._id}`} key={r.id || r._id}>
                 <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-100 group">
                   <div className="overflow-hidden h-32 relative">
-                    <Image 
+                    <SafeImage 
                       src={r.logo || r.image} 
                       alt={r.name} 
                       fill

@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import SafeImage from './SafeImage';
 import Link from 'next/link';
 import SearchBar from './SearchBar';
 import { useLang } from './LangToggle';
@@ -62,7 +62,7 @@ export default function HomeHero({
             <div className="hidden md:grid grid-cols-2 gap-2 flex-shrink-0 w-72 lg:w-96" style={{ gridTemplateRows: 'repeat(2, 1fr)' }}>
               {[...heroImages, ...heroImages].slice(0, 4).map((o: any, i: number) => (
                 <div key={i} className="relative rounded-xl overflow-hidden shadow-xl" style={{ height: '140px' }}>
-                  <Image src={o.image} alt="" fill sizes="200px" className="object-cover" priority={i < 2} />
+                  <SafeImage src={o.image} alt="" fill sizes="200px" className="object-cover" priority={i < 2} />
                   <div className="absolute inset-0 bg-black/10 rounded-xl" />
                 </div>
               ))}
@@ -92,7 +92,7 @@ export default function HomeHero({
               <Link href={`/cities/${c.id || c._id}`} key={c.id || c._id}>
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 group">
                   <div className="overflow-hidden h-24 relative">
-                    <Image src={c.image} alt={c.name} fill sizes="(max-width: 640px) 50vw, 20vw"
+                    <SafeImage src={c.image} alt={c.name} fill sizes="(max-width: 640px) 50vw, 20vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <div className="p-3 text-center">
@@ -125,7 +125,7 @@ export default function HomeHero({
               <Link href={`/offers/${r.id || r._id}`} key={r.id || r._id}>
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 group">
                   <div className="overflow-hidden h-24 relative">
-                    <Image src={r.logo || r.image} alt={r.name} fill sizes="(max-width: 640px) 50vw, 20vw"
+                    <SafeImage src={r.logo || r.image} alt={r.name} fill sizes="(max-width: 640px) 50vw, 20vw"
                       className="object-contain p-3 group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <div className="p-3 text-center border-t border-gray-100">
@@ -175,10 +175,8 @@ export default function HomeHero({
                       </div>
                     )}
                     <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
-                      <Image src={o.image} alt={o.title} fill sizes="(max-width: 640px) 50vw, 25vw"
+                      <SafeImage src={o.image} alt={o.title} fill sizes="(max-width: 640px) 50vw, 25vw"
                         className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                    </div>
-                    <div className="p-3 border-t border-orange-100">
                       <h3 className="text-xs font-bold text-gray-800 truncate">{o.title}</h3>
                       <p className="text-xs text-orange-600 font-semibold mt-1">
                         <i className="fa-regular fa-calendar mr-1"></i>
@@ -225,7 +223,7 @@ export default function HomeHero({
                       </div>
                     )}
                     <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
-                      <Image src={o.image} alt={o.title} fill sizes="(max-width: 640px) 50vw, 25vw"
+                      <SafeImage src={o.image} alt={o.title} fill sizes="(max-width: 640px) 50vw, 25vw"
                         className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                     </div>
                     <div className="p-3 border-t border-gray-100">

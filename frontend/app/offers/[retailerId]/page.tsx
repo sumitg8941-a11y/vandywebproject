@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
 import CouponReveal from '../../CouponReveal';
 import FollowButton from '../../FollowButton';
 import Tracker from '../../Tracker';
+import SafeImage from '../../SafeImage';
 
 const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
@@ -59,7 +59,7 @@ export default async function OffersPage({ params }: { params: Promise<{ retaile
         {retailer?.logo || retailer?.image ? (
           <div className="flex justify-center mb-4">
             <div className="relative w-20 h-20 bg-white rounded-xl shadow-md overflow-hidden">
-              <Image
+              <SafeImage
                 src={retailer.logo || retailer.image}
                 alt={retailer.name}
                 fill
@@ -127,7 +127,7 @@ export default async function OffersPage({ params }: { params: Promise<{ retaile
                       </div>
                     )}
                     <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
-                      <Image
+                      <SafeImage
                         src={o.image}
                         alt={o.title}
                         fill
