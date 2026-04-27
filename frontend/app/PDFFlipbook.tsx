@@ -36,7 +36,7 @@ export default function PDFFlipbook({ pdfUrl, onClose, title, shareUrl }: PDFFli
       try {
         await navigator.share(shareData);
       } catch (err) {
-        if (err.name !== 'AbortError') {
+        if (err instanceof Error && err.name !== 'AbortError') {
           console.error('Share failed:', err);
         }
       }

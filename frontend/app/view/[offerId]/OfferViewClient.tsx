@@ -133,7 +133,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
         await navigator.share(shareData);
       } catch (err) {
         // User cancelled or error occurred
-        if (err.name !== 'AbortError') {
+        if (err instanceof Error && err.name !== 'AbortError') {
           console.error('Share failed:', err);
         }
       }
