@@ -541,7 +541,7 @@ const admin = {
         const activeOffers = offers.filter(o => new Date(o.validUntil) >= now);
         const expiredOffers = offers.filter(o => new Date(o.validUntil) < now);
         
-        let rows = activeOffers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${o.validFrom ? new Date(o.validFrom).toISOString().split('T')[0] : ''} to ${o.validUntil ? new Date(o.validUntil).toISOString().split('T')[0] : ''}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
+        let rows = activeOffers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${o.validFrom ? new Date(o.validFrom).toISOString().split('T')[0] : ''} to ${o.validUntil ? new Date(o.validUntil).toISOString().split('T')[0] : ''}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#f59e0b;" onclick="admin.resetOfferMetrics('${o.id || o._id}')">Reset Metrics</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
         let retailerOptions = retailers.map(r => `<option value="${r.id}">${r.name} (${r.cityId})</option>`).join('');
 
         let expiredSection = '';
@@ -1278,3 +1278,17 @@ const admin = {
 
 // Boot Admin Dashboard
 document.addEventListener('DOMContentLoaded', () => admin.init());
+
+
+    resetOfferMetrics: async function(id) {
+        if (!confirm('Reset all metrics (clicks, likes, dislikes, ratings, saves, time, pages) for this offer? This is for testing purposes only.')) return;
+        try {
+            const res = await fetch(`/api/admin/offers/${id}/reset-metrics`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+            });
+            if (!res.ok) throw new Error('Failed to reset metrics');
+            alert('Metrics reset successfully! Refresh the page to see updated values.');
+            this.showTab('offers');
+        } catch(e) { alert('Error resetting metrics: ' + e.message); }
+    },

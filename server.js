@@ -1304,6 +1304,33 @@ app.delete('/api/offers/:id', verifyAdmin, async (req, res) => {
     }
 });
 
+// Admin: Reset offer metrics (for testing)
+app.post('/api/admin/offers/:id/reset-metrics', verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
+    try {
+        const offer = await Offer.findOneAndUpdate(
+            { id: id.toLowerCase() },
+            { 
+                $set: { 
+                    clicks: 0, 
+                    likes: 0, 
+                    dislikes: 0, 
+                    rating: 0, 
+                    ratingCount: 0, 
+                    savedCount: 0,
+                    totalTimeSeconds: 0,
+                    maxPagesViewed: 0
+                }
+            },
+            { new: true }
+        );
+        if (!offer) return res.status(404).json({ error: 'Offer not found' });
+        res.json({ message: 'Metrics reset successfully', offer });
+    } catch (err) { res.status(500).json({ error: 'Failed to reset metrics' }); }
+});
+
+
 // Public: Submit Feedback
 app.post('/api/feedback', async (req, res) => {
     try {
