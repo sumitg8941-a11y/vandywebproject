@@ -589,6 +589,11 @@ app.get('/api/offers', async (req, res) => {
 app.get('/api/stats', async (req, res) => {
     try {
         const now = new Date();
+        // Date range filter: ?since=7 or ?since=30, default all-time
+        const sinceParam = parseInt(req.query.since) || 0;
+        const sinceDate = sinceParam > 0 ? new Date(now.getTime() - sinceParam * 24 * 60 * 60 * 1000) : null;
+        const rangeFilter = sinceDate ? { createdAt: { $gte: sinceDate } } : {};
+        const offerRangeFilter = sinceDate ? { validUntil: { $gte: now }, createdAt: { $gte: sinceDate } } : { validUntil: { $gte: now } };
         const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
         const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
         const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -654,11 +659,11 @@ app.get('/api/stats', async (req, res) => {
             // Top performers by visits/clicks
             Country.find().sort({ visits: -1 }).limit(10).lean(),
             City.find().sort({ visits: -1 }).limit(10).lean(),
-            Retailer.find().sort({ clicks: -1 }).limit(10).lean(),
-            Offer.find({ validUntil: { $gte: now } }).sort({ clicks: -1 }).limit(10).lean(),
-            Offer.find({ validUntil: { $gte: now } }).sort({ likes: -1 }).limit(10).lean(),
-            Offer.find({ validUntil: { $gte: now } }).sort({ dislikes: -1 }).limit(5).lean(),
-            Offer.find({ validUntil: { $gte: now } }).sort({ totalTimeSeconds: -1 }).limit(10).lean(),
+            Retailer.find(rangeFilter).sort({ clicks: -1 }).limit(10).lean(),
+            Offer.find(offerRangeFilter).sort({ clicks: -1 }).limit(10).lean(),
+            Offer.find(offerRangeFilter).sort({ likes: -1 }).limit(10).lean(),
+            Offer.find(offerRangeFilter).sort({ dislikes: -1 }).limit(5).lean(),
+            Offer.find(offerRangeFilter).sort({ totalTimeSeconds: -1 }).limit(10).lean(),
             
             // Expiring offers
             Offer.find({ validUntil: { $gte: now, $lte: in7Days } }).sort({ validUntil: 1 }).lean(),

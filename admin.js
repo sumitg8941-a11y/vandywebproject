@@ -733,9 +733,9 @@ const admin = {
         }
     },
 
-    renderStats: async function() {
+    renderStats: async function(since = 0) {
         try {
-            const stats = await api.getStats();
+            const stats = await api.getStats(since);
             
             // Format numbers with safe defaults
             const formatNum = (n) => (n || 0).toLocaleString();
@@ -821,6 +821,16 @@ const admin = {
             return `
                 <h2>Marketing Analytics Dashboard</h2>
                 <p style="color:#64748b; margin-bottom:24px;">Comprehensive insights to optimize your platform performance</p>
+
+                <!-- Date Range Toggle -->
+                <div style="display:flex; gap:8px; margin-bottom:24px;">
+                    ${[{label:'Last 7 days',val:7},{label:'Last 30 days',val:30},{label:'All time',val:0}].map(opt=>`
+                        <button onclick="admin.showTab('stats'); admin.renderStats(${opt.val}).then(h=>admin.contentDiv.innerHTML=h)"
+                            style="padding:8px 16px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; border:2px solid ${since===opt.val?'var(--red)':'var(--border)'}; background:${since===opt.val?'var(--red)':'white'}; color:${since===opt.val?'white':'var(--text-secondary)'}; transition:all .15s;">
+                            ${opt.label}
+                        </button>
+                    `).join('')}
+                </div>
                 
                 <!-- KPI Cards -->
                 <div class="kpi-grid">

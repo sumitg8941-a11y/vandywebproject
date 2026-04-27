@@ -44,6 +44,19 @@ function getDaysLeft(validUntil: string) {
   return Math.ceil((new Date(validUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
+function getUrgencyBadge(validUntil: string, createdAt?: string): { text: string; cls: string } | null {
+  const days = Math.ceil((new Date(validUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  if (days <= 0) return null;
+  if (days === 1) return { text: 'Expires today!', cls: 'bg-red-600 text-white' };
+  if (days <= 3) return { text: `${days} days left`, cls: 'bg-orange-500 text-white' };
+  if (days <= 7) return { text: `${days} days left`, cls: 'bg-yellow-500 text-gray-900' };
+  if (createdAt) {
+    const addedDaysAgo = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24));
+    if (addedDaysAgo <= 7) return { text: 'New this week', cls: 'bg-green-500 text-white' };
+  }
+  return null;
+}
+
 export default async function HomePage() {
   const [countries, topRetailers, latestOffers, expiringSoon] = await Promise.all([
     getCountries(),
@@ -62,49 +75,39 @@ export default async function HomePage() {
       {/* ── My Retailers (personalised, localStorage) ── */}
       <MyRetailers />
       {/* ── Hero ── */}
-      <div className="bg-gradient-to-br from-red-700 via-red-600 to-orange-500 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
-        <div className="relative z-10 max-w-6xl mx-auto px-4 py-16 md:py-20 flex flex-col md:flex-row items-center gap-10">
-          {/* Left: copy + search */}
-          <div className="flex-1 text-center md:text-left">
-            <span className="inline-block bg-yellow-400 text-gray-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-4">
-              🔥 New deals every week
-            </span>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 drop-shadow-lg leading-tight">
-              Find the Best<br />Deals Near You
-            </h1>
-            <p className="text-lg md:text-xl mb-8 opacity-90 font-medium max-w-lg">
-              Browse thousands of flyers, coupons, and exclusive offers from top retailers — all in one place.
-            </p>
-            <SearchBar />
-            <p className="mt-4 text-sm opacity-70">
-              <i className="fa-solid fa-location-dot mr-1"></i>
-              Covering retailers across multiple cities &amp; regions
-            </p>
+      <div className="relative text-white overflow-hidden" style={{ minHeight: '420px' }}>
+        {/* Mosaic background */}
+        {heroImages.length > 0 ? (
+          <div className="absolute inset-0 grid grid-cols-4 grid-rows-2">
+            {[...heroImages, ...heroImages].slice(0, 8).map((o: any, i: number) => (
+              <div key={i} className="relative overflow-hidden">
+                <Image src={o.image} alt="" fill sizes="25vw" className="object-cover" priority={i < 4} />
+              </div>
+            ))}
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80" />
           </div>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-red-700 via-red-600 to-orange-500" />
+        )}
 
-          {/* Right: live offer mosaic */}
-          {heroImages.length > 0 && (
-            <div className="hidden md:grid grid-cols-3 gap-2 flex-shrink-0 w-72">
-              {heroImages.slice(0, 3).map((o: any, i: number) => (
-                <Link href={`/view/${o.id || o._id}`} key={o.id || o._id}
-                  className={`relative rounded-xl overflow-hidden shadow-lg border-2 border-white/20 hover:scale-105 transition-transform duration-300 ${i === 0 ? 'col-span-2 row-span-2 aspect-square' : 'aspect-square'}`}>
-                  <Image src={o.image} alt={o.title} fill sizes="200px" className="object-cover" />
-                  {o.badge && (
-                    <span className="absolute bottom-1 left-1 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                      {o.badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
-              {heroImages.slice(3, 5).map((o: any) => (
-                <Link href={`/view/${o.id || o._id}`} key={o.id || o._id}
-                  className="relative rounded-xl overflow-hidden shadow-lg border-2 border-white/20 hover:scale-105 transition-transform duration-300 aspect-square">
-                  <Image src={o.image} alt={o.title} fill sizes="100px" className="object-cover" />
-                </Link>
-              ))}
-            </div>
-          )}
+        <div className="relative z-10 max-w-6xl mx-auto px-4 py-16 md:py-24 flex flex-col items-center text-center">
+          <span className="inline-block bg-yellow-400 text-gray-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-4">
+            🔥 New deals every week
+          </span>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 drop-shadow-lg leading-tight">
+            Find the Best<br />Deals Near You
+          </h1>
+          <p className="text-lg md:text-xl mb-8 opacity-90 font-medium max-w-xl">
+            Browse thousands of flyers, coupons, and exclusive offers from top retailers — all in one place.
+          </p>
+          <div className="w-full max-w-xl">
+            <SearchBar />
+          </div>
+          <p className="mt-4 text-sm opacity-70">
+            <i className="fa-solid fa-location-dot mr-1"></i>
+            Covering retailers across multiple cities &amp; regions
+          </p>
         </div>
       </div>
 
@@ -171,6 +174,9 @@ export default async function HomePage() {
                   </div>
                   <div className="p-3 text-center border-t border-gray-100">
                     <h3 className="text-sm font-bold text-gray-800 truncate">{r.name}</h3>
+                    {r.category && (
+                      <span className="inline-block text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full mt-1">{r.category}</span>
+                    )}
                     {r.offerCount > 0 ? (
                       <p className="text-xs text-red-600 font-semibold mt-1">
                         <i className="fa-solid fa-tag mr-1"></i>{r.offerCount} {r.offerCount === 1 ? 'offer' : 'offers'}
@@ -250,37 +256,45 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-            {latestOffers.map((o: any) => (
-              <Link href={`/view/${o.id || o._id}`} key={o.id || o._id}>
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 hover:border-red-200 group relative">
-                  {o.badge && (
-                    <div className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow">
-                      {o.badge}
+            {latestOffers.map((o: any) => {
+              const urgency = o.validUntil ? getUrgencyBadge(o.validUntil, o.createdAt) : null;
+              return (
+                <Link href={`/view/${o.id || o._id}`} key={o.id || o._id}>
+                  <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 hover:border-red-200 group relative">
+                    {urgency && (
+                      <div className={`absolute top-2 right-2 z-10 text-xs font-bold px-2 py-1 rounded shadow ${urgency.cls}`}>
+                        {urgency.text}
+                      </div>
+                    )}
+                    {o.badge && (
+                      <div className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow">
+                        {o.badge}
+                      </div>
+                    )}
+                    <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
+                      <Image src={o.image} alt={o.title} fill
+                        sizes="(max-width: 640px) 50vw, 25vw"
+                        className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy" />
                     </div>
-                  )}
-                  <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
-                    <Image src={o.image} alt={o.title} fill
-                      sizes="(max-width: 640px) 50vw, 25vw"
-                      className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy" />
+                    <div className="p-3 border-t border-gray-100">
+                      <h3 className="text-xs font-bold text-gray-800 truncate mb-1">{o.title}</h3>
+                      {o.retailerId && (
+                        <p className="text-xs text-gray-500 truncate">
+                          <i className="fa-solid fa-store mr-1 text-red-400"></i>{o.retailerId}
+                        </p>
+                      )}
+                      {o.validUntil && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          <i className="fa-regular fa-calendar mr-1"></i>
+                          Until {new Date(o.validUntil).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="p-3 border-t border-gray-100">
-                    <h3 className="text-xs font-bold text-gray-800 truncate mb-1">{o.title}</h3>
-                    {o.retailerId && (
-                      <p className="text-xs text-gray-500 truncate">
-                        <i className="fa-solid fa-store mr-1 text-red-400"></i>{o.retailerId}
-                      </p>
-                    )}
-                    {o.validUntil && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        <i className="fa-regular fa-calendar mr-1"></i>
-                        Until {new Date(o.validUntil).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

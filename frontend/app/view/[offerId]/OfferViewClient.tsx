@@ -205,6 +205,16 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
             >
               <i className="fa-brands fa-whatsapp"></i> Share on WhatsApp
             </a>
+            {retailer?.websiteUrl && (
+              <a
+                href={retailer.websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-200 transition border border-gray-200"
+              >
+                <i className="fa-solid fa-globe"></i> Visit {retailer.name}
+              </a>
+            )}
           </div>
         </div>
 
@@ -229,6 +239,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
           pdfUrl={pdfSrc}
           onClose={() => setIsFlipbookOpen(false)}
           title={offer.title}
+          shareUrl={`${siteUrl}/view/${offerId}`}
         />
       )}
     </div>

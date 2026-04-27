@@ -117,8 +117,9 @@ const api = {
             body: JSON.stringify({ duration, maxPage })
         }).catch(()=>null);
     },
-    getStats: async () => {
-        const res = await fetch('/api/stats', { headers: getAuthHeaders() });
+    getStats: async (since = 0) => {
+        const url = since > 0 ? `/api/stats?since=${since}` : '/api/stats';
+        const res = await fetch(url, { headers: getAuthHeaders() });
         return await res.json();
     },
     
