@@ -278,7 +278,7 @@ app.get('/api/settings', async (req, res) => {
 // Admin: Update site settings
 app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
     try {
-        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl'];
+        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl', 'siteUrl'];
         const update = {};
         allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
         const settings = await SiteSettings.findOneAndUpdate(
@@ -483,7 +483,7 @@ app.get('/api/search', async (req, res) => {
         
         // Only return active (non-expired) offers in search results
         const now2 = new Date();
-        const validity = req.query.validity as string;
+        const validity = req.query.validity;
         if (validity === 'today') {
             const endOfDay = new Date(now2); endOfDay.setHours(23, 59, 59, 999);
             offerFilter.validUntil = { $gte: now2, $lte: endOfDay };
@@ -848,7 +848,7 @@ app.post('/api/admin/login', (req, res) => {
 // Admin: Update site settings
 app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
     try {
-        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl'];
+        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl', 'siteUrl'];
         const update = {};
         allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
         const settings = await SiteSettings.findOneAndUpdate(
