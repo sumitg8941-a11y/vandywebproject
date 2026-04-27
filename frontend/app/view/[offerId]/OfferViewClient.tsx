@@ -120,9 +120,34 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
     });
   };
 
-  const whatsappText = encodeURIComponent(
-    `🔥 Amazing deal alert! ${offer.title} at ${retailer?.name || 'this retailer'}\n\n💰 Help your friends save money too!\n${siteUrl}/view/${offerId}`
-  );
+  const handleShare = async () => {
+    const shareData = {
+      title: offer.title,
+      text: `🔥 Amazing deal alert! ${offer.title} at ${retailer?.name || 'this retailer'}\n\n💰 Help your friends save money too!`,
+      url: `${siteUrl}/view/${offerId}`
+    };
+
+    // Check if Web Share API is supported
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled or error occurred
+        if (err.name !== 'AbortError') {
+          console.error('Share failed:', err);
+        }
+      }
+    } else {
+      // Fallback: copy link to clipboard
+      try {
+        await navigator.clipboard.writeText(`${siteUrl}/view/${offerId}`);
+        alert('Link copied to clipboard! Share it with your friends.');
+      } catch (err) {
+        // Final fallback: show the link
+        prompt('Copy this link to share:', `${siteUrl}/view/${offerId}`);
+      }
+    }
+  };
 
   const expiryLabel = getExpiryLabel(offer.validUntil);
   const pdfSrc = offer.pdfUrl && offer.pdfUrl !== '#'
@@ -139,17 +164,15 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
           <span className="sm:hidden">Back</span>
         </Link>
         <div className="flex items-center gap-3">
-          {/* WhatsApp Share */}
-          <a
-            href={`https://wa.me/?text=${whatsappText}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white text-sm font-bold px-3 py-1.5 rounded-lg transition"
-            aria-label="Share on WhatsApp"
+          {/* Share Button */}
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold px-3 py-1.5 rounded-lg transition"
+            aria-label="Share this offer"
           >
-            <i className="fa-brands fa-whatsapp text-base"></i>
+            <i className="fa-solid fa-share-nodes text-base"></i>
             <span className="hidden sm:inline">Share</span>
-          </a>
+          </button>
           <div className="font-black text-red-600 tracking-tight hidden sm:block">
             HOT DEAL <i className="fa-solid fa-fire text-orange-500"></i>
           </div>
@@ -270,14 +293,6 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                 <i className="fa-solid fa-arrow-up-right-from-square"></i> Shop Now
               </a>
             )}
-            <a
-              href={`https://wa.me/?text=${whatsappText}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-green-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-green-600 transition"
-            >
-              <i className="fa-brands fa-whatsapp"></i> Share & Help Friends Save
-            </a>
             {retailer?.websiteUrl && (
               <a
                 href={retailer.websiteUrl}
@@ -288,6 +303,12 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                 <i className="fa-solid fa-globe"></i> Visit {retailer.name}
               </a>
             )}
+            <button
+              onClick={handleShare}
+              className="flex items-center justify-center gap-2 bg-blue-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-600 transition"
+            >
+              <i className="fa-solid fa-share-nodes"></i> Share with Friends
+            </button>
           </div>
         </div>
 

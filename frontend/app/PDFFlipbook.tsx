@@ -25,9 +25,31 @@ export default function PDFFlipbook({ pdfUrl, onClose, title, shareUrl }: PDFFli
   const goToPrevPage = () => setPageNumber(prev => Math.max(prev - 1, 1));
   const goToNextPage = () => setPageNumber(prev => Math.min(prev + 1, numPages));
 
-  const whatsappText = encodeURIComponent(
-    `🔥 Check out this deal: ${title}\n${shareUrl || (typeof window !== 'undefined' ? window.location.href : '')}`
-  );
+  const handleShare = async () => {
+    const shareData = {
+      title: title,
+      text: `🔥 Check out this deal: ${title}`,
+      url: shareUrl || (typeof window !== 'undefined' ? window.location.href : '')
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Share failed:', err);
+        }
+      }
+    } else {
+      // Fallback: copy link
+      try {
+        await navigator.clipboard.writeText(shareData.url);
+        alert('Link copied to clipboard!');
+      } catch (err) {
+        prompt('Copy this link to share:', shareData.url);
+      }
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/95 flex flex-col">
@@ -35,16 +57,14 @@ export default function PDFFlipbook({ pdfUrl, onClose, title, shareUrl }: PDFFli
       <div className="flex justify-between items-center px-4 py-3 border-b border-gray-800 text-white gap-3">
         <div className="font-bold text-sm md:text-base truncate flex-1 pr-2">{title}</div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* WhatsApp share */}
-          <a
-            href={`https://wa.me/?text=${whatsappText}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition"
+          {/* Share */}
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition"
           >
-            <i className="fa-brands fa-whatsapp"></i>
+            <i className="fa-solid fa-share-nodes"></i>
             <span className="hidden sm:inline">Share</span>
-          </a>
+          </button>
           {/* Download */}
           <a
             href={pdfUrl}
