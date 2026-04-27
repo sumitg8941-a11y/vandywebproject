@@ -117,8 +117,10 @@ const api = {
             body: JSON.stringify({ duration, maxPage })
         }).catch(()=>null);
     },
-    getStats: async (since = 0) => {
-        const url = since > 0 ? `/api/stats?since=${since}` : '/api/stats';
+    getStats: async (since = 0, from = null, to = null) => {
+        let url = '/api/stats';
+        if (from && to) url = `/api/stats?from=${from}&to=${to}`;
+        else if (since > 0) url = `/api/stats?since=${since}`;
         const res = await fetch(url, { headers: getAuthHeaders() });
         return await res.json();
     },

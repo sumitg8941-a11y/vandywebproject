@@ -1,4 +1,4 @@
-﻿﻿require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
@@ -591,9 +591,12 @@ app.get('/api/stats', async (req, res) => {
         const now = new Date();
         // Date range filter: ?since=7 or ?since=30, default all-time
         const sinceParam = parseInt(req.query.since) || 0;
-        const sinceDate = sinceParam > 0 ? new Date(now.getTime() - sinceParam * 24 * 60 * 60 * 1000) : null;
-        const rangeFilter = sinceDate ? { createdAt: { $gte: sinceDate } } : {};
-        const offerRangeFilter = sinceDate ? { validUntil: { $gte: now }, createdAt: { $gte: sinceDate } } : { validUntil: { $gte: now } };
+        const fromParam = req.query.from ? new Date(req.query.from) : null;
+        const toParam = req.query.to ? new Date(req.query.to + 'T23:59:59.999Z') : null;
+        const sinceDate = fromParam ? fromParam : (sinceParam > 0 ? new Date(now.getTime() - sinceParam * 24 * 60 * 60 * 1000) : null);
+        const untilDate = toParam || null;
+        const rangeFilter = sinceDate ? (untilDate ? { createdAt: { $gte: sinceDate, $lte: untilDate } } : { createdAt: { $gte: sinceDate } }) : {};
+        const offerRangeFilter = sinceDate ? (untilDate ? { validUntil: { $gte: now }, createdAt: { $gte: sinceDate, $lte: untilDate } } : { validUntil: { $gte: now }, createdAt: { $gte: sinceDate } }) : { validUntil: { $gte: now } };
         const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
         const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
         const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);

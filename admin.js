@@ -98,7 +98,7 @@ const admin = {
                     html = await this.renderOffers();
                     break;
                 case 'stats':
-                    html = await this.renderStats(this._statsSince || 0);
+                    html = await this.renderStats(this._statsSince || 0, this._statsFrom, this._statsTo);
                     break;
                 case 'settings':
                     html = await this.renderSettings();
@@ -750,16 +750,28 @@ const admin = {
     },
 
     _statsSince: 0,
+    _statsFrom: null,
+    _statsTo: null,
 
-    loadStats: async function(since) {
-        this._statsSince = since;
+    loadStats: async function(since, from, to) {
+        this._statsSince = since !== undefined ? since : 0;
+        this._statsFrom = from || null;
+        this._statsTo = to || null;
         this.contentDiv.innerHTML = '<p style="padding:20px;">Loading stats...</p>';
-        this.contentDiv.innerHTML = await this.renderStats(since);
+        this.contentDiv.innerHTML = await this.renderStats(this._statsSince, this._statsFrom, this._statsTo);
     },
 
-    renderStats: async function(since = 0) {
+    applyCustomStats: function() {
+        const from = document.getElementById('stats-from').value;
+        const to = document.getElementById('stats-to').value;
+        if (!from || !to) { alert('Please select both a start and end date.'); return; }
+        if (from > to) { alert('Start date must be before end date.'); return; }
+        this.loadStats(null, from, to);
+    },
+
+    renderStats: async function(since = 0, from = null, to = null) {
         try {
-            const stats = await api.getStats(since);
+            const stats = await api.getStats(since, from, to);
             
             // Format numbers with safe defaults
             const formatNum = (n) => (n || 0).toLocaleString();
@@ -847,13 +859,24 @@ const admin = {
                 <p style="color:#64748b; margin-bottom:24px;">Comprehensive insights to optimize your platform performance</p>
 
                 <!-- Date Range Toggle -->
-                <div style="display:flex; gap:8px; margin-bottom:24px;">
-                    ${[{label:'Last 7 days',val:7},{label:'Last 30 days',val:30},{label:'All time',val:0}].map(opt=>`
-                        <button onclick="admin.loadStats(${opt.val})"
-                            style="padding:8px 16px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; border:2px solid ${since===opt.val?'var(--red)':'var(--border)'}; background:${since===opt.val?'var(--red)':'white'}; color:${since===opt.val?'white':'var(--text-secondary)'}; transition:all .15s;">
+                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; align-items:center;">
+                    ${[{label:'Last 7 days',val:7},{label:'Last 30 days',val:30},{label:'All time',val:0}].map(opt => {
+                        const isActive = !from && since === opt.val;
+                        return `<button onclick="admin.loadStats(${opt.val})"
+                            style="padding:8px 16px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; border:2px solid ${isActive ? 'var(--red)' : 'var(--border)'}; background:${isActive ? 'var(--red)' : 'white'}; color:${isActive ? 'white' : 'var(--text-secondary)'}; transition:all .15s;">
                             ${opt.label}
-                        </button>
-                    `).join('')}
+                        </button>`;
+                    }).join('')}
+                    <button onclick="document.getElementById('custom-range-picker').style.display = document.getElementById('custom-range-picker').style.display === 'none' ? 'flex' : 'none'"
+                        style="padding:8px 16px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; border:2px solid ${from ? 'var(--red)' : 'var(--border)'}; background:${from ? 'var(--red)' : 'white'}; color:${from ? 'white' : 'var(--text-secondary)'}; transition:all .15s;">
+                        <i class="fa-solid fa-calendar-days"></i> ${from ? `${from} → ${to}` : 'Custom'}
+                    </button>
+                    <div id="custom-range-picker" style="display:${from ? 'flex' : 'none'}; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <input type="date" id="stats-from" value="${from || ''}" style="padding:7px 10px; border:1.5px solid var(--border); border-radius:8px; font-size:0.8rem; font-family:inherit;">
+                        <span style="color:var(--text-muted); font-size:0.8rem;">to</span>
+                        <input type="date" id="stats-to" value="${to || ''}" style="padding:7px 10px; border:1.5px solid var(--border); border-radius:8px; font-size:0.8rem; font-family:inherit;">
+                        <button onclick="admin.applyCustomStats()" style="padding:7px 14px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; border:none; background:var(--green); color:white;">Apply</button>
+                    </div>
                 </div>
                 
                 <!-- KPI Cards -->
