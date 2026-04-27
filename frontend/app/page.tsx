@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import SearchBar from './SearchBar';
+import GeoDetect from './GeoDetect';
 
 const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
@@ -55,6 +56,7 @@ export default async function HomePage() {
 
   return (
     <div>
+      <GeoDetect countries={(countries || []).map((c: any) => ({ id: c.id, name: c.name }))} />
       {/* ── Hero ── */}
       <div className="bg-gradient-to-br from-red-700 via-red-600 to-orange-500 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
