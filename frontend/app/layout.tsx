@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import Link from 'next/link'
 import Script from 'next/script'
+import LangToggle from './LangToggle'
 import './globals.css'
 
 const poppins = Poppins({
@@ -82,7 +83,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link href="/search" className="hover:text-red-600 transition">Search</Link>
             </nav>
 
-            <div className="hidden md:flex items-center">
+            <div className="hidden md:flex items-center gap-3">
+              <LangToggle />
               <Link href="/search" className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition text-sm">
                 <i className="fa-solid fa-magnifying-glass mr-2"></i>Find Deals
               </Link>

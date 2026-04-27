@@ -13,11 +13,13 @@ function SearchContent() {
   const initialCategory = searchParams.get('category') || 'all';
   const initialCityId = searchParams.get('cityId') || 'all';
   const initialRetailerId = searchParams.get('retailerId') || 'all';
+  const initialValidity = searchParams.get('validity') || 'all';
 
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
   const [cityId, setCityId] = useState(initialCityId);
   const [retailerId, setRetailerId] = useState(initialRetailerId);
+  const [validity, setValidity] = useState(initialValidity);
   const [showFilters, setShowFilters] = useState(false);
 
   const [results, setResults] = useState<{ retailers: any[]; offers: any[] }>({ retailers: [], offers: [] });
@@ -33,12 +35,13 @@ function SearchContent() {
       .catch(err => console.error('Failed to fetch filters:', err));
   }, [apiBaseUrl]);
 
-  const updateURL = (newQuery: string, newCategory: string, newCityId: string, newRetailerId: string) => {
+  const updateURL = (newQuery: string, newCategory: string, newCityId: string, newRetailerId: string, newValidity: string) => {
     const params = new URLSearchParams();
     if (newQuery) params.set('q', newQuery);
     if (newCategory && newCategory !== 'all') params.set('category', newCategory);
     if (newCityId && newCityId !== 'all') params.set('cityId', newCityId);
     if (newRetailerId && newRetailerId !== 'all') params.set('retailerId', newRetailerId);
+    if (newValidity && newValidity !== 'all') params.set('validity', newValidity);
     const queryString = params.toString();
     router.push(`/search${queryString ? `?${queryString}` : ''}`, { scroll: false });
   };
@@ -53,6 +56,7 @@ function SearchContent() {
         if (category && category !== 'all') params.set('category', category);
         if (cityId && cityId !== 'all') params.set('cityId', cityId);
         if (retailerId && retailerId !== 'all') params.set('retailerId', retailerId);
+        if (validity && validity !== 'all') params.set('validity', validity);
         const res = await fetch(`${apiBaseUrl}/api/search?${params.toString()}`);
         const data = await res.json();
         if (active) setResults(data);
@@ -62,15 +66,16 @@ function SearchContent() {
       if (active) setLoading(false);
     }, 300);
     return () => { active = false; clearTimeout(timer); };
-  }, [query, category, cityId, retailerId, apiBaseUrl]);
+  }, [query, category, cityId, retailerId, validity, apiBaseUrl]);
 
-  const handleQueryChange = (v: string) => { setQuery(v); updateURL(v, category, cityId, retailerId); };
-  const handleCategoryChange = (v: string) => { setCategory(v); updateURL(query, v, cityId, retailerId); };
-  const handleCityChange = (v: string) => { setCityId(v); setRetailerId('all'); updateURL(query, category, v, 'all'); };
-  const handleRetailerChange = (v: string) => { setRetailerId(v); updateURL(query, category, cityId, v); };
-  const clearFilters = () => { setQuery(''); setCategory('all'); setCityId('all'); setRetailerId('all'); router.push('/search', { scroll: false }); };
+  const handleQueryChange = (v: string) => { setQuery(v); updateURL(v, category, cityId, retailerId, validity); };
+  const handleCategoryChange = (v: string) => { setCategory(v); updateURL(query, v, cityId, retailerId, validity); };
+  const handleCityChange = (v: string) => { setCityId(v); setRetailerId('all'); updateURL(query, category, v, 'all', validity); };
+  const handleRetailerChange = (v: string) => { setRetailerId(v); updateURL(query, category, cityId, v, validity); };
+  const handleValidityChange = (v: string) => { setValidity(v); updateURL(query, category, cityId, retailerId, v); };
+  const clearFilters = () => { setQuery(''); setCategory('all'); setCityId('all'); setRetailerId('all'); setValidity('all'); router.push('/search', { scroll: false }); };
 
-  const activeFiltersCount = [category !== 'all', cityId !== 'all', retailerId !== 'all'].filter(Boolean).length;
+  const activeFiltersCount = [category !== 'all', cityId !== 'all', retailerId !== 'all', validity !== 'all'].filter(Boolean).length;
   const filteredRetailers = cityId === 'all' ? filters.retailers : filters.retailers.filter((r: any) => r.cityId === cityId);
 
   return (
@@ -137,6 +142,32 @@ function SearchContent() {
                   <option value="all">All Retailers</option>
                   {filteredRetailers.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-gray-700 mb-3">
+                  <i className="fa-solid fa-clock mr-2 text-orange-500"></i>Expiry
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: 'all', label: 'Any time', icon: '' },
+                    { value: 'today', label: 'Today', icon: '🔥' },
+                    { value: 'week', label: 'This week', icon: '⚡' },
+                    { value: 'month', label: 'This month', icon: '📅' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleValidityChange(opt.value)}
+                      className={`text-xs font-bold py-2 px-2 rounded-lg border transition text-center ${
+                        validity === opt.value
+                          ? 'bg-orange-500 text-white border-orange-500'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-orange-400 hover:text-orange-600'
+                      }`}
+                    >
+                      {opt.icon && <span className="mr-1">{opt.icon}</span>}{opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {activeFiltersCount > 0 && (

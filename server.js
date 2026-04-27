@@ -482,7 +482,20 @@ app.get('/api/search', async (req, res) => {
         }
         
         // Only return active (non-expired) offers in search results
-        offerFilter.validUntil = { $gte: new Date() };
+        const now2 = new Date();
+        const validity = req.query.validity as string;
+        if (validity === 'today') {
+            const endOfDay = new Date(now2); endOfDay.setHours(23, 59, 59, 999);
+            offerFilter.validUntil = { $gte: now2, $lte: endOfDay };
+        } else if (validity === 'week') {
+            const in7 = new Date(now2.getTime() + 7 * 24 * 60 * 60 * 1000);
+            offerFilter.validUntil = { $gte: now2, $lte: in7 };
+        } else if (validity === 'month') {
+            const in30 = new Date(now2.getTime() + 30 * 24 * 60 * 60 * 1000);
+            offerFilter.validUntil = { $gte: now2, $lte: in30 };
+        } else {
+            offerFilter.validUntil = { $gte: now2 };
+        }
 
         // Fetch offers based on filters
         const offers = await Offer.find(offerFilter).sort({ validUntil: -1 }).lean();

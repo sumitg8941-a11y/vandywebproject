@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import Breadcrumbs from '../../Breadcrumbs';
+import CouponReveal from '../../CouponReveal';
+import FollowButton from '../../FollowButton';
 
 const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
@@ -89,6 +91,9 @@ export default async function OffersPage({ params }: { params: Promise<{ retaile
             <i className="fa-brands fa-whatsapp"></i> Share
           </a>
         </div>
+        <div className="mt-4">
+          <FollowButton retailerId={retailerId} retailerName={retailer?.name || 'this retailer'} />
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto p-6 mt-4">
@@ -135,6 +140,7 @@ export default async function OffersPage({ params }: { params: Promise<{ retaile
                         <i className="fa-regular fa-calendar mr-1"></i>
                         {o.validFrom ? new Date(o.validFrom).toLocaleDateString() : ''} &ndash; {o.validUntil ? new Date(o.validUntil).toLocaleDateString() : ''}
                       </p>
+                      {o.couponCode && <CouponReveal code={o.couponCode} />}
                     </div>
                   </div>
                 </Link>
