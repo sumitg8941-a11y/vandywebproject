@@ -541,7 +541,7 @@ const admin = {
         const activeOffers = offers.filter(o => new Date(o.validUntil) >= now);
         const expiredOffers = offers.filter(o => new Date(o.validUntil) < now);
         
-        let rows = activeOffers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${o.validFrom ? new Date(o.validFrom).toISOString().split('T')[0] : ''} to ${o.validUntil ? new Date(o.validUntil).toISOString().split('T')[0] : ''}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#f59e0b;" onclick="admin.resetOfferMetrics('${o.id || o._id}')">Reset Metrics</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
+        let rows = activeOffers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${o.maxPagesViewed || 0}</td><td>${o.validFrom ? new Date(o.validFrom).toISOString().split('T')[0] : ''} to ${o.validUntil ? new Date(o.validUntil).toISOString().split('T')[0] : ''}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#f59e0b;" onclick="admin.resetOfferMetrics('${o.id || o._id}')">Reset Metrics</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
         let retailerOptions = retailers.map(r => `<option value="${r.id}">${r.name} (${r.cityId})</option>`).join('');
 
         let expiredSection = '';
@@ -551,6 +551,7 @@ const admin = {
                     <td><input type="checkbox" class="expired-offer-checkbox" data-offer-id="${o.id || o._id}" data-pdf="${o.pdfUrl || ''}" data-image="${o.image || ''}"></td>
                     <td>${o.title}</td>
                     <td>${o.retailerId.toUpperCase()}</td>
+                    <td>${o.maxPagesViewed || 0}</td>
                     <td style="color:#ea580c; font-weight:600;">Expired ${Math.floor((now - new Date(o.validUntil)) / (1000 * 60 * 60 * 24))} days ago</td>
                     <td><button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td>
                 </tr>
@@ -572,6 +573,7 @@ const admin = {
                                 <th style="width:40px;"><input type="checkbox" id="select-all-expired" onclick="admin.toggleAllExpired(this)"></th>
                                 <th>Title</th>
                                 <th>Retailer</th>
+                                <th>Max Pages Viewed</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -609,6 +611,9 @@ const admin = {
                     <input type="file" id="new-off-pdf-file" accept="application/pdf" style="width:100%; padding:8px; margin-bottom:5px;">
                     <input type="text" id="new-off-pdf" placeholder="OR provide PDF URL (e.g. https://...)" style="width:100%; padding:8px; margin-bottom:15px;">
                     
+                    <label style="font-weight: bold; font-size: 0.9em;">Target Retailer Website URL (Optional):</label>
+                    <input type="url" id="new-off-retailer-url" placeholder="https://example.com/promo" style="width:100%; padding:8px; margin-bottom:15px;">
+
                     <label style="font-weight: bold; font-size: 0.9em;">Upload Cover Image (Optional):</label>
                     <input type="file" id="new-off-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
                     <input type="text" id="new-off-image" placeholder="OR provide Image URL (e.g. https://...)" style="width:100%; padding:8px; margin-bottom:15px;">
@@ -620,7 +625,7 @@ const admin = {
             </div>
             
             <h3 style="margin-top:30px;">Active Offers (${activeOffers.length})</h3>
-            <table class="admin-table" style="margin-top:10px;"><thead><tr><th>Title</th><th>Retailer</th><th>Validity</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No active offers</td></tr>'}</tbody></table>
+            <table class="admin-table" style="margin-top:10px;"><thead><tr><th>Title</th><th>Retailer</th><th>Max Pages Viewed</th><th>Validity</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No active offers</td></tr>'}</tbody></table>
             
             ${expiredSection}
         `;
@@ -660,6 +665,7 @@ const admin = {
         document.getElementById('new-off-valid-until').value = '';
         document.getElementById('new-off-badge').value = '';
         document.getElementById('new-off-pdf').value = '';
+        document.getElementById('new-off-retailer-url').value = '';
         document.getElementById('new-off-image').value = '';
         
         const btn = document.getElementById('save-offer-btn');
@@ -685,6 +691,7 @@ const admin = {
             document.getElementById('new-off-retailer').value = offer.retailerId || '';
             document.getElementById('new-off-badge').value = offer.badge || '';
             document.getElementById('new-off-pdf').value = (offer.pdfUrl && offer.pdfUrl !== '#') ? offer.pdfUrl : '';
+            document.getElementById('new-off-retailer-url').value = offer.retailerUrl || '';
             document.getElementById('new-off-image').value = offer.image || '';
 
             const saveBtn = document.getElementById('save-offer-btn');
@@ -704,6 +711,7 @@ const admin = {
         const badge = document.getElementById('new-off-badge').value;
 
         let pdfUrl = document.getElementById('new-off-pdf').value || '#';
+        let retailerUrl = document.getElementById('new-off-retailer-url').value || '';
         let image = document.getElementById('new-off-image').value;
 
         const pdfFile = document.getElementById('new-off-pdf-file').files[0];
@@ -719,7 +727,7 @@ const admin = {
             if (imageFile) image = await this.uploadFile(imageFile);
             
             if(id && title && validFrom && validUntil && retailerId) {
-                const payload = { id, title, validFrom, validUntil, retailerId, pdfUrl, image, badge };
+                const payload = { id, title, validFrom, validUntil, retailerId, pdfUrl, retailerUrl, image, badge };
                 if (editId) {
                     const res = await fetch(`/api/admin/offers/${editId}`, {
                         method: 'PUT',
@@ -773,6 +781,7 @@ const admin = {
     renderStats: async function(since = 0, from = null, to = null) {
         try {
             const stats = await api.getStats(since, from, to);
+            window._lastStatsData = stats;
             
             // Format numbers with safe defaults
             const formatNum = (n) => (n || 0).toLocaleString();
@@ -856,7 +865,10 @@ const admin = {
             `).join('');
             
             return `
-                <h2>Marketing Analytics Dashboard</h2>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2>Marketing Analytics Dashboard</h2>
+                    <button onclick="admin.exportMetricsCSV()" class="action-btn" style="background:#27ae60;"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+                </div>
                 <p style="color:#64748b; margin-bottom:24px;">Comprehensive insights to optimize your platform performance</p>
 
                 <!-- Date Range Toggle -->
@@ -1286,6 +1298,48 @@ const admin = {
             alert('Metrics reset successfully! Refresh the page to see updated values.');
             this.showTab('offers');
         } catch(e) { alert('Error resetting metrics: ' + e.message); }
+    },
+
+    exportMetricsCSV: function() {
+        if (!window._lastStatsData) {
+            alert('No stats data available to export.');
+            return;
+        }
+        
+        const stats = window._lastStatsData;
+        let csvContent = "data:text/csv;charset=utf-8,";
+        
+        csvContent += "=== DEALNAMAA METRICS EXPORT ===\\n\\n";
+        
+        csvContent += "--- OVERVIEW ---\\n";
+        csvContent += `Total Visits,${stats.visits || 0}\\n`;
+        csvContent += `Active Offers,${(stats.totals || {}).activeOffers || 0}\\n`;
+        csvContent += `Conversion Rate,${stats.conversionRate || 0}%\\n`;
+        csvContent += `Offers With Clicks,${stats.offersWithClicks || 0}\\n`;
+        csvContent += `Average Engagement Time,${stats.avgEngagementTime || 0} seconds\\n`;
+        csvContent += `Average PDF Pages Viewed,${stats.avgPagesViewed || 0}\\n\\n`;
+        
+        csvContent += "--- TOP OFFERS ---\\n";
+        csvContent += "Title,Retailer,Clicks\\n";
+        (stats.topOffers || []).forEach(o => {
+            csvContent += `"${o.title.replace(/"/g, '""')}","${o.retailerId}",${o.clicks}\\n`;
+        });
+        csvContent += "\\n";
+        
+        csvContent += "--- PDF ENGAGEMENT ---\\n";
+        csvContent += "Title,Max Pages Viewed,Total Time (Seconds)\\n";
+        (stats.offersWithPDFViews || []).forEach(o => {
+            csvContent += `"${o.title.replace(/"/g, '""')}",${o.maxPagesViewed},${o.totalTimeSeconds}\\n`;
+        });
+        csvContent += "\\n";
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `dealnamaa_metrics_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 };
 

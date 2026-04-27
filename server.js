@@ -279,7 +279,7 @@ app.get('/api/redirect/offer/:id', async (req, res) => {
         offer.clicks += 1;
         await offer.save();
 
-        let dest = offer.couponUrl || offer.externalAdLink || offer.pdfUrl;
+        let dest = offer.retailerUrl || offer.couponUrl || offer.externalAdLink || offer.pdfUrl;
         if (!dest || dest === '#') {
             return res.status(400).send('No valid destination link for this offer');
         }
@@ -313,7 +313,7 @@ app.get('/api/settings', async (req, res) => {
 // Admin: Update site settings
 app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
     try {
-        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl', 'siteUrl'];
+        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl', 'siteUrl', 'contactEmail', 'contactPhone', 'contactAddress', 'privacyPolicy', 'aboutUs', 'termsOfService', 'showStats', 'customLogoUrl'];
         const update = {};
         allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
         const settings = await SiteSettings.findOneAndUpdate(
@@ -938,11 +938,13 @@ app.post('/api/offer/:id/unsave', async (req, res) => {
 app.get('/api/social-proof', async (req, res) => {
     try {
         const stats = await SiteStat.findOne({ id: 'global' });
+        const settings = await SiteSettings.findOne({ id: 'global' });
         res.json({
             visits: stats?.visits || 0,
             totalSaves: stats?.totalSaves || 0,
             avgRating: stats?.avgRating || 0,
-            totalRatings: stats?.totalRatings || 0
+            totalRatings: stats?.totalRatings || 0,
+            showStats: settings?.showStats || false
         });
     } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
@@ -964,7 +966,7 @@ app.post('/api/admin/login', (req, res) => {
 // Admin: Update site settings
 app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
     try {
-        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl', 'siteUrl'];
+        const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl', 'siteUrl', 'contactEmail', 'contactPhone', 'contactAddress', 'privacyPolicy', 'aboutUs', 'termsOfService', 'showStats', 'customLogoUrl'];
         const update = {};
         allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
         const settings = await SiteSettings.findOneAndUpdate(

@@ -21,6 +21,7 @@ const offerSchema = new mongoose.Schema({
     category: { type: String, default: 'General', trim: true }, // For grouping offers like D4D
     couponCode: { type: String, default: '', trim: true }, // The promo code to generate traffic for end retailers
     couponUrl: { type: String, default: '', trim: true }, // The link to apply the coupon, tracked to show traffic source
+    retailerUrl: { type: String, default: '', trim: true }, // The target retailer website URL
     retailerId: { type: String, required: true, lowercase: true, trim: true } // Creates the relationship to Retailer
 }, { timestamps: true });
 

@@ -275,6 +275,17 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
 
           {/* CTA column */}
           <div className="flex-shrink-0 flex flex-col items-stretch gap-3 w-full md:w-56">
+            {offer.retailerUrl && offer.retailerUrl !== '#' && (
+              <a
+                href={`${apiBaseUrl}/api/redirect/offer/${offer.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center justify-center gap-1 bg-gradient-to-r from-red-600 to-orange-500 text-white px-6 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+              >
+                <span className="font-black text-lg tracking-tight"><i className="fa-solid fa-bolt text-yellow-300"></i> Go to Deal</span>
+                <span className="text-xs font-medium opacity-90">at {retailer?.name || 'Retailer Website'}</span>
+              </a>
+            )}
             {pdfSrc && (
               <button
                 onClick={() => setIsFlipbookOpen(true)}
@@ -283,7 +294,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                 <i className="fa-solid fa-book-open"></i> View Catalog
               </button>
             )}
-            {offer.couponUrl && offer.couponUrl !== '#' && (
+            {!offer.retailerUrl && offer.couponUrl && offer.couponUrl !== '#' && (
               <a
                 href={`${apiBaseUrl}/api/redirect/offer/${offer.id}`}
                 target="_blank"

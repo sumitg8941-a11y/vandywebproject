@@ -90,8 +90,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
 
             <Link href="/" className="flex items-center gap-2 text-red-600 font-black text-2xl tracking-tight hover:opacity-90 transition">
-              <i className="fa-solid fa-tags"></i>
-              <span>DealNamaa</span>
+              {settings.customLogoUrl ? (
+                <img src={settings.customLogoUrl} alt="DealNamaa Logo" className="h-8 object-contain" />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <i className="fa-solid fa-tags"></i>
+                  <span>DealNamaa</span>
+                </div>
+              )}
             </Link>
 
             <NavLinks />

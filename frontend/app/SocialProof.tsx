@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 export default function SocialProof() {
-  const [stats, setStats] = useState({ visits: 0, totalSaves: 0, avgRating: 0, totalRatings: 0 });
+  const [stats, setStats] = useState({ visits: 0, totalSaves: 0, avgRating: 0, totalRatings: 0, showStats: false });
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
   useEffect(() => {
@@ -13,7 +13,7 @@ export default function SocialProof() {
       .catch(() => {});
   }, [apiBaseUrl]);
 
-  if (stats.visits === 0) return null;
+  if (!stats.showStats || stats.visits === 0) return null;
 
   return (
     <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white py-4">
@@ -49,3 +49,4 @@ export default function SocialProof() {
     </div>
   );
 }
+

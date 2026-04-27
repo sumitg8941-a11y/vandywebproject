@@ -10,7 +10,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const apiBaseUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+  let settings: any = {};
+  try {
+    const res = await fetch(`${apiBaseUrl}/api/settings`, { next: { revalidate: 300 } });
+    if (res.ok) settings = await res.json();
+  } catch (e) {}
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white text-center py-16 px-4 rounded-xl mb-8">
@@ -18,20 +25,25 @@ export default function PrivacyPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-md p-8">
-        <p className="text-gray-500 text-sm mb-6">Last updated: April 2026</p>
-        
-        <h2 className="text-xl font-bold text-gray-800 mb-4">1. Information We Collect</h2>
-        <p className="text-gray-600 mb-6">We collect information you provide directly to us.</p>
+        {settings.privacyPolicy ? (
+          <div dangerouslySetInnerHTML={{ __html: settings.privacyPolicy }} className="prose max-w-none text-gray-600" />
+        ) : (
+          <div className="content-fallback">
+            <p className="text-gray-500 text-sm mb-6">Last updated: April 2026</p>
 
-        <h2 className="text-xl font-bold text-gray-800 mb-4">2. How We Use Information</h2>
-        <p className="text-gray-600 mb-6">We use the information to provide and improve our services.</p>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">1. Information We Collect</h2>
+            <p className="text-gray-600 mb-6">We collect information you provide directly to us.</p>
 
-        <h2 className="text-xl font-bold text-gray-800 mb-4">3. Data Security</h2>
-        <p className="text-gray-600 mb-6">We implement appropriate security measures to protect your data.</p>
-      </div>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">2. How We Use Information</h2>
+            <p className="text-gray-600 mb-6">We use the information to provide and improve our services.</p>
+
+            <h2 className="text-xl font-bold text-gray-800 mb-4">3. Data Security</h2>
+            <p className="text-gray-600 mb-6">We implement appropriate security measures to protect your data.</p>
+          </div>
+        )}      </div>
 
       <div className="text-center mt-6">
-        <Link href="/" className="text-red-600 hover:underline">← Back to Home</Link>
+        <Link href="/" className="text-red-600 hover:underline">&larr; Back to Home</Link>
       </div>
     </div>
   );
