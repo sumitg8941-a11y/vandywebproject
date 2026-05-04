@@ -356,7 +356,7 @@ export const translations = {
 } as const;
 
 type Lang = 'en' | 'ar' | 'ur' | 'hi';
-type T = typeof translations.en;
+type T = { [K in keyof typeof translations.en]: string };
 
 interface LangContextValue {
   lang: Lang;
