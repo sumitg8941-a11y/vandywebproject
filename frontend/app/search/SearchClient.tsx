@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import SafeImage from '../SafeImage';
 import { SkeletonCard, SkeletonOfferCard } from '../SkeletonLoader';
 import AdSlot from '../AdSlot';
+import { useLang } from '../LangToggle';
 
 function SearchContent() {
   const { t } = useLang();

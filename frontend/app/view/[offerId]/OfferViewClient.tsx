@@ -8,6 +8,7 @@ import SafeImage from '../../SafeImage';
 import SaveButton from '../../SaveButton';
 import RatingWidget from '../../RatingWidget';
 import AdSlot from '../../AdSlot';
+import { useLang } from '../../LangToggle';
 
 interface Props {
   offer: any;
