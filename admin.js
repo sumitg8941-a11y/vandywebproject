@@ -1242,6 +1242,7 @@ const admin = {
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>Marketing Analytics Dashboard</h2>
                     <div style="display:flex; gap:8px;">
+                        <button onclick="admin.exportPDFReport()" class="action-btn" style="background:#dc2626; border:2px solid #dc2626; box-shadow:0 4px 6px -1px rgba(220, 38, 38, 0.2);"><i class="fa-solid fa-file-pdf"></i> Download PDF Report</button>
                         <button onclick="admin.exportOffersCSV()" class="action-btn" style="background:#2563eb;"><i class="fa-solid fa-table"></i> Export Offers</button>
                         <button onclick="admin.exportMetricsCSV()" class="action-btn" style="background:#27ae60;"><i class="fa-solid fa-file-csv"></i> Export Metrics</button>
                     </div>
@@ -2101,6 +2102,19 @@ const admin = {
             rows.push([`"${o.title.replace(/"/g, '""')}"`, o.maxPagesViewed, o.totalTimeSeconds]);
         });
 
+        rows.push([]);
+        rows.push(["--- RETAILER PERFORMANCE ---"]);
+        rows.push(["Retailer", "Category", "Total Clicks", "Engagement Time (Sec)"]);
+        (stats.topRetailers || []).forEach(r => {
+            rows.push([`"${r.name.replace(/"/g, '""')}"`, `"${(r.category || 'General').replace(/"/g, '""')}"`, r.clicks || 0, r.totalTimeSeconds || 0]);
+        });
+
+        rows.push([]);
+        rows.push(["--- GEOGRAPHIC DATA ---"]);
+        rows.push(["Region", "Type", "Visits"]);
+        (stats.topCountries || []).forEach(c => rows.push([`"${c.name}"`, "Country", c.visits]));
+        (stats.topCities || []).forEach(c => rows.push([`"${c.name}"`, "City", c.visits]));
+
         const csvContent = rows.map(e => e.join(",")).join("\r\n");
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -2112,6 +2126,195 @@ const admin = {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+    },
+
+    exportPDFReport: function() {
+        if (!window._lastStatsData) return alert('No stats data to export. Refresh the dashboard first.');
+        const stats = window._lastStatsData;
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+        
+        const formatNum = (n) => (n || 0).toLocaleString();
+        const formatTime = (seconds) => {
+            if (seconds < 60) return `${seconds}s`;
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}m ${secs}s`;
+        };
+
+        const reportWin = window.open('', '_blank');
+        reportWin.document.write(`
+            <html>
+            <head>
+                <title>DealNamaa Platform Performance Report - ${dateStr}</title>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+                    body { font-family: 'Inter', sans-serif; color: #1e293b; line-height: 1.5; margin: 0; padding: 40px; background: #fff; }
+                    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 30px; }
+                    .logo { font-size: 24px; font-weight: 900; color: #dc2626; display: flex; align-items: center; gap: 10px; }
+                    .report-title { text-align: right; }
+                    .report-title h1 { margin: 0; font-size: 20px; color: #0f172a; }
+                    .report-title p { margin: 4px 0 0; font-size: 14px; color: #64748b; }
+                    
+                    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; }
+                    .kpi-card { padding: 20px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
+                    .kpi-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
+                    .kpi-value { font-size: 24px; font-weight: 800; color: #0f172a; }
+                    
+                    .section { margin-bottom: 40px; page-break-inside: avoid; }
+                    .section-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; color: #0f172a; display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+                    .section-title i { color: #dc2626; }
+                    
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                    th { text-align: left; padding: 12px; font-size: 12px; font-weight: 700; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; }
+                    td { padding: 12px; font-size: 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+                    
+                    .bar-container { width: 100%; background: #f1f5f9; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+                    .bar-fill { height: 100%; background: linear-gradient(90deg, #dc2626, #ef4444); border-radius: 4px; }
+                    
+                    .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+                    .badge-blue { background: #eff6ff; color: #2563eb; }
+                    .badge-green { background: #f0fdf4; color: #16a34a; }
+                    
+                    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+                    
+                    @media print {
+                        body { padding: 0; }
+                        .no-print { display: none; }
+                        .kpi-card { background: #f8fafc !important; -webkit-print-color-adjust: exact; }
+                        .bar-fill { background: #dc2626 !important; -webkit-print-color-adjust: exact; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div class="logo"><i class="fa-solid fa-tags"></i> DEALNAMAA</div>
+                    <div class="report-title">
+                        <h1>Performance Analytics Summary</h1>
+                        <p>Business Intelligence Report • ${dateStr}</p>
+                    </div>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Platform Traffic</div>
+                        <div class="kpi-value">${formatNum(stats.visits)}</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Conversion Rate</div>
+                        <div class="kpi-value">${stats.conversionRate}%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Active Content</div>
+                        <div class="kpi-value">${formatNum((stats.totals || {}).activeOffers)} Flyers</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Avg. Engagement</div>
+                        <div class="kpi-value">${formatTime(stats.avgEngagementTime)}</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title"><i class="fa-solid fa-ranking-star"></i> Top Performing Content</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Offer Title & Retailer</th>
+                                <th style="width: 200px;">Market Share (Clicks)</th>
+                                <th style="width: 100px; text-align: right;">Total Clicks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(stats.topOffers || []).slice(0, 10).map(o => {
+                                const maxClicks = stats.topOffers[0].clicks || 1;
+                                const width = (o.clicks / maxClicks * 100);
+                                return `
+                                    <tr>
+                                        <td>
+                                            <div style="font-weight: 700; color: #0f172a;">${o.title}</div>
+                                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">${o.retailerId.toUpperCase()}</div>
+                                        </td>
+                                        <td>
+                                            <div class="bar-container"><div class="bar-fill" style="width: ${width}%"></div></div>
+                                        </td>
+                                        <td style="text-align: right; font-weight: 800; color: #dc2626;">${formatNum(o.clicks)}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="grid-2">
+                    <div class="section">
+                        <div class="section-title"><i class="fa-solid fa-store"></i> Retailer Rankings</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Retailer</th>
+                                    <th style="text-align: right;">Clicks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(stats.topRetailers || []).slice(0, 5).map(r => `
+                                    <tr>
+                                        <td>
+                                            <div style="font-weight: 600;">${r.name}</div>
+                                            <div style="font-size: 11px; color: #94a3b8;">${r.category || 'General'}</div>
+                                        </td>
+                                        <td style="text-align: right; font-weight: 700;">${formatNum(r.clicks)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="section">
+                        <div class="section-title"><i class="fa-solid fa-file-pdf"></i> Flyer Engagement</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th style="text-align: right;">Time Spent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(stats.offersWithPDFViews || []).slice(0, 5).map(o => `
+                                    <tr>
+                                        <td>
+                                            <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${o.title}</div>
+                                            <div style="font-size: 11px; color: #2563eb; font-weight: 700;">PAGE ${o.maxPagesViewed} REACHED</div>
+                                        </td>
+                                        <td style="text-align: right; font-weight: 700;">${formatTime(o.totalTimeSeconds)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section" style="background: #f8fafc; padding: 20px; border-radius: 12px; margin-top: 40px; border: 1px solid #e2e8f0;">
+                    <h4 style="margin: 0 0 10px; font-size: 14px; color: #475569;">Report Summary & Insights</h4>
+                    <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.6;">
+                        Current data shows a conversion rate of <strong>${stats.conversionRate}%</strong> with <strong>${formatNum(stats.visits)}</strong> total platform visits. 
+                        The most engaged offer is "<strong>${(stats.topOffers[0] || {}).title || 'N/A'}</strong>" from <strong>${(stats.topOffers[0] || {}).retailerId || 'N/A'}</strong>. 
+                        Geographic data indicates strong performance in <strong>${stats.topCountryName || 'primary regions'}</strong>.
+                    </p>
+                </div>
+
+                <div style="text-align: center; margin-top: 60px; color: #94a3b8; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">
+                    <p>© ${new Date().getFullYear()} DealNamaa Advertising Technology • Internal Document</p>
+                </div>
+
+                <div class="no-print" style="position: fixed; bottom: 30px; right: 30px;">
+                    <button onclick="window.print()" style="padding: 16px 32px; background: #dc2626; color: white; border: none; border-radius: 50px; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 0 20px 25px -5px rgba(220, 38, 38, 0.3); display: flex; align-items: center; gap: 12px; transition: transform 0.2s;">
+                        <i class="fa-solid fa-cloud-arrow-down" style="font-size: 18px;"></i> SAVE REPORT AS PDF
+                    </button>
+                </div>
+            </body>
+            </html>
+        `);
+        reportWin.document.close();
     },
 
     exportOffersCSV: async function() {
