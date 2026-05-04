@@ -3,6 +3,7 @@
 import SafeImage from './SafeImage';
 import Link from 'next/link';
 import SearchBar from './SearchBar';
+import AdSlot from './AdSlot';
 import { useLang } from './LangToggle';
 import { SkeletonCard, SkeletonOfferCard } from './SkeletonLoader';
 

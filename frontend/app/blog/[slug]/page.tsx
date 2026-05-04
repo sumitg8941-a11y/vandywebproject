@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import Breadcrumbs from '../../../Breadcrumbs';
-import SafeImage from '../../../SafeImage';
-import AdSlot from '../../../AdSlot';
+import Breadcrumbs from '../../Breadcrumbs';
+import SafeImage from '../../SafeImage';
+import AdSlot from '../../AdSlot';
 
 const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 

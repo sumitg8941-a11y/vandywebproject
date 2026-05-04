@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import SafeImage from '../../SafeImage';
-import Breadcrumbs from '../../Breadcrumbs';
+import SafeImage from '../SafeImage';
+import Breadcrumbs from '../Breadcrumbs';
 
 export const metadata = {
   title: 'Blog | DealNamaa',

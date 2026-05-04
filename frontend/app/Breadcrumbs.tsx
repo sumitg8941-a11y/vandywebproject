@@ -3,18 +3,46 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-export default function Breadcrumbs({ type, id }: { type: string, id: string }) {
+export default function Breadcrumbs({ type, id, items }: { type?: string, id?: string, items?: { label: string, href?: string }[] }) {
   const [breadcrumbs, setBreadcrumbs] = useState<any>(null);
 
   useEffect(() => {
+    if (items) return;
+    if (!type || !id) return;
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
     fetch(`${apiBaseUrl}/api/breadcrumbs/${type}/${id}`)
       .then(res => res.ok ? res.json() : null)
       .then(data => setBreadcrumbs(data))
       .catch(() => setBreadcrumbs(null));
-  }, [type, id]);
+  }, [type, id, items]);
 
-  if (!breadcrumbs) return null;
+  if (!items && !breadcrumbs) return null;
+
+  if (items) {
+    return (
+      <nav className="flex text-sm text-gray-500 mb-6 bg-gray-50 p-3 rounded-lg overflow-x-auto whitespace-nowrap">
+        <ol className="flex items-center space-x-2">
+          <li>
+            <Link href="/" className="hover:text-red-600 transition-colors">
+              <i className="fa-solid fa-home mr-1"></i> Home
+            </Link>
+          </li>
+          {items.map((item, idx) => (
+            <li key={idx} className="flex items-center space-x-2">
+              <span className="text-gray-400">/</span>
+              {item.href ? (
+                <Link href={item.href} className="hover:text-red-600 transition-colors">
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="text-gray-800 font-medium">{item.label}</span>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+    );
+  }
 
   return (
     <nav className="flex text-sm text-gray-500 mb-6 bg-gray-50 p-3 rounded-lg overflow-x-auto whitespace-nowrap">
