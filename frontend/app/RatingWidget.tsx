@@ -14,13 +14,13 @@ export default function RatingWidget({ offerId, initialRating = 0, initialCount 
 
   useEffect(() => {
     const key = `dn_rating_${offerId}`;
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      const parsedRating = parseInt(stored, 10);
-      if (parsedRating >= 1 && parsedRating <= 5) {
-        setUserRating(parsedRating);
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsedRating = parseInt(stored, 10);
+        if (parsedRating >= 1 && parsedRating <= 5) setUserRating(parsedRating);
       }
-    }
+    } catch { /* localStorage unavailable */ }
   }, [offerId]);
 
   const handleRate = async (stars: number) => {
@@ -35,7 +35,7 @@ export default function RatingWidget({ offerId, initialRating = 0, initialCount 
         setRating(data.rating);
         setCount(data.ratingCount);
         setUserRating(stars);
-        localStorage.setItem(`dn_rating_${offerId}`, stars.toString());
+        try { localStorage.setItem(`dn_rating_${offerId}`, stars.toString()); } catch { /* ignore */ }
       }
     } catch {}
   };

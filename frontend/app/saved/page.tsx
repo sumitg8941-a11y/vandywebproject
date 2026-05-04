@@ -19,7 +19,8 @@ export default function SavedPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedIds: string[] = JSON.parse(localStorage.getItem('dn_saved_offers') || '[]');
+    let savedIds: string[] = [];
+    try { savedIds = JSON.parse(localStorage.getItem('dn_saved_offers') || '[]'); } catch { /* ignore */ }
     if (!savedIds.length) { setLoading(false); return; }
 
     const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
@@ -35,7 +36,7 @@ export default function SavedPage() {
   const unsave = (id: string) => {
     const updated = offers.filter(o => o.id !== id);
     setOffers(updated);
-    localStorage.setItem('dn_saved_offers', JSON.stringify(updated.map(o => o.id)));
+    try { localStorage.setItem('dn_saved_offers', JSON.stringify(updated.map(o => o.id))); } catch { /* ignore */ }
   };
 
   return (

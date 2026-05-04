@@ -10,8 +10,10 @@ export default function SaveButton({ offerId }: { offerId: string }) {
   const [popping, setPopping] = useState(false);
 
   useEffect(() => {
-    const savedOffers = JSON.parse(localStorage.getItem('dn_saved_offers') || '[]');
-    setSaved(savedOffers.includes(offerId));
+    try {
+      const savedOffers = JSON.parse(localStorage.getItem('dn_saved_offers') || '[]');
+      setSaved(savedOffers.includes(offerId));
+    } catch { /* localStorage unavailable */ }
   }, [offerId]);
 
   const triggerPop = () => {
@@ -22,17 +24,18 @@ export default function SaveButton({ offerId }: { offerId: string }) {
 
   const toggleSave = async () => {
     triggerPop();
-    const savedOffers = JSON.parse(localStorage.getItem('dn_saved_offers') || '[]');
+    let savedOffers: string[] = [];
+    try { savedOffers = JSON.parse(localStorage.getItem('dn_saved_offers') || '[]'); } catch { /* ignore */ }
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
-    
+
     if (saved) {
       const updated = savedOffers.filter((id: string) => id !== offerId);
-      localStorage.setItem('dn_saved_offers', JSON.stringify(updated));
+      try { localStorage.setItem('dn_saved_offers', JSON.stringify(updated)); } catch { /* ignore */ }
       setSaved(false);
       fetch(`${apiBaseUrl}/api/offer/${offerId}/unsave`, { method: 'POST' }).catch(() => {});
     } else {
       savedOffers.push(offerId);
-      localStorage.setItem('dn_saved_offers', JSON.stringify(savedOffers));
+      try { localStorage.setItem('dn_saved_offers', JSON.stringify(savedOffers)); } catch { /* ignore */ }
       setSaved(true);
       fetch(`${apiBaseUrl}/api/offer/${offerId}/save`, { method: 'POST' })
         .then(r => r.json())

@@ -382,13 +382,17 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>('en');
 
   useEffect(() => {
-    const saved = (localStorage.getItem(STORAGE_KEY) || 'en') as Lang;
-    setLangState(saved);
-    applyLang(saved);
+    try {
+      const saved = (localStorage.getItem(STORAGE_KEY) || 'en') as Lang;
+      setLangState(saved);
+      applyLang(saved);
+    } catch {
+      applyLang('en');
+    }
   }, []);
 
   function setLang(l: Lang) {
-    localStorage.setItem(STORAGE_KEY, l);
+    try { localStorage.setItem(STORAGE_KEY, l); } catch { /* ignore */ }
     setLangState(l);
     applyLang(l);
   }

@@ -41,10 +41,10 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
   // Load user's previous feedback from localStorage
   useEffect(() => {
     const key = `dn_feedback_${offerId}`;
-    const stored = localStorage.getItem(key);
-    if (stored === 'like' || stored === 'dislike') {
-      setUserFeedback(stored);
-    }
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored === 'like' || stored === 'dislike') setUserFeedback(stored);
+    } catch { /* localStorage unavailable */ }
   }, [offerId]);
 
   // Track offer click on mount
@@ -93,7 +93,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
           const data = await res.json();
           setOffer({ ...offer, likes: data.likes, dislikes: data.dislikes });
           setUserFeedback(null);
-          localStorage.removeItem(`dn_feedback_${offerId}`);
+          try { localStorage.removeItem(`dn_feedback_${offerId}`); } catch { /* ignore */ }
         }
       } catch {}
       return;
@@ -111,7 +111,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
         const data = await res.json();
         setOffer({ ...offer, likes: data.likes, dislikes: data.dislikes });
         setUserFeedback(type);
-        localStorage.setItem(`dn_feedback_${offerId}`, type);
+        try { localStorage.setItem(`dn_feedback_${offerId}`, type); } catch { /* ignore */ }
       }
     } catch {}
   };
