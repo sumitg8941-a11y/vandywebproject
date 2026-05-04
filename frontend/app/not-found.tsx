@@ -62,7 +62,7 @@ export default async function NotFound() {
                       <h3 className="text-xs font-bold text-gray-800 truncate">{o.title}</h3>
                       {o.validUntil && (
                         <p className="text-xs text-gray-400 mt-1">
-                          Until {new Date(o.validUntil).toLocaleDateString()}
+                          Until {new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})}
                         </p>
                       )}
                     </div>

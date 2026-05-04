@@ -5,6 +5,7 @@ import Script from 'next/script'
 import LangToggle, { LangProvider } from './LangToggle'
 import NavLinks from './NavLinks'
 import MobileNav from './MobileNav'
+import LogoLink from './LogoLink'
 import FindDealsButton from './FindDealsButton'
 import Tracker from './Tracker'
 import './globals.css'
@@ -100,7 +101,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <header className="bg-white shadow-sm border-b sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
 
-            <Link href="/" className="flex items-center gap-2 text-red-600 font-black text-2xl tracking-tight hover:opacity-90 transition">
+            <LogoLink className="flex items-center gap-2 text-red-600 font-black text-2xl tracking-tight hover:opacity-90 transition">
               {settings.customLogoUrl ? (
                 <img src={settings.customLogoUrl} alt="DealNamaa Logo" className="h-8 object-contain" />
               ) : (
@@ -109,7 +110,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <span>DealNamaa</span>
                 </div>
               )}
-            </Link>
+            </LogoLink>
 
             <NavLinks />
 

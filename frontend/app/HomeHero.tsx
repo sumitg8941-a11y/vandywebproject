@@ -42,47 +42,16 @@ export default function HomeHero({
 
   return (
     <div>
-      {/* ── Hero ── */}
-      <div className="bg-gradient-to-br from-red-700 via-red-600 to-orange-500 overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 py-14 md:py-20 flex flex-col md:flex-row items-center gap-10">
-          <div className="flex-1 text-white text-center md:text-left">
-            <span className="inline-block bg-yellow-400 text-gray-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-4">
-              {t.newDeals}
-            </span>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight drop-shadow whitespace-pre-line">
-              {customHomeMessage || t.heroTitle}
-            </h1>
-            <p className="text-lg md:text-xl mb-8 opacity-90 font-medium max-w-xl">
-              {t.heroSub}
-            </p>
-            <SearchBar />
-            <p className="mt-4 text-sm opacity-70">
-              <i className="fa-solid fa-location-dot mr-1"></i>
-              {t.coveringCities}
-            </p>
-          </div>
-          {heroImages.length >= 4 ? (
-            <div className="hidden md:grid grid-cols-2 gap-2 flex-shrink-0 w-72 lg:w-96" style={{ gridTemplateRows: 'repeat(2, 1fr)' }}>
-              {[...heroImages, ...heroImages].slice(0, 4).map((o: any, i: number) => (
-                <div key={i} className="relative rounded-xl overflow-hidden shadow-xl" style={{ height: '140px' }}>
-                  <SafeImage src={o.image} alt="" fill sizes="200px" className="object-cover" priority={i < 2} />
-                  <div className="absolute inset-0 bg-black/10 rounded-xl" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="hidden md:flex items-center justify-center flex-shrink-0 w-72 lg:w-96">
-              <div className="text-white/20 text-center">
-                <i className="fa-solid fa-tags text-8xl mb-4"></i>
-                <p className="text-sm font-semibold">Hot deals loading...</p>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* ── Ad Slot ── */}
+      <div className="max-w-6xl mx-auto px-4 mt-6">
+        <AdSlot format="horizontal" />
       </div>
 
       {/* ── Countries ── */}
-      <div className="max-w-6xl mx-auto px-4 mt-16">
+      <div className="max-w-6xl mx-auto px-4 mt-10">
+        <div className="max-w-xl mx-auto mb-8">
+          <SearchBar />
+        </div>
         <div className="text-center mb-8">
           <span className="inline-block bg-red-100 text-red-600 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2">
             Start Here
@@ -193,7 +162,7 @@ export default function HomeHero({
                       <h3 className="text-xs font-bold text-gray-800 truncate">{o.title}</h3>
                       <p className="text-xs text-orange-600 font-semibold mt-1">
                         <i className="fa-regular fa-calendar mr-1"></i>
-                        {t.until} {new Date(o.validUntil).toLocaleDateString()}
+                        {t.until} {new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})}
                       </p>
                     </div>
                   </div>
@@ -249,7 +218,7 @@ export default function HomeHero({
                       {o.validUntil && (
                         <p className="text-xs text-gray-400 mt-1">
                           <i className="fa-regular fa-calendar mr-1"></i>
-                          {t.until} {new Date(o.validUntil).toLocaleDateString()}
+                          {t.until} {new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})}
                         </p>
                       )}
                     </div>

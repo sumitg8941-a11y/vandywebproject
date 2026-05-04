@@ -266,7 +266,7 @@ function SearchContent() {
                           {o.validUntil && (
                             <p className="text-xs text-gray-400 mt-1">
                               <i className="fa-regular fa-calendar mr-1"></i>
-                              Until {new Date(o.validUntil).toLocaleDateString()}
+                              Until {new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})}
                             </p>
                           )}
                         </div>

@@ -1,33 +1,85 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import Script from 'next/script';
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
 
 export default function FeedbackPage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [recaptchaToken, setRecaptchaToken] = useState('');
     const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
+    const [errorMsg, setErrorMsg] = useState('');
+    const recaptchaRef = useRef<HTMLDivElement>(null);
+
+    const validateEmail = (val: string) => {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+        if (!val) { setEmailError(''); return false; }
+        if (!regex.test(val)) { setEmailError('Please enter a valid email (e.g. you@example.com)'); return false; }
+        setEmailError('');
+        return true;
+    };
+
+    useEffect(() => {
+        if (RECAPTCHA_SITE_KEY && typeof window !== 'undefined' && (window as any).grecaptcha && recaptchaRef.current) {
+            try {
+                (window as any).grecaptcha.render(recaptchaRef.current, {
+                    sitekey: RECAPTCHA_SITE_KEY,
+                    callback: (token: string) => setRecaptchaToken(token),
+                    'expired-callback': () => setRecaptchaToken(''),
+                });
+            } catch {}
+        }
+    }, []);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
+        setErrorMsg('');
+        if (!validateEmail(email)) return;
+        if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
+            setErrorMsg('Please complete the "I\'m not a robot" verification.');
+            return;
+        }
         setStatus('sending');
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
             const res = await fetch(`${apiUrl}/api/feedback`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, message }),
+                body: JSON.stringify({ name, email, message, recaptchaToken }),
             });
-            if (!res.ok) throw new Error();
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Submission failed');
             setStatus('done');
-            setName(''); setEmail(''); setMessage('');
-        } catch {
+            setName(''); setEmail(''); setMessage(''); setRecaptchaToken('');
+        } catch (err: any) {
             setStatus('error');
+            setErrorMsg(err.message || 'Something went wrong. Please try again.');
         }
     }
 
     return (
         <div className="max-w-lg mx-auto px-4 py-16">
+            {RECAPTCHA_SITE_KEY && (
+                <Script
+                    src="https://www.google.com/recaptcha/api.js"
+                    strategy="lazyOnload"
+                    onLoad={() => {
+                        if (recaptchaRef.current && (window as any).grecaptcha) {
+                            try {
+                                (window as any).grecaptcha.render(recaptchaRef.current, {
+                                    sitekey: RECAPTCHA_SITE_KEY,
+                                    callback: (token: string) => setRecaptchaToken(token),
+                                    'expired-callback': () => setRecaptchaToken(''),
+                                });
+                            } catch {}
+                        }
+                    }}
+                />
+            )}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                 <h1 className="text-2xl font-black text-gray-900 mb-1">Share your feedback</h1>
                 <p className="text-gray-500 text-sm mb-6">
@@ -66,10 +118,13 @@ export default function FeedbackPage() {
                                 type="email"
                                 required
                                 value={email}
-                                onChange={e => setEmail(e.target.value)}
+                                onChange={e => { setEmail(e.target.value); validateEmail(e.target.value); }}
+                                onBlur={() => validateEmail(email)}
                                 placeholder="you@example.com"
-                                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
+                                className={`w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent ${emailError ? 'border-red-400' : 'border-gray-200'}`}
                             />
+                            {emailError && <p className="text-red-500 text-xs mt-1">{emailError}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">Message</label>
@@ -83,8 +138,15 @@ export default function FeedbackPage() {
                             />
                         </div>
 
-                        {status === 'error' && (
-                            <p className="text-red-500 text-sm">Something went wrong. Please try again.</p>
+                        {/* reCAPTCHA widget */}
+                        {RECAPTCHA_SITE_KEY && (
+                            <div className="flex justify-center">
+                                <div ref={recaptchaRef}></div>
+                            </div>
+                        )}
+
+                        {(status === 'error' || errorMsg) && (
+                            <p className="text-red-500 text-sm">{errorMsg || 'Something went wrong. Please try again.'}</p>
                         )}
 
                         <button

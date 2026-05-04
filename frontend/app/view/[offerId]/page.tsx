@@ -26,11 +26,11 @@ export async function generateMetadata({ params }: { params: Promise<{ offerId: 
   if (!offer) return { title: 'Offer Not Found' };
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dealnamaa.com';
   return {
-    title: offer.title,
-    description: `${offer.badge ? offer.badge + ' — ' : ''}Valid until ${new Date(offer.validUntil).toLocaleDateString()}. View the full flyer on DealNamaa.`,
+    title: offer.metaTitle || offer.title,
+    description: offer.metaDescription || `${offer.badge ? offer.badge + ' — ' : ''}Valid until ${new Date(offer.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})}. View the full flyer on DealNamaa.`,
     openGraph: {
-      title: `${offer.title} | DealNamaa`,
-      description: `Valid until ${new Date(offer.validUntil).toLocaleDateString()}.`,
+      title: `${offer.metaTitle || offer.title} | DealNamaa`,
+      description: offer.metaDescription || `Valid until ${new Date(offer.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})}.`,
       ...(offer.image && { images: [{ url: offer.image.startsWith('http') ? offer.image : `${siteUrl}${offer.image}` }] }),
       type: 'website',
     },

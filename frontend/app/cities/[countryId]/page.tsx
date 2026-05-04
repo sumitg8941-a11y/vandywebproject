@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Breadcrumbs from '../../Breadcrumbs';
 import Tracker from '../../Tracker';
 import SafeImage from '../../SafeImage';
+import AdSlot from '../../AdSlot';
 
 async function getRegions(countryId: string) {
   try {
@@ -81,24 +82,27 @@ export default async function CitiesPage({ params }: { params: Promise<{ country
 
   return (
     <div>
-      <div className="bg-gradient-to-br from-red-700 via-red-600 to-orange-500 text-white text-center py-16 px-4 shadow-md">
-        <h1 className="text-4xl md:text-5xl font-black mb-3 drop-shadow-md uppercase tracking-tight">
-          {country?.name || 'Browse Deals'}
-        </h1>
-        <p className="text-lg md:text-xl font-medium opacity-90">
-          {hasStates && hasDirectCities
-            ? 'Browse by state or jump straight to your city'
-            : hasStates
-            ? 'Select your state to find local deals'
-            : 'Select your city to find local deals'}
-        </p>
-        <div className="flex justify-center mt-6">
+      <div className="max-w-6xl mx-auto px-4 mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">
+              {country?.name || 'Browse Deals'}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {hasStates && hasDirectCities
+                ? 'Browse by state or jump straight to your city'
+                : hasStates
+                ? 'Select your state to find local deals'
+                : 'Select your city to find local deals'}
+            </p>
+          </div>
           <Link href="/">
-            <button className="bg-white/20 hover:bg-white/30 text-white border border-white/40 px-5 py-2 rounded-lg font-semibold transition text-sm">
+            <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition text-sm">
               &larr; All Countries
             </button>
           </Link>
         </div>
+        <AdSlot format="horizontal" />
       </div>
 
       <div className="max-w-6xl mx-auto px-4 mt-6">

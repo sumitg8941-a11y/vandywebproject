@@ -2,7 +2,7 @@
 
 interface AdSlotProps {
   className?: string;
-  format?: 'horizontal' | 'rectangle';
+  format?: 'horizontal' | 'rectangle' | 'vertical';
 }
 
 export default function AdSlot({ className = '', format = 'horizontal' }: AdSlotProps) {
@@ -13,7 +13,7 @@ export default function AdSlot({ className = '', format = 'horizontal' }: AdSlot
     <div className={`w-full flex justify-center my-6 ${className}`}>
       <div 
         className={`bg-gray-100 border border-gray-200 border-dashed rounded-lg flex flex-col items-center justify-center text-gray-400 
-        ${format === 'horizontal' ? 'w-full max-w-4xl h-[90px] md:h-[120px]' : 'w-[300px] h-[250px]'}`}
+        ${format === 'horizontal' ? 'w-full max-w-4xl h-[90px] md:h-[120px]' : format === 'vertical' ? 'w-[300px] h-[600px]' : 'w-[300px] h-[250px]'}`}
       >
         <span className="text-xs font-bold uppercase tracking-wider mb-1">Advertisement</span>
         <span className="text-[10px] opacity-75">Ad Space Available</span>

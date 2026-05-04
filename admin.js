@@ -8,7 +8,16 @@ const admin = {
             return;
         }
         document.getElementById('login-modal').style.display = 'none';
-        this.showTab('dashboard');
+        
+        const role = localStorage.getItem('adminRole');
+        if (role !== 'superadmin') {
+            document.querySelectorAll('[data-role="superadmin"]').forEach(el => el.style.display = 'none');
+            this.showTab('offers');
+        } else {
+            document.querySelectorAll('[data-role="superadmin"]').forEach(el => el.style.display = '');
+            this.showTab('dashboard');
+        }
+        
         this._loadSiteUrl();
         
         // Dynamically add the Feedback tab to the sidebar if it doesn't exist
@@ -51,6 +60,7 @@ const admin = {
             if (res.ok) {
                 const data = await res.json();
                 localStorage.setItem('adminToken', data.token);
+                localStorage.setItem('adminRole', data.role);
                 document.getElementById('login-modal').style.display = 'none';
                 document.getElementById('login-error').style.display = 'none';
                 this.init(); // Reload data now that we have token
@@ -64,6 +74,7 @@ const admin = {
 
     logout: function() {
         localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminRole');
         location.reload();
     },
 
@@ -100,6 +111,12 @@ const admin = {
                     break;
                 case 'offers':
                     html = await this.renderOffers();
+                    break;
+                case 'blogs':
+                    html = await this.renderBlogs();
+                    break;
+                case 'users':
+                    html = await this.renderUsers();
                     break;
                 case 'settings':
                     html = await this.renderSettings();
@@ -145,7 +162,7 @@ const admin = {
                     
                     <label>Upload Cover Image (Optional):</label><br>
                     <input type="file" id="new-country-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
-                    <input type="text" id="new-country-image" style="width:100%; padding:8px; margin-bottom:15px;" placeholder="OR provide Image URL (e.g. https://...)">
+                    <input type="hidden" id="new-country-image">
                     
                     <button class="action-btn" onclick="admin.saveCountry()">Save Country</button>
                     <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('new-country-id').readOnly=false; document.getElementById('add-country-form').style.display='none'; document.querySelector('#add-country-form h3').innerText='Add New Country';">Cancel</button>
@@ -253,7 +270,7 @@ const admin = {
 
                     <label>Upload Cover Image (Optional):</label><br>
                     <input type="file" id="new-state-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
-                    <input type="text" id="new-state-image" style="width:100%; padding:8px; margin-bottom:15px;" placeholder="OR provide Image URL">
+                    <input type="hidden" id="new-state-image">
 
                     <button class="action-btn" onclick="admin.saveState()">Save State</button>
                     <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('new-state-id').readOnly=false; document.getElementById('add-state-form').style.display='none'; document.querySelector('#add-state-form h3').innerText='Add New State';">Cancel</button>
@@ -388,7 +405,7 @@ const admin = {
                     
                     <label>Upload Cover Image (Optional):</label><br>
                     <input type="file" id="new-city-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
-                    <input type="text" id="new-city-image" style="width:100%; padding:8px; margin-bottom:15px;" placeholder="OR provide Image URL">
+                    <input type="hidden" id="new-city-image">
                     
                     <button class="action-btn" onclick="admin.saveCity()">Save City</button>
                     <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('new-city-id').readOnly=false; document.getElementById('add-city-form').style.display='none'; document.querySelector('#add-city-form h3').innerText='Add New City';">Cancel</button>
@@ -468,11 +485,27 @@ const admin = {
                 <input type="text" id="new-ret-id" placeholder="Retailer ID (e.g. r20)" style="width:100%; padding:8px; margin-bottom:10px;">
                 <input type="text" id="new-ret-name" placeholder="Retailer Name" style="width:100%; padding:8px; margin-bottom:10px;">
                 <input type="url" id="new-ret-web" placeholder="Official Website URL (Optional)" style="width:100%; padding:8px; margin-bottom:10px;">
-                <select id="new-ret-city" style="width:100%; padding:8px; margin-bottom:10px;">${cityOptions}</select>
                 
+                <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; margin-bottom:10px;">
+                    <h4 style="margin:0 0 8px; font-size:0.9em; color:#0369a1;"><i class="fa-solid fa-link" style="margin-right:6px;"></i>Affiliate Tracking (Optional)</h4>
+                    <label style="font-size: 0.8em; font-weight: bold; display: block; margin-bottom: 4px;">Structure Type:</label>
+                    <select id="new-ret-aff-type" style="width:100%; padding:8px; margin-bottom:8px;">
+                        <option value="direct">Direct (No Rewriting)</option>
+                        <option value="prefix">Prefix (Prepend to URL)</option>
+                        <option value="suffix">Suffix (Append as Query Params)</option>
+                        <option value="template">Custom Template (Use {URL} placeholder)</option>
+                    </select>
+                    <input type="text" id="new-ret-aff-val" placeholder="Affiliate Value (e.g. ?tag=id-21 or https://ad.link?url=)" style="width:100%; padding:8px; margin-bottom:5px; box-sizing:border-box;">
+                    <p style="font-size:0.7em; color:#64748b; margin:4px 0 0;">Outbound links to this retailer will be rewritten using this structure.</p>
+                </div>
+
+                <label style="font-weight: bold; font-size: 0.9em;">Primary City:</label>
+                <select id="new-ret-city" style="width:100%; padding:8px; margin-bottom:10px;">${cityOptions}</select>
+                <label style="font-weight: bold; font-size: 0.9em;">Additional Cities (Hold Ctrl/Cmd to select multiple, optional):</label>
+                <select id="new-ret-cityIds" multiple style="width:100%; height:80px; padding:8px; margin-bottom:10px;">${cityOptions}</select>
                 <label style="font-weight: bold; font-size: 0.9em;">Upload Logo/Image (Optional):</label><br>
                 <input type="file" id="new-ret-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
-                <input type="text" id="new-ret-image" placeholder="OR provide Image URL" style="width:100%; padding:8px; margin-bottom:15px;">
+                <input type="hidden" id="new-ret-image">
                 
                 <button class="action-btn" onclick="admin.saveRetailer()">Save Retailer</button>
                 <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('new-ret-id').readOnly=false; document.getElementById('add-retailer-form').style.display='none'; document.querySelector('#add-retailer-form h3').innerText='Add New Retailer';">Cancel</button>
@@ -486,6 +519,10 @@ const admin = {
         const name = document.getElementById('new-ret-name').value;
         const websiteUrl = document.getElementById('new-ret-web').value;
         const cityId = document.getElementById('new-ret-city').value;
+        const cityIdsSelect = document.getElementById('new-ret-cityIds');
+        const cityIds = Array.from(cityIdsSelect.selectedOptions).map(opt => opt.value);
+        const affiliateType = document.getElementById('new-ret-aff-type').value;
+        const affiliateValue = document.getElementById('new-ret-aff-val').value;
         let image = document.getElementById('new-ret-image').value;
         const imageFile = document.getElementById('new-ret-image-file').files[0];
         const isEdit = document.getElementById('new-ret-id').readOnly;
@@ -493,16 +530,17 @@ const admin = {
         if(id && name && cityId) {
             try { 
                 if (imageFile) image = await this.uploadFile(imageFile);
+                const payload = { name, websiteUrl, cityId, cityIds, image, affiliateType, affiliateValue };
                 if (isEdit) {
                     const res = await fetch(`/api/admin/retailers/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                        body: JSON.stringify({ name, websiteUrl, cityId, image })
+                        body: JSON.stringify(payload)
                     });
                     if (!res.ok) throw new Error('Failed to update retailer');
                     alert('Retailer updated successfully!');
                 } else {
-                    await api.addRetailer({ id, name, websiteUrl, cityId, image });
+                    await api.addRetailer({ id, name, websiteUrl, cityId, cityIds, image });
                     alert('Retailer saved!');
                 }
                 document.getElementById('new-ret-id').readOnly = false;
@@ -523,7 +561,15 @@ const admin = {
             document.getElementById('new-ret-id').readOnly = true;
             document.getElementById('new-ret-name').value = retailer.name;
             document.getElementById('new-ret-web').value = retailer.websiteUrl || '';
+            document.getElementById('new-ret-aff-type').value = retailer.affiliateType || 'direct';
+            document.getElementById('new-ret-aff-val').value = retailer.affiliateValue || '';
             document.getElementById('new-ret-city').value = retailer.cityId;
+            const cityIdsSelect = document.getElementById('new-ret-cityIds');
+            if (cityIdsSelect) {
+                Array.from(cityIdsSelect.options).forEach(opt => {
+                    opt.selected = retailer.cityIds && retailer.cityIds.includes(opt.value);
+                });
+            }
             document.getElementById('new-ret-image').value = retailer.image || '';
             document.querySelector('#add-retailer-form h3').innerText = 'Edit Retailer';
             window.scrollTo(0, 0);
@@ -535,14 +581,30 @@ const admin = {
     renderOffers: async function() {
         const offers = await api.getAllOffers();
         const retailers = await api.getAllRetailers();
+        const countries = await api.getCountries();
+        const cities = await api.getAllCities();
         
-        // Separate active and expired offers
+        // Build lookup maps
+        const retMap = {};
+        retailers.forEach(r => { retMap[r.id] = r; });
+        const cityMap = {};
+        cities.forEach(c => { cityMap[c.id] = c; });
+
+        // Store for cascading use
+        window._offerFormData = { countries, cities, retailers };
+
+        // Separate active, archived, and expired offers
         const now = new Date();
-        const activeOffers = offers.filter(o => new Date(o.validUntil) >= now);
-        const expiredOffers = offers.filter(o => new Date(o.validUntil) < now);
+        const activeOffers = offers.filter(o => new Date(o.validUntil) >= now && !o.archived);
+        const archivedOffers = offers.filter(o => o.archived);
+        const expiredOffers = offers.filter(o => new Date(o.validUntil) < now && !o.archived);
         
-        let rows = activeOffers.map(o => `<tr><td>${o.title}</td><td>${o.retailerId.toUpperCase()}</td><td>${o.maxPagesViewed || 0}</td><td>${o.validFrom ? new Date(o.validFrom).toISOString().split('T')[0] : ''} to ${o.validUntil ? new Date(o.validUntil).toISOString().split('T')[0] : ''}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#f59e0b;" onclick="admin.resetOfferMetrics('${o.id || o._id}')">Reset Metrics</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`).join('');
-        let retailerOptions = retailers.map(r => `<option value="${r.id}">${r.name} (${r.cityId})</option>`).join('');
+        let rows = activeOffers.map(o => {
+            const ret = retMap[o.retailerId];
+            const retName = ret ? ret.name : o.retailerId.toUpperCase();
+            return `<tr><td>${o.title}</td><td>${retName}</td><td>${o.maxPagesViewed || 0}</td><td>${o.validFrom ? new Date(o.validFrom).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : ''} to ${o.validUntil ? new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : ''}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#7c3aed;" onclick="admin.archiveOffer('${o.id || o._id}')">Archive</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`;
+        }).join('');
+        let countryOptions = countries.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
         let expiredSection = '';
         if (expiredOffers.length > 0) {
@@ -584,16 +646,40 @@ const admin = {
             `;
         }
 
+        let archivedSection = '';
+        if (archivedOffers.length > 0) {
+            let archivedRows = archivedOffers.map(o => `
+                <tr style="background:#f5f3ff;">
+                    <td>${o.title}</td>
+                    <td>${(retMap[o.retailerId] || {}).name || o.retailerId.toUpperCase()}</td>
+                    <td>${o.validUntil ? new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : ''}</td>
+                    <td>
+                        <button class="action-btn" style="background:#16a34a;" onclick="admin.unarchiveOffer('${o.id || o._id}')">Restore</button>
+                        <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+            archivedSection = `
+                <div style="margin-top:30px; padding:20px; background:#f5f3ff; border:2px solid #7c3aed; border-radius:8px;">
+                    <h3 style="color:#7c3aed; margin:0 0 15px;"><i class="fa-solid fa-box-archive"></i> Archived Offers (${archivedOffers.length})</h3>
+                    <table class="admin-table">
+                        <thead><tr><th>Title</th><th>Retailer</th><th>Valid Until</th><th>Actions</th></tr></thead>
+                        <tbody>${archivedRows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
         return `
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2>Offers & PDFs</h2>
+                <h2>Flyers</h2>
                 <button class="action-btn" style="background:#27ae60;" onclick="admin.showAddOfferForm()">+ Add New Offer</button>
             </div>
             
             <div id="upload-form" style="display:none; background:#f9f9f9; padding:20px; border-radius:8px; margin-top:15px; border:1px solid #ddd;">
                 <h3>Add New Offer</h3>
                 <div style="margin-top:10px;">
-                    <input type="text" id="new-off-id" placeholder="Offer ID (e.g. o20)" style="width:100%; padding:8px; margin-bottom:10px;">
+                    <input type="hidden" id="new-off-id">
                     <input type="text" id="new-off-title" placeholder="Offer Title (e.g., Weekend Sale)" style="width:100%; padding:8px; margin-bottom:10px;">
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <div style="flex:1;">
@@ -605,20 +691,48 @@ const admin = {
                             <input type="date" id="new-off-valid-until" style="width:100%; padding:8px;">
                         </div>
                     </div>
-                    <select id="new-off-retailer" style="width:100%; padding:8px; margin-bottom:10px;">${retailerOptions}</select>
+
+                    <label style="font-weight: bold; font-size: 0.9em;">Select Country:</label>
+                    <select id="new-off-country" style="width:100%; padding:8px; margin-bottom:10px;" onchange="admin.loadOfferCities(this.value)">
+                        <option value="">— Select Country —</option>
+                        ${countryOptions}
+                    </select>
+
+                    <label style="font-weight: bold; font-size: 0.9em;">Select City / State:</label>
+                    <select id="new-off-city" style="width:100%; padding:8px; margin-bottom:10px;" onchange="admin.loadOfferRetailers(this.value)" disabled>
+                        <option value="">— Select country first —</option>
+                    </select>
+
+                    <label style="font-weight: bold; font-size: 0.9em;">Select Retailer:</label>
+                    <select id="new-off-retailer" style="width:100%; padding:8px; margin-bottom:10px;" disabled>
+                        <option value="">— Select city first —</option>
+                    </select>
                     
                     <label style="font-weight: bold; font-size: 0.9em;">Upload PDF Flyer (Optional):</label>
                     <input type="file" id="new-off-pdf-file" accept="application/pdf" style="width:100%; padding:8px; margin-bottom:5px;">
-                    <input type="text" id="new-off-pdf" placeholder="OR provide PDF URL (e.g. https://...)" style="width:100%; padding:8px; margin-bottom:15px;">
+                    <input type="hidden" id="new-off-pdf">
                     
                     <label style="font-weight: bold; font-size: 0.9em;">Target Retailer Website URL (Optional):</label>
-                    <input type="url" id="new-off-retailer-url" placeholder="https://example.com/promo" style="width:100%; padding:8px; margin-bottom:15px;">
+                    <input type="url" id="new-off-retailer-url" placeholder="https://example.com/promo" style="width:100%; padding:8px; margin-bottom:10px;">
+
+                    <label style="font-weight: bold; font-size: 0.9em; color:#0369a1;"><i class="fa-solid fa-link" style="margin-right:6px;"></i>Direct Affiliate Link (Optional Override):</label>
+                    <input type="url" id="new-off-aff-override" placeholder="https://ad.link/custom-for-this-offer" style="width:100%; padding:8px; margin-bottom:15px;">
 
                     <label style="font-weight: bold; font-size: 0.9em;">Upload Cover Image (Optional):</label>
                     <input type="file" id="new-off-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
-                    <input type="text" id="new-off-image" placeholder="OR provide Image URL (e.g. https://...)" style="width:100%; padding:8px; margin-bottom:15px;">
+                    <input type="hidden" id="new-off-image">
                     
-                    <input type="text" id="new-off-badge" placeholder="Badge (e.g. 50% OFF)" style="width:100%; padding:8px; margin-bottom:15px;">
+                    
+                    <input type="text" id="new-off-badge" placeholder="Badge (e.g. 50% OFF)" style="width:100%; padding:8px; margin-bottom:10px;">
+                    <input type="text" id="new-off-coupon" placeholder="Coupon Code (optional)" style="width:100%; padding:8px; margin-bottom:15px;">
+
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px; margin-bottom:15px;">
+                        <h4 style="margin:0 0 10px; font-size:0.9em; color:#166534;"><i class="fa-solid fa-magnifying-glass" style="margin-right:6px;"></i>SEO Settings (Optional)</h4>
+                        <input type="text" id="new-off-meta-title" placeholder="Custom SEO Title (defaults to Offer Title)" style="width:100%; padding:8px; margin-bottom:8px; box-sizing:border-box;">
+                        <textarea id="new-off-meta-desc" placeholder="Custom SEO Description (defaults to auto-generated)" rows="2" style="width:100%; padding:8px; box-sizing:border-box; resize:none;"></textarea>
+                        <p style="font-size:0.75em; color:#64748b; margin:4px 0 0;"><i class="fa-solid fa-circle-question" style="margin-right:4px;"></i>Override the page title and description shown in Google search results. Leave blank to use defaults.</p>
+                    </div>
+
                     <button class="action-btn" id="save-offer-btn" onclick="admin.saveOffer()">Save Offer</button>
                     <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('upload-form').style.display='none'">Cancel</button>
                 </div>
@@ -627,6 +741,7 @@ const admin = {
             <h3 style="margin-top:30px;">Active Offers (${activeOffers.length})</h3>
             <table class="admin-table" style="margin-top:10px;"><thead><tr><th>Title</th><th>Retailer</th><th>Max Pages Viewed</th><th>Validity</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No active offers</td></tr>'}</tbody></table>
             
+            ${archivedSection}
             ${expiredSection}
         `;
     },
@@ -658,7 +773,6 @@ const admin = {
 
     showAddOfferForm: function() {
         document.getElementById('upload-form').style.display = 'block';
-        document.getElementById('new-off-id').readOnly = false;
         document.getElementById('new-off-id').value = '';
         document.getElementById('new-off-title').value = '';
         document.getElementById('new-off-valid-from').value = '';
@@ -668,12 +782,70 @@ const admin = {
         document.getElementById('new-off-retailer-url').value = '';
         document.getElementById('new-off-image').value = '';
         
+        // Reset cascading dropdowns
+        const countryEl = document.getElementById('new-off-country');
+        const cityEl = document.getElementById('new-off-city');
+        const retEl = document.getElementById('new-off-retailer');
+        if (countryEl) countryEl.value = '';
+        if (cityEl) { cityEl.innerHTML = '<option value="">— Select country first —</option>'; cityEl.disabled = true; }
+        if (retEl) { retEl.innerHTML = '<option value="">— Select city first —</option>'; retEl.disabled = true; }
+
         const btn = document.getElementById('save-offer-btn');
         if(btn) {
             btn.removeAttribute('data-edit-id');
             btn.innerText = 'Save Offer';
         }
         document.querySelector('#upload-form h3').innerText = 'Add New Offer';
+    },
+
+    loadOfferCities: function(countryId) {
+        const cityEl = document.getElementById('new-off-city');
+        const retEl = document.getElementById('new-off-retailer');
+        retEl.innerHTML = '<option value="">— Select city first —</option>';
+        retEl.disabled = true;
+        if (!countryId || !window._offerFormData) {
+            cityEl.innerHTML = '<option value="">— Select country first —</option>';
+            cityEl.disabled = true;
+            return;
+        }
+        const filtered = window._offerFormData.cities.filter(c => c.countryId === countryId);
+        cityEl.innerHTML = '<option value="">— Select City —</option>' + filtered.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        cityEl.disabled = false;
+    },
+
+    loadOfferRetailers: function(cityId) {
+        const retEl = document.getElementById('new-off-retailer');
+        if (!cityId || !window._offerFormData) {
+            retEl.innerHTML = '<option value="">— Select city first —</option>';
+            retEl.disabled = true;
+            return;
+        }
+        const filtered = window._offerFormData.retailers.filter(r => r.cityId === cityId);
+        retEl.innerHTML = '<option value="">— Select Retailer —</option>' + filtered.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+        retEl.disabled = false;
+    },
+
+    archiveOffer: async function(id) {
+        if (!confirm('Archive this offer? It will be hidden from the active list.')) return;
+        try {
+            await fetch(`/api/admin/offers/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                body: JSON.stringify({ archived: true })
+            });
+            this.showTab('offers');
+        } catch(e) { alert('Error archiving offer.'); }
+    },
+
+    unarchiveOffer: async function(id) {
+        try {
+            await fetch(`/api/admin/offers/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                body: JSON.stringify({ archived: false })
+            });
+            this.showTab('offers');
+        } catch(e) { alert('Error restoring offer.'); }
     },
 
     editOffer: async function(id) {
@@ -692,6 +864,7 @@ const admin = {
             document.getElementById('new-off-badge').value = offer.badge || '';
             document.getElementById('new-off-pdf').value = (offer.pdfUrl && offer.pdfUrl !== '#') ? offer.pdfUrl : '';
             document.getElementById('new-off-retailer-url').value = offer.retailerUrl || '';
+            document.getElementById('new-off-aff-override').value = offer.affiliateOverrideUrl || '';
             document.getElementById('new-off-image').value = offer.image || '';
 
             const saveBtn = document.getElementById('save-offer-btn');
@@ -703,12 +876,21 @@ const admin = {
     },
 
     saveOffer: async function() {
-        const id = document.getElementById('new-off-id').value.toLowerCase();
         const title = document.getElementById('new-off-title').value;
         const validFrom = document.getElementById('new-off-valid-from').value;
         const validUntil = document.getElementById('new-off-valid-until').value;
         const retailerId = document.getElementById('new-off-retailer').value;
         const badge = document.getElementById('new-off-badge').value;
+        const btn = document.getElementById('save-offer-btn');
+        const editId = btn.getAttribute('data-edit-id');
+        
+        // Auto-generate ID for new offers: retailerId-YYYYMMDD-random
+        let id = document.getElementById('new-off-id').value;
+        if (!id && !editId) {
+            const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+            const rand = Math.random().toString(36).substring(2, 6);
+            id = `${retailerId}-${dateStr}-${rand}`.toLowerCase();
+        }
 
         let pdfUrl = document.getElementById('new-off-pdf').value || '#';
         let retailerUrl = document.getElementById('new-off-retailer-url').value || '';
@@ -716,9 +898,7 @@ const admin = {
 
         const pdfFile = document.getElementById('new-off-pdf-file').files[0];
         const imageFile = document.getElementById('new-off-image-file').files[0];
-        const btn = document.getElementById('save-offer-btn');
 
-        const editId = btn.getAttribute('data-edit-id');
         btn.innerText = editId ? 'Updating...' : 'Uploading...';
         btn.disabled = true;
 
@@ -726,8 +906,14 @@ const admin = {
             if (pdfFile) pdfUrl = await this.uploadFile(pdfFile);
             if (imageFile) image = await this.uploadFile(imageFile);
             
+            const couponCode = document.getElementById('new-off-coupon')?.value || '';
+            const metaTitle = document.getElementById('new-off-meta-title')?.value || '';
+            const metaDescription = document.getElementById('new-off-meta-desc')?.value || '';
+
+            const affiliateOverrideUrl = document.getElementById('new-off-aff-override')?.value || '';
+
             if(id && title && validFrom && validUntil && retailerId) {
-                const payload = { id, title, validFrom, validUntil, retailerId, pdfUrl, retailerUrl, image, badge };
+                const payload = { id, title, validFrom, validUntil, retailerId, pdfUrl, retailerUrl, image, badge, couponCode, metaTitle, metaDescription, affiliateOverrideUrl };
                 if (editId) {
                     const res = await fetch(`/api/admin/offers/${editId}`, {
                         method: 'PUT',
@@ -867,9 +1053,16 @@ const admin = {
             return `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>Marketing Analytics Dashboard</h2>
-                    <button onclick="admin.exportMetricsCSV()" class="action-btn" style="background:#27ae60;"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="admin.exportOffersCSV()" class="action-btn" style="background:#2563eb;"><i class="fa-solid fa-table"></i> Export Offers</button>
+                        <button onclick="admin.exportMetricsCSV()" class="action-btn" style="background:#27ae60;"><i class="fa-solid fa-file-csv"></i> Export Metrics</button>
+                    </div>
                 </div>
-                <p style="color:#64748b; margin-bottom:24px;">Comprehensive insights to optimize your platform performance</p>
+                <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:14px 18px; margin-bottom:20px; font-size:0.85rem; color:#1e40af;">
+                    <i class="fa-solid fa-circle-info" style="margin-right:6px;"></i>
+                    <strong>How to access your data:</strong> Use the <strong>Export</strong> buttons above to download your offers and analytics as CSV files (open in Excel/Google Sheets).
+                    For detailed visitor demographics and traffic sources, check your <strong>Google Analytics</strong> dashboard (configure your GA ID in Site Settings).
+                </div>
 
                 <!-- Date Range Toggle -->
                 <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; align-items:center;">
@@ -1089,7 +1282,8 @@ const admin = {
 
                 <h3 style="margin-bottom:16px;"><i class="fa-solid fa-globe" style="color:#2563eb;"></i> General Settings</h3>
                 <label style="font-size:0.85em; font-weight:bold;">Production Site URL</label>
-                <input type="url" id="s-site-url" value="${s.siteUrl || ''}" placeholder="https://your-frontend.up.railway.app" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
+                <input type="url" id="s-site-url" value="${s.siteUrl || ''}" placeholder="https://your-frontend.up.railway.app" style="width:100%; padding:8px; margin:6px 0 4px; box-sizing:border-box;">
+                <p style="font-size:0.75em; color:#64748b; margin:0 0 12px;"><i class="fa-solid fa-circle-question" style="margin-right:4px;"></i>Your live website address. Used for generating sitemaps, canonical SEO links, and share URLs (e.g. WhatsApp share links).</p>
                 
                 <label style="font-size:0.85em; font-weight:bold;">Custom Logo URL (Optional)</label>
                 <input type="url" id="s-custom-logo" value="${s.customLogoUrl || ''}" placeholder="https://example.com/logo.png" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">
@@ -1139,6 +1333,7 @@ const admin = {
                 <label style="font-size:0.85em; font-weight:bold;">Feedback Page URL</label>
                 <input type="text" id="s-feedback" value="${s.feedbackUrl || '/feedback'}" placeholder="/feedback or https://forms.google.com/..."
                     style="width:100%; padding:8px; margin:6px 0 4px; box-sizing:border-box;">
+                <p style="font-size:0.75em; color:#64748b; margin:0 0 12px;"><i class="fa-solid fa-circle-question" style="margin-right:4px;"></i>Where the "Leave Feedback" button links to. Default is <code>/feedback</code> (built-in form). You can also use an external form URL like Google Forms.</p>
 
                 <button class="action-btn" style="background:#27ae60; width:100%; padding:12px; font-size:1em; margin-top:20px;" onclick="admin.saveSettings()">Save Settings</button>
                 <p id="settings-msg" style="display:none; margin-top:12px; text-align:center; font-weight:bold;"></p>
@@ -1195,6 +1390,8 @@ const admin = {
             if (!res.ok) throw new Error('Failed to fetch feedback');
             const feedbackList = await res.json();
 
+            window._lastFeedbackData = feedbackList;
+
             let rows = feedbackList.map(f => `
                 <tr>
                     <td style="white-space:nowrap;">${new Date(f.date).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })}</td>
@@ -1208,6 +1405,7 @@ const admin = {
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                     <h2>User Feedback <span style="font-size:0.85em; color:#64748b; font-weight:400;">(${feedbackList.length})</span></h2>
                     <div style="display:flex; align-items:center; gap:8px;">
+                        <button onclick="admin.exportFeedbackCSV()" class="action-btn" style="background:#27ae60;"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
                         <label style="font-size:0.85em; color:#64748b;">Sort:</label>
                         <select onchange="admin.showTab('feedback'); admin._feedbackSort=this.value; admin.renderFeedback(this.value).then(h=>admin.contentDiv.innerHTML=h)" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.85em;">
                             <option value="newest" ${sort==='newest'?'selected':''}>Newest First</option>
@@ -1266,13 +1464,314 @@ const admin = {
     },
 
     deleteOffer: async function(id) {
-        if(!confirm('Are you sure you want to delete this offer?')) return;
+        if(!confirm('Are you sure you want to delete this offer permanently?')) return;
         try {
             const res = await fetch(`/api/admin/offers/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } });
-            if (!res.ok) throw new Error('Failed to delete');
-            alert('Offer deleted successfully!');
+            if (!res.ok) throw new Error('Failed to delete offer');
+            alert('Offer deleted');
             this.showTab('offers');
-        } catch(e) { alert('Error deleting offer: ' + e.message); }
+        } catch(e) { alert('Error: ' + e.message); }
+    },
+
+    // ==========================================
+    // BLOGS
+    // ==========================================
+
+    renderBlogs: async function() {
+        const blogs = await api.getAllBlogs();
+        
+        let rows = blogs.map(b => `
+            <tr>
+                <td>${b.slug}</td>
+                <td>${b.title}</td>
+                <td><span class="badge ${b.status === 'published' ? 'badge-green' : 'badge-gray'}">${b.status}</span></td>
+                <td>${b.views}</td>
+                <td>
+                    <button class="action-btn" onclick="admin.editBlog('${b.slug}')">Edit</button>
+                    <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteBlog('${b.slug}')">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+
+        return `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h2>Blog Posts</h2>
+                <button class="action-btn" style="background:#27ae60;" onclick="admin.showAddBlogForm()">+ Add Blog Post</button>
+            </div>
+            
+            <div id="add-blog-form" class="form-card" style="display:none;">
+                <h3 id="blog-form-title"><i class="fa-solid fa-pen-nib"></i> Add New Blog Post</h3>
+                <input type="hidden" id="edit-blog-id">
+                
+                <label style="font-weight: bold; font-size: 0.9em;">Slug (URL identifier, e.g. 'top-10-deals'):</label>
+                <input type="text" id="new-blog-slug" style="width:100%; padding:8px; margin-bottom:10px;">
+                
+                <label style="font-weight: bold; font-size: 0.9em;">Title:</label>
+                <input type="text" id="new-blog-title" style="width:100%; padding:8px; margin-bottom:10px;">
+                
+                <label style="font-weight: bold; font-size: 0.9em;">Excerpt:</label>
+                <textarea id="new-blog-excerpt" rows="2" style="width:100%; padding:8px; margin-bottom:10px;"></textarea>
+                
+                <label style="font-weight: bold; font-size: 0.9em;">Content (HTML supported):</label>
+                <textarea id="new-blog-content" rows="10" style="width:100%; padding:8px; margin-bottom:10px; font-family:monospace;"></textarea>
+                
+                <label style="font-weight: bold; font-size: 0.9em;">Featured Image:</label>
+                <input type="file" id="new-blog-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
+                <input type="hidden" id="new-blog-image">
+                
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px; margin:bottom:15px; margin-top:10px;">
+                    <h4 style="margin:0 0 10px; font-size:0.9em; color:#166534;"><i class="fa-solid fa-magnifying-glass" style="margin-right:6px;"></i>SEO Settings</h4>
+                    <input type="text" id="new-blog-meta-title" placeholder="Meta Title" style="width:100%; padding:8px; margin-bottom:8px;">
+                    <textarea id="new-blog-meta-desc" placeholder="Meta Description" rows="2" style="width:100%; padding:8px;"></textarea>
+                </div>
+                
+                <label style="font-weight: bold; font-size: 0.9em; margin-top:15px; display:block;">Status:</label>
+                <select id="new-blog-status" style="width:100%; padding:8px; margin-bottom:15px;">
+                    <option value="published">Published</option>
+                    <option value="draft">Draft</option>
+                </select>
+
+                <div style="margin-top: 15px;">
+                    <button class="action-btn" id="save-blog-btn" onclick="admin.saveBlog()">Save Post</button>
+                    <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('add-blog-form').style.display='none'">Cancel</button>
+                </div>
+            </div>
+            
+            <table class="admin-table" style="margin-top:10px;">
+                <thead><tr><th>Slug</th><th>Title</th><th>Status</th><th>Views</th><th>Actions</th></tr></thead>
+                <tbody>${rows || '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No blog posts found</td></tr>'}</tbody>
+            </table>
+        `;
+    },
+
+    showAddBlogForm: function() {
+        document.getElementById('add-blog-form').style.display = 'block';
+        document.getElementById('blog-form-title').innerHTML = '<i class="fa-solid fa-pen-nib"></i> Add New Blog Post';
+        document.getElementById('edit-blog-id').value = '';
+        document.getElementById('new-blog-slug').value = '';
+        document.getElementById('new-blog-slug').readOnly = false;
+        document.getElementById('new-blog-title').value = '';
+        document.getElementById('new-blog-excerpt').value = '';
+        document.getElementById('new-blog-content').value = '';
+        document.getElementById('new-blog-image').value = '';
+        document.getElementById('new-blog-image-file').value = '';
+        document.getElementById('new-blog-meta-title').value = '';
+        document.getElementById('new-blog-meta-desc').value = '';
+        document.getElementById('new-blog-status').value = 'published';
+    },
+
+    saveBlog: async function() {
+        const slug = document.getElementById('new-blog-slug').value.toLowerCase().trim();
+        const title = document.getElementById('new-blog-title').value;
+        const excerpt = document.getElementById('new-blog-excerpt').value;
+        const content = document.getElementById('new-blog-content').value;
+        const metaTitle = document.getElementById('new-blog-meta-title').value;
+        const metaDescription = document.getElementById('new-blog-meta-desc').value;
+        const status = document.getElementById('new-blog-status').value;
+        let image = document.getElementById('new-blog-image').value;
+        const imageFile = document.getElementById('new-blog-image-file').files[0];
+        
+        const editId = document.getElementById('edit-blog-id').value;
+
+        if(!slug || !title || !excerpt || !content) {
+            alert('Please fill out all required fields (Slug, Title, Excerpt, Content).');
+            return;
+        }
+
+        const btn = document.getElementById('save-blog-btn');
+        btn.innerText = 'Saving...';
+        btn.disabled = true;
+
+        try {
+            if (imageFile) image = await this.uploadFile(imageFile);
+            if (!image) {
+                alert('Please upload a featured image.');
+                btn.innerText = 'Save Post';
+                btn.disabled = false;
+                return;
+            }
+
+            const payload = { slug, title, excerpt, content, image, metaTitle, metaDescription, status };
+            let res;
+            
+            if (editId) {
+                res = await fetch(`/api/admin/blogs/${editId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                res = await fetch('/api/admin/blogs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Failed to save blog');
+            }
+
+            alert('Blog saved successfully!');
+            this.showTab('blogs');
+        } catch(e) {
+            alert('Error: ' + e.message);
+            btn.innerText = 'Save Post';
+            btn.disabled = false;
+        }
+    },
+
+    editBlog: async function(slugToEdit) {
+        try {
+            const blogs = await api.getAllBlogs();
+            const blog = blogs.find(b => b.slug === slugToEdit);
+            if (!blog) throw new Error('Blog not found');
+
+            this.showAddBlogForm();
+            document.getElementById('blog-form-title').innerHTML = '<i class="fa-solid fa-pen-nib"></i> Edit Blog Post';
+            document.getElementById('edit-blog-id').value = blog.slug;
+            document.getElementById('new-blog-slug').value = blog.slug;
+            document.getElementById('new-blog-slug').readOnly = true;
+            document.getElementById('new-blog-title').value = blog.title;
+            document.getElementById('new-blog-excerpt').value = blog.excerpt;
+            document.getElementById('new-blog-content').value = blog.content;
+            document.getElementById('new-blog-image').value = blog.image || '';
+            document.getElementById('new-blog-meta-title').value = blog.metaTitle || '';
+            document.getElementById('new-blog-meta-desc').value = blog.metaDescription || '';
+            document.getElementById('new-blog-status').value = blog.status || 'published';
+            
+            window.scrollTo(0, 0);
+        } catch(e) {
+            alert('Error loading blog: ' + e.message);
+        }
+    },
+
+    deleteBlog: async function(slug) {
+        if(!confirm('Are you sure you want to delete this blog post permanently?')) return;
+        try {
+            const res = await fetch(`/api/admin/blogs/${slug}`, { 
+                method: 'DELETE', 
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } 
+            });
+            if (!res.ok) throw new Error('Failed to delete blog');
+            alert('Blog deleted');
+            this.showTab('blogs');
+        } catch(e) { 
+            alert('Error: ' + e.message); 
+        }
+    },
+
+    // ==========================================
+    // USERS (Admin & Superadmin)
+    // ==========================================
+    
+    renderUsers: async function() {
+        try {
+            const res = await fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } });
+            if (!res.ok) throw new Error('Failed to fetch users');
+            const users = await res.json();
+            
+            let rows = users.map(u => `
+                <tr>
+                    <td>${u.username}</td>
+                    <td><span class="badge ${u.role === 'superadmin' ? 'badge-red' : 'badge-gray'}">${u.role}</span></td>
+                    <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteUser('${u._id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            return `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                    <h2>Admin Users</h2>
+                    <button class="action-btn" style="background:#27ae60;" onclick="admin.showAddUserForm()">+ Add User</button>
+                </div>
+                
+                <div id="add-user-form" class="form-card" style="display:none;">
+                    <h3><i class="fa-solid fa-user-plus"></i> Add New Admin</h3>
+                    
+                    <label style="font-weight: bold; font-size: 0.9em;">Username:</label>
+                    <input type="text" id="new-user-username" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="admin2">
+                    
+                    <label style="font-weight: bold; font-size: 0.9em;">Password:</label>
+                    <input type="password" id="new-user-password" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="Min 6 characters">
+                    
+                    <label style="font-weight: bold; font-size: 0.9em;">Role:</label>
+                    <select id="new-user-role" style="width:100%; padding:8px; margin-bottom:15px;">
+                        <option value="admin">Admin (Flyers Only)</option>
+                        <option value="superadmin">Super Admin (Full Access)</option>
+                    </select>
+
+                    <div style="margin-top: 15px;">
+                        <button class="action-btn" onclick="admin.saveUser()">Create User</button>
+                        <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('add-user-form').style.display='none'">Cancel</button>
+                    </div>
+                </div>
+                
+                <table class="admin-table" style="margin-top:10px;">
+                    <thead><tr><th>Username</th><th>Role</th><th>Created</th><th>Actions</th></tr></thead>
+                    <tbody>${rows || '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No users found</td></tr>'}</tbody>
+                </table>
+            `;
+        } catch (e) {
+            return `<p style="color:red">Error loading users: ${e.message}</p>`;
+        }
+    },
+
+    showAddUserForm: function() {
+        document.getElementById('add-user-form').style.display = 'block';
+        document.getElementById('new-user-username').value = '';
+        document.getElementById('new-user-password').value = '';
+        document.getElementById('new-user-role').value = 'admin';
+    },
+
+    saveUser: async function() {
+        const username = document.getElementById('new-user-username').value.trim();
+        const password = document.getElementById('new-user-password').value;
+        const role = document.getElementById('new-user-role').value;
+
+        if(!username || !password) {
+            alert('Username and password are required.');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/admin/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                body: JSON.stringify({ username, password, role })
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Failed to create user');
+            }
+
+            alert('User created successfully!');
+            this.showTab('users');
+        } catch(e) {
+            alert('Error: ' + e.message);
+        }
+    },
+
+    deleteUser: async function(id) {
+        if(!confirm('Are you sure you want to delete this user?')) return;
+        try {
+            const res = await fetch(`/api/admin/users/${id}`, { 
+                method: 'DELETE', 
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } 
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Failed to delete user');
+            }
+            alert('User deleted');
+            this.showTab('users');
+        } catch(e) { 
+            alert('Error: ' + e.message); 
+        }
     },
 
     toggleAllExpired: function(checkbox) {
@@ -1374,6 +1873,82 @@ const admin = {
         const link = document.createElement("a");
         link.setAttribute("href", url);
         link.setAttribute("download", `dealnamaa_metrics_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    },
+
+    exportOffersCSV: async function() {
+        try {
+            const offers = await api.getAllOffers();
+            const retailers = await api.getAllRetailers();
+            const retMap = {};
+            retailers.forEach(r => { retMap[r.id] = r.name; });
+
+            const rows = [];
+            rows.push(["ID", "Title", "Retailer", "Valid From", "Valid Until", "Status", "Clicks", "Likes", "Dislikes", "Max Pages Viewed", "Time (sec)", "Badge", "Coupon Code"]);
+            const now = new Date();
+            offers.forEach(o => {
+                const status = new Date(o.validUntil) >= now ? 'Active' : 'Expired';
+                const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '';
+                rows.push([
+                    o.id || o._id,
+                    `"${(o.title || '').replace(/"/g, '""')}"`,
+                    `"${(retMap[o.retailerId] || o.retailerId).replace(/"/g, '""')}"`,
+                    fmtDate(o.validFrom),
+                    fmtDate(o.validUntil),
+                    status,
+                    o.clicks || 0,
+                    o.likes || 0,
+                    o.dislikes || 0,
+                    o.maxPagesViewed || 0,
+                    o.totalTimeSeconds || 0,
+                    o.badge || '',
+                    o.couponCode || ''
+                ]);
+            });
+
+            const csvContent = rows.map(e => e.join(",")).join("\r\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `dealnamaa_offers_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch(e) { alert('Error exporting offers: ' + e.message); }
+    },
+
+    exportFeedbackCSV: function() {
+        if (!window._lastFeedbackData || window._lastFeedbackData.length === 0) {
+            alert('No feedback data to export. Open the Feedback tab first.');
+            return;
+        }
+        const data = window._lastFeedbackData;
+        const rows = [];
+        rows.push(["Date", "Time", "Name", "Email", "Message", "Rating"]);
+        data.forEach(f => {
+            const d = new Date(f.date);
+            const date = d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+            const time = d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+            rows.push([
+                date,
+                time,
+                `"${(f.name || '').replace(/"/g, '""')}"`,
+                f.email || '',
+                `"${(f.message || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+                f.rating || ''
+            ]);
+        });
+        const csvContent = rows.map(e => e.join(",")).join("\r\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `dealnamaa_feedback_${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

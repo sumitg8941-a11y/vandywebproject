@@ -215,7 +215,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
 
             <p className="text-gray-500 text-sm mb-5">
               <i className="fa-regular fa-calendar mr-2"></i>
-              Valid: {offer.validFrom ? new Date(offer.validFrom).toLocaleDateString() : '—'} &ndash; {offer.validUntil ? new Date(offer.validUntil).toLocaleDateString() : '—'}
+              Valid: {offer.validFrom ? new Date(offer.validFrom).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '—'} &ndash; {offer.validUntil ? new Date(offer.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '—'}
             </p>
 
             {/* Coupon Code */}
@@ -307,7 +307,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
             )}
             {retailer?.websiteUrl && (
               <a
-                href={retailer.websiteUrl}
+                href={`${apiBaseUrl}/api/redirect/retailer/${retailer.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-200 transition border border-gray-200"
@@ -315,29 +315,88 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                 <i className="fa-solid fa-globe"></i> Visit {retailer.name}
               </a>
             )}
-            <button
-              onClick={handleShare}
-              className="flex items-center justify-center gap-2 bg-blue-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-600 transition"
-            >
-              <i className="fa-solid fa-share-nodes"></i> Share with Friends
-            </button>
+            {/* Multi-platform Share */}
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 text-center">Share this deal</p>
+              <div className="grid grid-cols-3 gap-2">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`🔥 ${offer.title}\n${siteUrl}/view/${offerId}`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1 bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg transition text-xs font-bold"
+                >
+                  <i className="fa-brands fa-whatsapp text-lg"></i>WhatsApp
+                </a>
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${siteUrl}/view/${offerId}`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition text-xs font-bold"
+                >
+                  <i className="fa-brands fa-facebook-f text-lg"></i>Facebook
+                </a>
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`🔥 ${offer.title}`)}&url=${encodeURIComponent(`${siteUrl}/view/${offerId}`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1 bg-gray-900 hover:bg-black text-white p-2 rounded-lg transition text-xs font-bold"
+                >
+                  <i className="fa-brands fa-x-twitter text-lg"></i>X
+                </a>
+                <a
+                  href={`https://t.me/share/url?url=${encodeURIComponent(`${siteUrl}/view/${offerId}`)}&text=${encodeURIComponent(`🔥 ${offer.title}`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1 bg-sky-500 hover:bg-sky-600 text-white p-2 rounded-lg transition text-xs font-bold"
+                >
+                  <i className="fa-brands fa-telegram text-lg"></i>Telegram
+                </a>
+                <a
+                  href={`mailto:?subject=${encodeURIComponent(offer.title)}&body=${encodeURIComponent(`Check out this deal: ${siteUrl}/view/${offerId}`)}`}
+                  className="flex flex-col items-center gap-1 bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg transition text-xs font-bold"
+                >
+                  <i className="fa-solid fa-envelope text-lg"></i>Email
+                </a>
+                <button
+                  onClick={handleShare}
+                  className="flex flex-col items-center gap-1 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg transition text-xs font-bold"
+                >
+                  <i className="fa-solid fa-link text-lg"></i>Copy Link
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
         <AdSlot format="horizontal" className="my-6" />
 
         {/* Flyer Image */}
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 md:p-8 flex justify-center">
-          <div className="relative w-full max-w-2xl" style={{ aspectRatio: '3/4' }}>
-            <SafeImage
-              src={offer.image}
-              alt={offer.title}
-              fill
-              sizes="(max-width: 768px) 100vw, 672px"
-              className="rounded-xl object-contain"
-              priority
-            />
+        {/* Flyer Image with Side Ads */}
+        <div className="flex gap-6 items-start">
+          {/* Left Ad (desktop only) */}
+          <div className="hidden lg:block flex-shrink-0 w-[300px]">
+            <AdSlot format="vertical" className="sticky top-4" />
           </div>
+
+          {/* Flyer Image */}
+          <div className="flex-1 bg-white rounded-2xl shadow-md border border-gray-100 p-4 md:p-8 flex justify-center">
+            <div className="relative w-full max-w-2xl" style={{ aspectRatio: '3/4' }}>
+              <SafeImage
+                src={offer.image}
+                alt={offer.title}
+                fill
+                sizes="(max-width: 768px) 100vw, 672px"
+                className="rounded-xl object-contain"
+                priority
+              />
+            </div>
+          </div>
+
+          {/* Right Ad (desktop only) */}
+          <div className="hidden lg:block flex-shrink-0 w-[300px]">
+            <AdSlot format="vertical" className="sticky top-4" />
+          </div>
+        </div>
+
+        {/* Mobile ad below image */}
+        <div className="lg:hidden mt-4">
+          <AdSlot format="horizontal" />
         </div>
       </div>
 

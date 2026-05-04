@@ -80,17 +80,7 @@ export default function PDFFlipbook({ pdfUrl, onClose, title, shareUrl, retailer
             <i className="fa-solid fa-share-nodes"></i>
             <span className="hidden sm:inline">Share</span>
           </button>
-          {/* Download */}
-          <a
-            href={pdfUrl}
-            download
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition"
-          >
-            <i className="fa-solid fa-download"></i>
-            <span className="hidden sm:inline">Download</span>
-          </a>
+          
           {/* Close */}
           <button
             onClick={onClose}

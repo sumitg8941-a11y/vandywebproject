@@ -22,6 +22,10 @@ const offerSchema = new mongoose.Schema({
     couponCode: { type: String, default: '', trim: true }, // The promo code to generate traffic for end retailers
     couponUrl: { type: String, default: '', trim: true }, // The link to apply the coupon, tracked to show traffic source
     retailerUrl: { type: String, default: '', trim: true }, // The target retailer website URL
+    archived: { type: Boolean, default: false }, // Archived offers are hidden from active list
+    metaTitle: { type: String, default: '', trim: true }, // Custom SEO page title
+    metaDescription: { type: String, default: '', trim: true }, // Custom SEO meta description
+    affiliateOverrideUrl: { type: String, default: '', trim: true }, // Direct affiliate link override for this specific offer
     retailerId: { type: String, required: true, lowercase: true, trim: true } // Creates the relationship to Retailer
 }, { timestamps: true });
 

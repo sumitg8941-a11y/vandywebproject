@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
@@ -6,6 +6,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const fs = require('fs');
 
@@ -48,19 +49,47 @@ const verifyAdmin = (req, res, next) => {
     }
     const token = authHeader.split(' ')[1];
     try {
-        jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = decoded; // { id, role }
         next();
     } catch (err) {
         res.status(401).json({ error: 'Invalid Token' });
     }
 };
 
+const verifySuperAdmin = (req, res, next) => {
+    verifyAdmin(req, res, () => {
+        if (req.user && req.user.role === 'superadmin') {
+            next();
+        } else {
+            res.status(403).json({ error: 'Access Denied: Super Admin role required' });
+        }
+    });
+};
+
 // ==========================================
 // 💾 DATABASE CONNECTION
 // ==========================================
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('✅ Securely connected to MongoDB (DealNamaa Database)'))
-    .catch(err => console.error('❌ MongoDB connection error:', err));
+// Initialize Default Super Admin
+async function initDefaultAdmin() {
+    try {
+        const adminCount = await User.countDocuments();
+        if (adminCount === 0) {
+            const hash = await bcrypt.hash(ADMIN_PASS, 10);
+            await User.create({ username: ADMIN_USER, passwordHash: hash, role: 'superadmin' });
+            console.log(`🔐 Created default superadmin user: ${ADMIN_USER}`);
+        }
+    } catch (err) {
+        console.error('Failed to init default admin:', err);
+    }
+}
+
+mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/dealnamaa_dev')
+    .then(() => {
+        console.log('✅ Connected safely to MongoDB via Mongoose');
+        initDefaultAdmin();
+    })
+    .catch(err => console.error('MongoDB Connection Error:', err));
 
 // ==========================================
 // 🌐 ROUTES & STATIC FILES
@@ -77,6 +106,8 @@ const State = require('./State');
 const City = require('./City');
 const Retailer = require('./Retailer');
 const Offer = require('./Offer');
+const Blog = require('./Blog');
+const User = require('./User');
 const SiteStat = require('./SiteStat');
 const Feedback = require('./Feedback');
 const SiteSettings = require('./SiteSettings');
@@ -94,6 +125,32 @@ if (checkR2Config()) {
 // ==========================================
 function validateId(id) {
     return /^[a-z0-9_-]+$/.test(id) && id.length <= 50;
+}
+
+// ==========================================
+// 🔗 AFFILIATE HELPER
+// ==========================================
+function constructAffiliateUrl(baseUrl, type, value) {
+    if (!baseUrl || baseUrl === '#') return baseUrl;
+    if (!type || type === 'direct') return baseUrl;
+
+    try {
+        switch (type) {
+            case 'prefix':
+                return value + baseUrl;
+            case 'suffix':
+                const urlObj = new URL(baseUrl);
+                const suffixParams = new URLSearchParams(value);
+                suffixParams.forEach((v, k) => urlObj.searchParams.set(k, v));
+                return urlObj.toString();
+            case 'template':
+                return value.replace('{URL}', baseUrl).replace('{ENCODED_URL}', encodeURIComponent(baseUrl));
+            default:
+                return baseUrl;
+        }
+    } catch (e) {
+        return baseUrl;
+    }
 }
 
 // ==========================================
@@ -173,7 +230,12 @@ app.get('/api/retailers/:cityId', async (req, res) => {
         return res.status(400).json({ error: 'Invalid ID format' });
     }
     try {
-        const retailers = await Retailer.find({ cityId: cityId.toLowerCase() });
+        const retailers = await Retailer.find({ 
+            $or: [
+                { cityId: cityId.toLowerCase() }, 
+                { cityIds: cityId.toLowerCase() }
+            ] 
+        });
         res.json(retailers);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch retailers' });
@@ -266,12 +328,11 @@ app.post('/api/offer/:id/undislike', async (req, res) => {
 });
 
 
-// Tracking Redirect for outbound traffic
+// Tracking Redirect for outbound traffic (Offers)
 app.get('/api/redirect/offer/:id', async (req, res) => {
     const { id } = req.params;
-    if (!validateId(id)) {
-        return res.status(400).json({ error: 'Invalid ID format' });
-    }
+    if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
+
     try {
         const offer = await Offer.findOne({ id: id.toLowerCase() });
         if (!offer) return res.status(404).send('Offer not found');
@@ -279,24 +340,41 @@ app.get('/api/redirect/offer/:id', async (req, res) => {
         offer.clicks += 1;
         await offer.save();
 
-        let dest = offer.retailerUrl || offer.couponUrl || offer.externalAdLink || offer.pdfUrl;
-        if (!dest || dest === '#') {
-            return res.status(400).send('No valid destination link for this offer');
-        }
+        const retailer = await Retailer.findOne({ id: offer.retailerId });
         
-        try {
-            const urlObj = new URL(dest);
-            urlObj.searchParams.set('utm_source', 'DealNamaa');
-            urlObj.searchParams.set('utm_medium', 'coupon_link');
-            urlObj.searchParams.set('utm_campaign', 'retailer_traffic');
-            dest = urlObj.toString();
-        } catch(e) {
-            // Invalid URL format, just use raw
-        }
+        let dest = offer.affiliateOverrideUrl || offer.retailerUrl || offer.couponUrl || offer.externalAdLink || offer.pdfUrl;
         
+        // If it's not an override, apply retailer affiliate structure
+        if (!offer.affiliateOverrideUrl && retailer) {
+            dest = constructAffiliateUrl(dest, retailer.affiliateType, retailer.affiliateValue);
+        }
+
+        if (!dest || dest === '#') return res.status(400).send('No valid destination link');
         res.redirect(dest);
-    } catch (err) {
-        res.status(500).send('Error processing redirect');
+    } catch (e) { 
+        res.status(500).send('Redirect failed'); 
+    }
+});
+
+// Tracking Redirect for outbound traffic (Retailers)
+app.get('/api/redirect/retailer/:id', async (req, res) => {
+    const { id } = req.params;
+    if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
+
+    try {
+        const retailer = await Retailer.findOne({ id: id.toLowerCase() });
+        if (!retailer) return res.status(404).send('Retailer not found');
+        
+        retailer.clicks += 1;
+        await retailer.save();
+
+        let dest = retailer.websiteUrl;
+        if (!dest || dest === '#') return res.status(400).send('No valid website URL');
+
+        dest = constructAffiliateUrl(dest, retailer.affiliateType, retailer.affiliateValue);
+        res.redirect(dest);
+    } catch (e) { 
+        res.status(500).send('Redirect failed'); 
     }
 });
 
@@ -311,7 +389,7 @@ app.get('/api/settings', async (req, res) => {
 });
 
 // Admin: Update site settings
-app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
+app.put('/api/admin/settings', verifySuperAdmin, async (req, res) => {
     try {
         const allowed = ['gaId', 'facebookUrl', 'twitterUrl', 'instagramUrl', 'feedbackUrl', 'siteUrl', 'contactEmail', 'contactPhone', 'contactAddress', 'privacyPolicy', 'aboutUs', 'termsOfService', 'showStats', 'customLogoUrl', 'homeMessage', 'faviconUrl', 'adSenseId'];
         const update = {};
@@ -348,7 +426,8 @@ app.get('/api/offers/expiring-soon', async (req, res) => {
         const now = new Date();
         const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
         const offers = await Offer.find({
-            validUntil: { $gte: now, $lte: in7Days }
+            validUntil: { $gte: now, $lte: in7Days },
+            archived: { $ne: true }
         }).sort({ validUntil: 1 }).limit(8).lean();
         res.json(offers);
     } catch (err) {
@@ -363,7 +442,7 @@ app.get('/api/offers/:retailerId', async (req, res) => {
         return res.status(400).json({ error: 'Invalid ID format' });
     }
     try {
-        const filter = { retailerId: retailerId.toLowerCase() };
+        const filter = { retailerId: retailerId.toLowerCase(), archived: { $ne: true } };
         if (req.query.includeExpired !== 'true') {
             filter.validUntil = { $gte: new Date() };
         }
@@ -609,7 +688,7 @@ app.get('/api/retailers', async (req, res) => {
 app.get('/api/offers', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 0;
-        const filter = {};
+        const filter = { archived: { $ne: true } };
         if (req.query.includeExpired !== 'true') {
             filter.validUntil = { $gte: new Date() };
         }
@@ -953,13 +1032,21 @@ app.get('/api/social-proof', async (req, res) => {
 // ==========================================
 // 🔒 ADMIN LOGIN ENDPOINT
 // ==========================================
-app.post('/api/admin/login', (req, res) => {
-    const { username, password } = req.body;
-    if (username === ADMIN_USER && password === ADMIN_PASS) {
-        const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '12h' });
-        res.json({ token });
-    } else {
-        res.status(401).json({ error: 'Invalid credentials' });
+app.post('/api/admin/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
+        if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+        const isMatch = await bcrypt.compare(password, user.passwordHash);
+        if (isMatch) {
+            const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '12h' });
+            res.json({ token, role: user.role });
+        } else {
+            res.status(401).json({ error: 'Invalid credentials' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: 'Login failed' });
     }
 });
 
@@ -981,7 +1068,7 @@ app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Get all feedback
-app.get('/api/admin/feedback', verifyAdmin, async (req, res) => {
+app.get('/api/admin/feedback', verifySuperAdmin, async (req, res) => {
     try {
         const sort = req.query.sort || 'newest';
         const sortOrder = sort === 'oldest' ? 1 : -1;
@@ -993,7 +1080,7 @@ app.get('/api/admin/feedback', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Delete feedback
-app.delete('/api/admin/feedback/:id', verifyAdmin, async (req, res) => {
+app.delete('/api/admin/feedback/:id', verifySuperAdmin, async (req, res) => {
     try {
         await Feedback.findByIdAndDelete(req.params.id);
         res.json({ message: 'Feedback deleted' });
@@ -1076,7 +1163,7 @@ app.post('/api/upload', ...handleUpload);
 app.post('/api/admin/upload', ...handleUpload);
 
 // Admin: Create new Country
-app.post('/api/countries', verifyAdmin, async (req, res) => {
+app.post('/api/countries', verifySuperAdmin, async (req, res) => {
     try {
         const newCountry = new Country(req.body);
         await newCountry.save();
@@ -1087,7 +1174,7 @@ app.post('/api/countries', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Create new State
-app.post('/api/states', verifyAdmin, async (req, res) => {
+app.post('/api/states', verifySuperAdmin, async (req, res) => {
     try {
         const newState = new State(req.body);
         await newState.save();
@@ -1098,7 +1185,7 @@ app.post('/api/states', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Create new City
-app.post('/api/cities', verifyAdmin, async (req, res) => {
+app.post('/api/cities', verifySuperAdmin, async (req, res) => {
     try {
         const newCity = new City(req.body);
         await newCity.save();
@@ -1109,7 +1196,7 @@ app.post('/api/cities', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Create new Retailer
-app.post('/api/retailers', verifyAdmin, async (req, res) => {
+app.post('/api/retailers', verifySuperAdmin, async (req, res) => {
     try {
         const newRetailer = new Retailer(req.body);
         await newRetailer.save();
@@ -1146,7 +1233,7 @@ app.put('/api/offers/:id', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Update existing Country
-app.put('/api/admin/countries/:id', verifyAdmin, async (req, res) => {
+app.put('/api/admin/countries/:id', verifySuperAdmin, async (req, res) => {
     const { id } = req.params;
     if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
     try {
@@ -1157,7 +1244,7 @@ app.put('/api/admin/countries/:id', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Update existing State
-app.put('/api/admin/states/:id', verifyAdmin, async (req, res) => {
+app.put('/api/admin/states/:id', verifySuperAdmin, async (req, res) => {
     const { id } = req.params;
     if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
     try {
@@ -1168,7 +1255,7 @@ app.put('/api/admin/states/:id', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Update existing City
-app.put('/api/admin/cities/:id', verifyAdmin, async (req, res) => {
+app.put('/api/admin/cities/:id', verifySuperAdmin, async (req, res) => {
     const { id } = req.params;
     if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
     try {
@@ -1179,7 +1266,7 @@ app.put('/api/admin/cities/:id', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Update existing Retailer
-app.put('/api/admin/retailers/:id', verifyAdmin, async (req, res) => {
+app.put('/api/admin/retailers/:id', verifySuperAdmin, async (req, res) => {
     const { id } = req.params;
     if (!validateId(id)) return res.status(400).json({ error: 'Invalid ID format' });
     try {
@@ -1201,7 +1288,7 @@ app.put('/api/admin/offers/:id', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Create new Country
-app.post('/api/admin/countries', verifyAdmin, async (req, res) => {
+app.post('/api/admin/countries', verifySuperAdmin, async (req, res) => {
     try {
         const newCountry = new Country(req.body);
         await newCountry.save();
@@ -1210,7 +1297,7 @@ app.post('/api/admin/countries', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Create new City
-app.post('/api/admin/cities', verifyAdmin, async (req, res) => {
+app.post('/api/admin/cities', verifySuperAdmin, async (req, res) => {
     try {
         const newCity = new City(req.body);
         await newCity.save();
@@ -1219,7 +1306,7 @@ app.post('/api/admin/cities', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Create new Retailer
-app.post('/api/admin/retailers', verifyAdmin, async (req, res) => {
+app.post('/api/admin/retailers', verifySuperAdmin, async (req, res) => {
     try {
         const newRetailer = new Retailer(req.body);
         await newRetailer.save();
@@ -1237,7 +1324,7 @@ app.post('/api/admin/offers', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Delete Country
-app.delete('/api/countries/:id', verifyAdmin, async (req, res) => {
+app.delete('/api/countries/:id', verifySuperAdmin, async (req, res) => {
     const { id } = req.params;
     if (!validateId(id)) {
         return res.status(400).json({ error: 'Invalid ID format' });
@@ -1251,7 +1338,7 @@ app.delete('/api/countries/:id', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Delete State
-app.delete('/api/states/:id', verifyAdmin, async (req, res) => {
+app.delete('/api/states/:id', verifySuperAdmin, async (req, res) => {
     const { id } = req.params;
     if (!validateId(id)) {
         return res.status(400).json({ error: 'Invalid ID format' });
@@ -1265,7 +1352,7 @@ app.delete('/api/states/:id', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Delete City
-app.delete('/api/cities/:id', verifyAdmin, async (req, res) => {
+app.delete('/api/cities/:id', verifySuperAdmin, async (req, res) => {
     const { id } = req.params;
     if (!validateId(id)) {
         return res.status(400).json({ error: 'Invalid ID format' });
@@ -1279,7 +1366,7 @@ app.delete('/api/cities/:id', verifyAdmin, async (req, res) => {
 });
 
 // Admin: Delete Retailer
-app.delete('/api/retailers/:id', verifyAdmin, async (req, res) => {
+app.delete('/api/retailers/:id', verifySuperAdmin, async (req, res) => {
     const { id } = req.params;
     if (!validateId(id)) {
         return res.status(400).json({ error: 'Invalid ID format' });
@@ -1336,11 +1423,168 @@ app.post('/api/admin/offers/:id/reset-metrics', verifyAdmin, async (req, res) =>
 // Public: Submit Feedback
 app.post('/api/feedback', async (req, res) => {
     try {
-        const newFeedback = new Feedback(req.body);
+        const { name, email, message, recaptchaToken } = req.body;
+        if (!name || !email || !message) return res.status(400).json({ error: 'All fields are required.' });
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+        if (!emailRegex.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
+
+        // reCAPTCHA verification (only if secret key is configured)
+        const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
+        if (recaptchaSecret) {
+            if (!recaptchaToken) return res.status(400).json({ error: 'Please complete the CAPTCHA verification.' });
+            try {
+                const verifyRes = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `secret=${recaptchaSecret}&response=${recaptchaToken}`
+                });
+                const verifyData = await verifyRes.json();
+                if (!verifyData.success) return res.status(400).json({ error: 'CAPTCHA verification failed. Please try again.' });
+            } catch (e) {
+                console.error('reCAPTCHA verify error:', e.message);
+                // Allow submission if reCAPTCHA service is down
+            }
+        }
+
+        const newFeedback = new Feedback({ name, email, message });
         await newFeedback.save();
         res.status(201).json({ message: 'Feedback submitted successfully' });
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+});
+
+// ==========================================
+// BLOG ENDPOINTS
+// ==========================================
+
+// Get all published blogs (Public)
+app.get('/api/blogs', async (req, res) => {
+    try {
+        const blogs = await Blog.find({ status: 'published' }).sort({ createdAt: -1 });
+        res.json(blogs);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch blogs' });
+    }
+});
+
+// Get a single blog by slug and increment views (Public)
+app.get('/api/blogs/:slug', async (req, res) => {
+    try {
+        const blog = await Blog.findOneAndUpdate(
+            { slug: req.params.slug.toLowerCase() },
+            { $inc: { views: 1 } },
+            { new: true }
+        );
+        if (!blog) return res.status(404).json({ error: 'Blog not found' });
+        res.json(blog);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch blog' });
+    }
+});
+
+// Get all blogs (Admin)
+app.get('/api/admin/blogs', verifySuperAdmin, async (req, res) => {
+    try {
+        const blogs = await Blog.find().sort({ createdAt: -1 });
+        res.json(blogs);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch blogs' });
+    }
+});
+
+// Create a blog (Admin)
+app.post('/api/admin/blogs', verifySuperAdmin, async (req, res) => {
+    try {
+        const newBlog = new Blog(req.body);
+        await newBlog.save();
+        res.status(201).json(newBlog);
+    } catch (err) {
+        if (err.code === 11000) return res.status(400).json({ error: 'Slug already exists' });
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Update a blog (Admin)
+app.put('/api/admin/blogs/:slug', verifySuperAdmin, async (req, res) => {
+    try {
+        const blog = await Blog.findOneAndUpdate(
+            { slug: req.params.slug.toLowerCase() },
+            req.body,
+            { new: true, runValidators: true }
+        );
+        if (!blog) return res.status(404).json({ error: 'Blog not found' });
+        res.json(blog);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Delete a blog (Admin)
+app.delete('/api/admin/blogs/:slug', verifySuperAdmin, async (req, res) => {
+    try {
+        const blog = await Blog.findOneAndDelete({ slug: req.params.slug.toLowerCase() });
+        if (!blog) return res.status(404).json({ error: 'Blog not found' });
+        res.json({ message: 'Blog deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete blog' });
+    }
+});
+
+// ==========================================
+// USER MANAGEMENT ENDPOINTS
+// ==========================================
+app.get('/api/admin/users', verifySuperAdmin, async (req, res) => {
+    try {
+        const users = await User.find({}, '-passwordHash').sort({ createdAt: -1 });
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+app.post('/api/admin/users', verifySuperAdmin, async (req, res) => {
+    try {
+        const { username, password, role } = req.body;
+        if (!username || !password || !role) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+        if (password.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+        
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+
+        const hash = await bcrypt.hash(password, 10);
+        const newUser = new User({ username, passwordHash: hash, role });
+        await newUser.save();
+        
+        const userResponse = newUser.toObject();
+        delete userResponse.passwordHash;
+        
+        res.status(201).json(userResponse);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.delete('/api/admin/users/:id', verifySuperAdmin, async (req, res) => {
+    try {
+        // Prevent deleting yourself
+        if (req.user.id === req.params.id) {
+            return res.status(400).json({ error: 'You cannot delete your own account' });
+        }
+        
+        const user = await User.findByIdAndDelete(req.params.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        res.json({ message: 'User deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete user' });
     }
 });
 

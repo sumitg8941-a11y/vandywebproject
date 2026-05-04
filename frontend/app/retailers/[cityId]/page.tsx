@@ -4,6 +4,7 @@ import Breadcrumbs from '../../Breadcrumbs';
 import Tracker from '../../Tracker';
 import SafeImage from '../../SafeImage';
 import AdSlot from '../../AdSlot';
+import RetailerGrid from './RetailerGrid';
 
 async function getRetailers(cityId: string) {
   try {
@@ -49,17 +50,19 @@ export default async function RetailersPage({ params }: { params: Promise<{ city
 
   return (
     <div>
-      {/* Hero Banner Section */}
-      <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white text-center py-20 px-4 shadow-md">
-        <h1 className="text-4xl md:text-5xl font-black mb-4 drop-shadow-md uppercase tracking-tight">Shop Top Retailers</h1>
-        <p className="text-xl md:text-2xl mb-8 font-medium opacity-95 drop-shadow-sm">Find the latest catalogs and offers from your favorite brands.</p>
-        <div className="flex justify-center mt-6">
+      <div className="max-w-6xl mx-auto px-4 mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">Shop Top Retailers</h1>
+            <p className="text-sm text-gray-500 mt-1">Find the latest catalogs and offers from your favorite brands.</p>
+          </div>
           <Link href="/">
-            <button className="bg-yellow-400 text-gray-900 px-6 py-2 rounded-md font-bold hover:bg-yellow-500 transition shadow-sm">
-              &larr; Back to Regions
+            <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition text-sm">
+              &larr; Back
             </button>
           </Link>
         </div>
+        <AdSlot format="horizontal" />
       </div>
 
       <div className="max-w-6xl mx-auto p-6 mt-4">
@@ -71,7 +74,7 @@ export default async function RetailersPage({ params }: { params: Promise<{ city
 
       {/* Retailers Grid */}
       <div className="max-w-6xl mx-auto p-6 mt-2">
-        <h2 className="text-3xl font-bold mb-8 text-gray-800 border-b pb-2">Retailers in this City</h2>
+        <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Retailers in this City</h2>
         
         {retailers.length === 0 ? (
           <div className="text-center p-10 bg-yellow-100 text-yellow-800 rounded-lg">
@@ -79,29 +82,7 @@ export default async function RetailersPage({ params }: { params: Promise<{ city
             <p>We couldn&apos;t find any retailers for this city. Please check back later.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {retailers.map((r: any) => (
-              <Link href={`/offers/${r.id || r._id}`} key={r.id || r._id}>
-                <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-100 group">
-                  <div className="overflow-hidden h-32 relative">
-                    <SafeImage 
-                      src={r.logo || r.image} 
-                      alt={r.name} 
-                      fill
-                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
-                      className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
-                    />
-                  </div>
-                  <div className="p-3 text-center border-t border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-800">{r.name}</h3>
-                    <p className="text-xs text-red-600 font-semibold mt-1">
-                      <i className="fa-solid fa-tag mr-1"></i>{r.offerCount} {r.offerCount === 1 ? 'offer' : 'offers'}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <RetailerGrid retailers={retailers} />
         )}
       </div>
     </div>

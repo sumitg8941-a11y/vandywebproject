@@ -304,35 +304,41 @@
         <div class="brand-sub">Admin Dashboard</div>
     </div>
 
-    <div class="sidebar-section-label">Overview</div>
-    <button class="tab-btn active" onclick="admin.showTab('stats', event)">
+    <div class="sidebar-section-label" data-role="superadmin">Overview</div>
+    <button class="tab-btn active" data-role="superadmin" onclick="admin.showTab('stats', event)">
         <i class="fa-solid fa-chart-line"></i> Dashboard
     </button>
 
     <div class="sidebar-section-label">Content</div>
-    <button class="tab-btn" onclick="admin.showTab('countries', event)">
+    <button class="tab-btn" data-role="superadmin" onclick="admin.showTab('countries', event)">
         <i class="fa-solid fa-globe"></i> Countries
     </button>
-    <button class="tab-btn" onclick="admin.showTab('states', event)">
+    <button class="tab-btn" data-role="superadmin" onclick="admin.showTab('states', event)">
         <i class="fa-solid fa-map"></i> States
     </button>
-    <button class="tab-btn" onclick="admin.showTab('cities', event)">
+    <button class="tab-btn" data-role="superadmin" onclick="admin.showTab('cities', event)">
         <i class="fa-solid fa-city"></i> Cities
     </button>
-    <button class="tab-btn" onclick="admin.showTab('retailers', event)">
+    <button class="tab-btn" data-role="superadmin" onclick="admin.showTab('retailers', event)">
         <i class="fa-solid fa-store"></i> Retailers
     </button>
     <button class="tab-btn" onclick="admin.showTab('offers', event)">
-        <i class="fa-solid fa-tags"></i> Offers &amp; PDFs
+        <i class="fa-solid fa-tags"></i> Flyers
+    </button>
+    <button class="tab-btn" data-role="superadmin" onclick="admin.showTab('blogs', event)">
+        <i class="fa-solid fa-pen-nib"></i> Blogs
     </button>
 
-    <div class="sidebar-section-label">Insights</div>
-    <button class="tab-btn" onclick="admin.showTab('feedback', event)">
+    <div class="sidebar-section-label" data-role="superadmin">Insights</div>
+    <button class="tab-btn" data-role="superadmin" onclick="admin.showTab('feedback', event)">
         <i class="fa-solid fa-comments"></i> Feedback
     </button>
 
-    <div class="sidebar-section-label">System</div>
-    <button class="tab-btn" onclick="admin.showTab('settings', event)">
+    <div class="sidebar-section-label" data-role="superadmin">System</div>
+    <button class="tab-btn" data-role="superadmin" onclick="admin.showTab('users', event)">
+        <i class="fa-solid fa-users"></i> Users & Roles
+    </button>
+    <button class="tab-btn" data-role="superadmin" onclick="admin.showTab('settings', event)">
         <i class="fa-solid fa-gear"></i> Site Settings
     </button>
 
@@ -355,9 +361,6 @@
         <a href="#" id="live-site-btn" target="_blank" class="btn btn-secondary" style="font-size:.8rem; display:none;">
             <i class="fa-solid fa-globe"></i> Live Site
         </a>
-        <button onclick="admin.logout()" class="btn btn-danger" style="font-size:.8rem;">
-            <i class="fa-solid fa-right-from-bracket"></i> Logout
-        </button>
     </div>
 </header>
 

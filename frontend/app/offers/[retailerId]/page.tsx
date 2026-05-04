@@ -5,6 +5,7 @@ import CouponReveal from '../../CouponReveal';
 import FollowButton from '../../FollowButton';
 import Tracker from '../../Tracker';
 import SafeImage from '../../SafeImage';
+import AdSlot from '../../AdSlot';
 
 const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
@@ -55,54 +56,61 @@ export default async function OffersPage({ params }: { params: Promise<{ retaile
 
   return (
     <div>
-      <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white text-center py-16 px-4 shadow-md">
-        {retailer?.logo || retailer?.image ? (
-          <div className="flex justify-center mb-4">
-            <div className="relative w-20 h-20 bg-white rounded-xl shadow-md overflow-hidden">
-              <SafeImage
-                src={retailer.logo || retailer.image}
-                alt={retailer.name}
-                fill
-                sizes="80px"
-                className="object-contain p-2"
-              />
+      {/* Compact Retailer Header */}
+      <div className="max-w-6xl mx-auto px-4 mt-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-4 mb-4">
+          {retailer?.logo || retailer?.image ? (
+            <div className="relative w-16 h-16 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+              <SafeImage src={retailer.logo || retailer.image} alt={retailer.name} fill sizes="64px" className="object-contain p-2" />
             </div>
+          ) : null}
+          <div className="flex-1">
+            <h1 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tight">
+              {retailer ? retailer.name : 'Retailer Offers'}
+            </h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {offers.length > 0
+                ? `${offers.length} active ${offers.length === 1 ? 'offer' : 'offers'} available`
+                : 'Browse the latest deals and flyers.'}
+            </p>
           </div>
-        ) : null}
-        <h1 className="text-4xl md:text-5xl font-black mb-3 drop-shadow-md uppercase tracking-tight">
-          {retailer ? retailer.name : 'Retailer Offers'}
-        </h1>
-        <p className="text-lg md:text-xl mb-6 font-medium opacity-90">
-          {offers.length > 0
-            ? `${offers.length} active ${offers.length === 1 ? 'offer' : 'offers'} available`
-            : 'Browse the latest deals and flyers.'}
-        </p>
-        <div className="flex justify-center items-center gap-3 flex-wrap">
-          <Link href="/">
-            <button className="bg-yellow-400 text-gray-900 px-5 py-2 rounded-lg font-bold hover:bg-yellow-500 transition shadow-sm text-sm">
-              &larr; Back to Home
-            </button>
-          </Link>
-          <a
-            href={`https://wa.me/?text=${whatsappText}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg font-bold transition shadow-sm text-sm"
-          >
-            <i className="fa-brands fa-whatsapp"></i> Share
-          </a>
+          <div className="flex items-center gap-2 flex-wrap">
+            {retailer?.websiteUrl && (
+              <a
+                href={`${API}/api/redirect/retailer/${retailer.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold transition text-sm border border-gray-200"
+              >
+                <i className="fa-solid fa-globe"></i> Visit Website
+              </a>
+            )}
+            <a
+              href={`https://wa.me/?text=${whatsappText}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold transition text-sm"
+            >
+              <i className="fa-brands fa-whatsapp"></i> Share
+            </a>
+            <Link href="/">
+              <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition text-sm">
+                &larr; Back
+              </button>
+            </Link>
+          </div>
         </div>
-        <div className="mt-4">
-          <FollowButton retailerId={retailerId} retailerName={retailer?.name || 'this retailer'} />
-        </div>
+        <FollowButton retailerId={retailerId} retailerName={retailer?.name || 'this retailer'} />
       </div>
 
-      <div className="max-w-6xl mx-auto p-6 mt-4">
+      <div className="max-w-6xl mx-auto px-4 mt-2">
         <Tracker type="retailer" id={retailerId} />
         <Breadcrumbs type="retailer" id={retailerId} />
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 pb-16">
+      <div className="max-w-6xl mx-auto px-4"><AdSlot format="horizontal" /></div>
+
+      <div className="max-w-6xl mx-auto px-4 pb-16">
         {offers.length === 0 ? (
           <div className="text-center p-10 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200">
             <i className="fa-solid fa-triangle-exclamation text-3xl mb-3"></i>
@@ -140,7 +148,7 @@ export default async function OffersPage({ params }: { params: Promise<{ retaile
                       <h3 className="text-sm font-bold text-gray-800 truncate mb-1">{o.title}</h3>
                       <p className="text-xs text-gray-400">
                         <i className="fa-regular fa-calendar mr-1"></i>
-                        {o.validFrom ? new Date(o.validFrom).toLocaleDateString() : ''} &ndash; {o.validUntil ? new Date(o.validUntil).toLocaleDateString() : ''}
+                        {o.validFrom ? new Date(o.validFrom).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : ''} &ndash; {o.validUntil ? new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : ''}
                       </p>
                       {o.couponCode && <CouponReveal code={o.couponCode} />}
                     </div>

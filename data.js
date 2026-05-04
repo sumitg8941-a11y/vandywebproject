@@ -158,6 +158,11 @@ const api = {
         if (!res.ok) throw new Error('Database connection failed');
         return await res.json();
     },
+    getAllBlogs: async () => {
+        const res = await fetch('/api/admin/blogs', { headers: getAuthHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch blogs');
+        return await res.json();
+    },
     addCity: async (cityData) => {
         const res = await fetch('/api/admin/cities', {
             method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(cityData)
