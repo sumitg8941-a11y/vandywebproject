@@ -2,7 +2,6 @@
 
 import SafeImage from './SafeImage';
 import Link from 'next/link';
-import SearchBar from './SearchBar';
 import AdSlot from './AdSlot';
 import { useLang } from './LangToggle';
 import { SkeletonCard, SkeletonOfferCard } from './SkeletonLoader';
@@ -50,9 +49,6 @@ export default function HomeHero({
 
       {/* ── Countries ── */}
       <div className="max-w-6xl mx-auto px-4 mt-10">
-        <div className="max-w-xl mx-auto mb-8">
-          <SearchBar />
-        </div>
         <div className="text-center mb-8">
           <span className="inline-block bg-red-100 text-red-600 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2">
             {t.startHere}

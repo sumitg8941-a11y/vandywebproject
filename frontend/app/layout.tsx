@@ -6,7 +6,7 @@ import LangToggle, { LangProvider } from './LangToggle'
 import NavLinks from './NavLinks'
 import MobileNav from './MobileNav'
 import LogoLink from './LogoLink'
-import FindDealsButton from './FindDealsButton'
+import HeaderSearch from './HeaderSearch'
 import Tracker from './Tracker'
 import FooterClient from './FooterClient'
 import SavedLink from './SavedLink'
@@ -119,7 +119,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <div className="hidden md:flex items-center gap-3">
               <SavedLink />
               <LangToggle />
-              <FindDealsButton />
+              <HeaderSearch />
             </div>
 
             <div className="flex md:hidden items-center gap-4">
