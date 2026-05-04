@@ -2501,37 +2501,37 @@ const admin = {
             <div class="form-row">
                 <div class="form-group">
                     <label>ID (unique, lowercase)</label>
-                    <input type="text" id="cat-id" class="form-input" value="${cat ? cat.id : ''}" ${cat ? 'disabled' : ''}>
+                    <input type="text" id="new-cat-id" class="form-input" value="${cat ? cat.id : ''}" ${cat ? 'disabled' : ''}>
                 </div>
                 <div class="form-group">
                     <label>Name (English)</label>
-                    <input type="text" id="cat-name" class="form-input" value="${cat ? cat.name : ''}">
+                    <input type="text" id="new-cat-name" class="form-input" value="${cat ? cat.name : ''}">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label>Name (Arabic)</label>
-                    <input type="text" id="cat-name-ar" class="form-input" value="${cat ? (cat.name_ar || '') : ''}" dir="rtl">
+                    <input type="text" id="new-cat-name-ar" class="form-input" value="${cat ? (cat.name_ar || '') : ''}" dir="rtl">
                 </div>
                 <div class="form-group">
                     <label>Name (Urdu)</label>
-                    <input type="text" id="cat-name-ur" class="form-input" value="${cat ? (cat.name_ur || '') : ''}" dir="rtl">
+                    <input type="text" id="new-cat-name-ur" class="form-input" value="${cat ? (cat.name_ur || '') : ''}" dir="rtl">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label>Name (Hindi)</label>
-                    <input type="text" id="cat-name-hi" class="form-input" value="${cat ? (cat.name_hi || '') : ''}">
+                    <input type="text" id="new-cat-name-hi" class="form-input" value="${cat ? (cat.name_hi || '') : ''}">
                 </div>
                 <div class="form-group">
                     <label>Icon (FontAwesome class)</label>
-                    <input type="text" id="cat-icon" class="form-input" value="${cat ? cat.icon : 'fa-tag'}">
+                    <input type="text" id="new-cat-icon" class="form-input" value="${cat ? cat.icon : 'fa-tag'}">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label>Display Order</label>
-                    <input type="number" id="cat-order" class="form-input" value="${cat ? cat.order : 0}">
+                    <input type="number" id="new-cat-order" class="form-input" value="${cat ? cat.order : 0}">
                 </div>
             </div>
             <div class="form-actions">
@@ -2544,13 +2544,13 @@ const admin = {
 
     saveCategory: async function(existingId) {
         const data = {
-            id: document.getElementById('cat-id').value.trim().toLowerCase(),
-            name: document.getElementById('cat-name').value.trim(),
-            name_ar: document.getElementById('cat-name-ar').value.trim(),
-            name_ur: document.getElementById('cat-name-ur').value.trim(),
-            name_hi: document.getElementById('cat-name-hi').value.trim(),
-            icon: document.getElementById('cat-icon').value.trim(),
-            order: parseInt(document.getElementById('cat-order').value) || 0
+            id: document.getElementById('new-cat-id').value.trim().toLowerCase(),
+            name: document.getElementById('new-cat-name').value.trim(),
+            name_ar: document.getElementById('new-cat-name-ar').value.trim(),
+            name_ur: document.getElementById('new-cat-name-ur').value.trim(),
+            name_hi: document.getElementById('new-cat-name-hi').value.trim(),
+            icon: document.getElementById('new-cat-icon').value.trim(),
+            order: parseInt(document.getElementById('new-cat-order').value) || 0
         };
 
         if (!data.id || !data.name) return alert('ID and English Name are required');
