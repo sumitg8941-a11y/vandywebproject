@@ -219,20 +219,31 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
             </p>
 
             {/* Coupon Code */}
+            {/* Coupon Code - Tap to Copy */}
             {offer.couponCode && (
               <div className="mb-5">
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Coupon Code</p>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg px-4 py-2 font-mono text-lg font-bold text-gray-800 text-center">
+                <button
+                  onClick={handleCopyCode}
+                  className="w-full group relative flex items-center gap-2 transition-all active:scale-95"
+                  title="Click to copy coupon code"
+                >
+                  <div className={`flex-1 bg-gray-100 border-2 border-dashed rounded-lg px-4 py-2.5 font-mono text-lg font-bold text-center transition-all duration-300 ${copied ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-300 text-gray-800 group-hover:border-red-400 group-hover:bg-red-50'}`}>
                     {offer.couponCode}
                   </div>
-                  <button
-                    onClick={handleCopyCode}
-                    className={`px-4 py-2 rounded-lg font-bold text-sm transition ${copied ? 'bg-green-500 text-white' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
-                  >
-                    {copied ? <><i className="fa-solid fa-check mr-1"></i>Copied!</> : <><i className="fa-regular fa-copy mr-1"></i>Copy</>}
-                  </button>
-                </div>
+                  <div className={`px-4 py-3 rounded-lg font-bold text-sm shadow-sm transition-all duration-300 whitespace-nowrap ${copied ? 'bg-green-600 text-white scale-105' : 'bg-gray-900 text-white group-hover:bg-red-600'}`}>
+                    {copied ? (
+                      <span className="flex items-center gap-1.5"><i className="fa-solid fa-check"></i> Copied!</span>
+                    ) : (
+                      <span className="flex items-center gap-1.5"><i className="fa-regular fa-copy"></i> Copy</span>
+                    )}
+                  </div>
+                  {!copied && (
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                      Tap to Copy
+                    </div>
+                  )}
+                </button>
               </div>
             )}
 

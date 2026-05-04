@@ -26,26 +26,26 @@ export default function CouponReveal({ code }: { code: string }) {
       {!revealed ? (
         <button
           onClick={handleReveal}
-          className="w-full flex items-center justify-between gap-1 bg-red-50 border border-dashed border-red-300 rounded-lg px-2 py-1.5 group hover:bg-red-100 transition"
+          className="w-full flex items-center justify-between gap-1 bg-red-50 border-2 border-dashed border-red-300 rounded-xl px-3 py-2 group hover:bg-red-100 hover:border-red-400 transition-all active:scale-95 shadow-sm"
         >
-          <span className="text-xs font-bold text-red-600 flex items-center gap-1">
+          <span className="text-xs font-bold text-red-600 flex items-center gap-2">
             <i className="fa-solid fa-ticket text-red-400"></i>
-            <span className="blur-sm select-none tracking-widest">{code}</span>
+            <span className="blur-[2px] select-none tracking-widest">{code}</span>
           </span>
-          <span className="text-[10px] font-black text-red-600 uppercase tracking-wide whitespace-nowrap">
-            Tap to reveal
+          <span className="text-[10px] font-black text-white bg-red-600 px-2 py-1 rounded-md uppercase tracking-wider whitespace-nowrap group-hover:bg-red-700">
+            Reveal Code
           </span>
         </button>
       ) : (
         <button
           onClick={handleCopy}
-          className="w-full flex items-center justify-between gap-1 bg-green-50 border border-dashed border-green-400 rounded-lg px-2 py-1.5 hover:bg-green-100 transition"
+          className={`w-full flex items-center justify-between gap-1 border-2 border-dashed rounded-xl px-3 py-2 transition-all active:scale-95 shadow-sm ${copied ? 'bg-green-50 border-green-500' : 'bg-green-50 border-green-400 hover:bg-green-100 hover:border-green-500'}`}
         >
-          <span className="text-xs font-bold text-green-700 font-mono tracking-wider truncate">
+          <span className={`text-sm font-bold font-mono tracking-widest truncate ${copied ? 'text-green-800' : 'text-green-700'}`}>
             {code}
           </span>
-          <span className="text-[10px] font-black text-green-600 uppercase tracking-wide whitespace-nowrap">
-            {copied ? '✓ Copied!' : 'Copy'}
+          <span className={`text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-1 rounded-md ${copied ? 'bg-green-600 text-white' : 'bg-green-700 text-white'}`}>
+            {copied ? <><i className="fa-solid fa-check mr-1"></i>Copied!</> : 'Copy'}
           </span>
         </button>
       )}

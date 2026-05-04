@@ -1321,13 +1321,7 @@ const admin = {
                 <label style="font-size:0.85em; font-weight:bold;">Contact Address</label>
                 <textarea id="s-contact-address" rows="2" style="width:100%; padding:8px; margin:6px 0 20px; box-sizing:border-box;">${s.contactAddress || ''}</textarea>
 
-                <h3 style="margin-bottom:16px;"><i class="fa-solid fa-file-lines" style="color:#8e44ad;"></i> Dynamic Pages (HTML Supported)</h3>
-                <label style="font-size:0.85em; font-weight:bold;">About Us</label>
-                <textarea id="s-about-us" rows="4" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">${s.aboutUs || ''}</textarea>
-                <label style="font-size:0.85em; font-weight:bold;">Privacy Policy</label>
-                <textarea id="s-privacy-policy" rows="4" style="width:100%; padding:8px; margin:6px 0 12px; box-sizing:border-box;">${s.privacyPolicy || ''}</textarea>
-                <label style="font-size:0.85em; font-weight:bold;">Terms of Service</label>
-                <textarea id="s-terms-service" rows="4" style="width:100%; padding:8px; margin:6px 0 20px; box-sizing:border-box;">${s.termsOfService || ''}</textarea>
+
 
                 <h3 style="margin-bottom:16px;"><i class="fa-solid fa-comment" style="color:#27ae60;"></i> Feedback Page</h3>
                 <label style="font-size:0.85em; font-weight:bold;">Feedback Page URL</label>
@@ -1355,9 +1349,7 @@ const admin = {
             contactEmail: document.getElementById('s-contact-email').value.trim(),
             contactPhone: document.getElementById('s-contact-phone').value.trim(),
             contactAddress: document.getElementById('s-contact-address').value.trim(),
-            aboutUs: document.getElementById('s-about-us').value.trim(),
-            privacyPolicy: document.getElementById('s-privacy-policy').value.trim(),
-            termsOfService: document.getElementById('s-terms-service').value.trim(),
+
             feedbackUrl: document.getElementById('s-feedback').value.trim() || '/feedback',
         };
         try {
