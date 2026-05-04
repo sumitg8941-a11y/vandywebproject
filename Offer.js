@@ -32,7 +32,9 @@ const offerSchema = new mongoose.Schema({
     metaTitle: { type: String, default: '', trim: true }, // Custom SEO page title
     metaDescription: { type: String, default: '', trim: true }, // Custom SEO meta description
     affiliateOverrideUrl: { type: String, default: '', trim: true }, // Direct affiliate link override for this specific offer
-    retailerId: { type: String, required: true, lowercase: true, trim: true } // Creates the relationship to Retailer
+    retailerId: { type: String, required: true, lowercase: true, trim: true }, // Creates the relationship to Retailer
+    discountPercent: { type: Number, default: 0 },
+    hotspots: { type: [Object], default: [] }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Offer', offerSchema);

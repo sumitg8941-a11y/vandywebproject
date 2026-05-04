@@ -1,5 +1,6 @@
 require('dotenv').config();
-const translate = require('translate');
+let translate;
+try { translate = require('translate'); } catch (e) { console.warn('⚠️ translate package not available:', e.message); }
 const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
@@ -160,7 +161,11 @@ function constructAffiliateUrl(baseUrl, type, value) {
 // ==========================================
 
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'secure', message: 'DealNamaa API is running safely!' });
+    const dbState = mongoose.connection.readyState; // 1=connected, 2=connecting
+    if (dbState === 0 || dbState === 3) {
+        return res.status(503).json({ status: 'error', message: 'Database not connected', dbState });
+    }
+    res.status(200).json({ status: 'ok', message: 'DealNamaa API is running safely!' });
 });
 
 // Track offer stats
