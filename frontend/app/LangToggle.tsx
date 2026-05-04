@@ -405,6 +405,7 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useLang() {
+  if (!LangContext) return { lang: 'en' as Lang, setLang: () => {}, t: translations.en };
   return useContext(LangContext);
 }
 

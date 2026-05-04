@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -157,6 +157,12 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
     ? (offer.pdfUrl.startsWith('http') ? offer.pdfUrl : `${apiBaseUrl}${offer.pdfUrl}`)
     : null;
 
+  // Auto-open flipbook on mount if PDF exists
+  useEffect(() => {
+    if (pdfSrc) setIsFlipbookOpen(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="bg-gray-50 min-h-screen pb-16">
       {/* Sub-header */}
@@ -167,242 +173,127 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
           <span className="sm:hidden">{t.backTo}</span>
         </Link>
         <div className="flex items-center gap-3">
-          {/* Share Button */}
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold px-3 py-1.5 rounded-lg transition"
-            aria-label="Share this offer"
-          >
-            <i className="fa-solid fa-share-nodes text-base"></i>
+          <button onClick={handleShare} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold px-3 py-1.5 rounded-lg transition">
+            <i className="fa-solid fa-share-nodes"></i>
             <span className="hidden sm:inline">{t.share}</span>
           </button>
-          <div className="font-black text-red-600 tracking-tight hidden sm:block uppercase">
-            {t.hotDeal} <i className="fa-solid fa-fire text-orange-500"></i>
-          </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto mt-6 px-4">
+      <div className="max-w-5xl mx-auto mt-4 px-4">
         <Breadcrumbs type="offer" id={offerId} />
 
-        {/* Offer Header Card */}
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-start mb-8">
-          <div className="flex-1 w-full">
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              {offer.badge && (
-                <span className="bg-red-100 text-red-700 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider border border-red-200">
-                  {(lang !== 'en' && offer[`badge_${lang}`]) ? offer[`badge_${lang}`] : offer.badge}
-                </span>
-              )}
-              {expiryLabel && (
-                <span className={`text-xs font-bold px-3 py-1 rounded-full ${expiryLabel.className}`}>
-                  {expiryLabel.text}
-                </span>
-              )}
-              {offer.isSponsored && (
-                <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full border border-yellow-200">
-                  {t.sponsored}
-                </span>
-              )}
-            </div>
+        {/* Compact offer info bar */}
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 md:p-6 mb-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
 
-            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3">
-              {(lang !== 'en' && offer[`title_${lang}`]) ? offer[`title_${lang}`] : offer.title}
-            </h1>
-
-            {retailer && (
-              <Link href={`/offers/${retailer.id}`} className="inline-flex items-center gap-2 text-gray-600 hover:text-red-600 transition mb-3 font-medium">
-                <i className="fa-solid fa-store text-red-400"></i>
-                {(lang !== 'en' && retailer?.[`name_${lang}`]) ? retailer[`name_${lang}`] : retailer?.name}
-              </Link>
-            )}
-
-            <p className="text-gray-500 text-sm mb-5">
-              <i className="fa-regular fa-calendar mr-2"></i>
-              {t.valid}: {offer.validFrom ? new Date(offer.validFrom).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '—'} &ndash; {offer.validUntil ? new Date(offer.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '—'}
-            </p>
-
-            {/* Coupon Code */}
-            {offer.couponCode && (
-              <div className="mb-5">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t.couponCode}</p>
-                <button
-                  onClick={handleCopyCode}
-                  className="w-full group relative flex items-center gap-2 transition-all active:scale-95"
-                  title="Click to copy coupon code"
-                >
-                  <div className={`flex-1 bg-gray-100 border-2 border-dashed rounded-lg px-4 py-2.5 font-mono text-lg font-bold text-center transition-all duration-300 ${copied ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-300 text-gray-800 group-hover:border-red-400 group-hover:bg-red-50'}`}>
-                    {offer.couponCode}
-                  </div>
-                  <div className={`px-4 py-3 rounded-lg font-bold text-sm shadow-sm transition-all duration-300 whitespace-nowrap ${copied ? 'bg-green-600 text-white scale-105' : 'bg-gray-900 text-white group-hover:bg-red-600'}`}>
-                    {copied ? (
-                      <span className="flex items-center gap-1.5"><i className="fa-solid fa-check"></i> {t.copied}</span>
-                    ) : (
-                      <span className="flex items-center gap-1.5"><i className="fa-regular fa-copy"></i> {t.copy}</span>
-                    )}
-                  </div>
-                  {!copied && (
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                      {t.tapToCopy}
-                    </div>
-                  )}
-                </button>
+            {/* Left: title + meta */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                {offer.badge && (
+                  <span className="bg-red-100 text-red-700 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider border border-red-200">
+                    {(lang !== 'en' && offer[`badge_${lang}`]) ? offer[`badge_${lang}`] : offer.badge}
+                  </span>
+                )}
+                {expiryLabel && (
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${expiryLabel.className}`}>{expiryLabel.text}</span>
+                )}
               </div>
-            )}
-
-            {/* Like / Dislike */}
-            <div className="mb-4">
-              <RatingWidget offerId={offerId} initialRating={offer.rating || 0} initialCount={offer.ratingCount || 0} />
+              <h1 className="text-lg md:text-xl font-extrabold text-gray-900 truncate">
+                {(lang !== 'en' && offer[`title_${lang}`]) ? offer[`title_${lang}`] : offer.title}
+              </h1>
+              {retailer && (
+                <Link href={`/offers/${retailer.id}`} className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-red-600 transition mt-1">
+                  <i className="fa-solid fa-store text-red-400 text-xs"></i>
+                  {(lang !== 'en' && retailer?.[`name_${lang}`]) ? retailer[`name_${lang}`] : retailer?.name}
+                  <span className="text-gray-300 mx-1">·</span>
+                  <i className="fa-regular fa-calendar text-xs"></i>
+                  {t.until} {offer.validUntil ? new Date(offer.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '—'}
+                </Link>
+              )}
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-sm font-semibold">
-              <span className="text-gray-500">{t.wasHelpful}</span>
+
+            {/* Right: engagement actions */}
+            <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+              <RatingWidget offerId={offerId} initialRating={offer.rating || 0} initialCount={offer.ratingCount || 0} />
               <button
                 onClick={() => handleFeedback('like')}
                 disabled={userFeedback === 'dislike'}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition ${
-                  userFeedback === 'like' 
-                    ? 'bg-green-500 text-white border-green-600 hover:bg-green-600' 
-                    : userFeedback === 'dislike'
-                    ? 'opacity-50 cursor-not-allowed text-green-600 border-green-200' 
-                    : 'hover:bg-green-50 hover:border-green-300 text-green-600 border-green-200'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full border text-sm font-bold transition ${userFeedback === 'like' ? 'bg-green-500 text-white border-green-600' : 'text-green-600 border-green-200 hover:bg-green-50 disabled:opacity-40'}`}
               >
                 <i className={userFeedback === 'like' ? 'fa-solid fa-thumbs-up' : 'fa-regular fa-thumbs-up'}></i> {offer.likes || 0}
               </button>
               <button
                 onClick={() => handleFeedback('dislike')}
                 disabled={userFeedback === 'like'}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition ${
-                  userFeedback === 'dislike' 
-                    ? 'bg-red-500 text-white border-red-600 hover:bg-red-600' 
-                    : userFeedback === 'like'
-                    ? 'opacity-50 cursor-not-allowed text-red-500 border-red-200' 
-                    : 'hover:bg-red-50 hover:border-red-300 text-red-500 border-red-200'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full border text-sm font-bold transition ${userFeedback === 'dislike' ? 'bg-red-500 text-white border-red-600' : 'text-red-500 border-red-200 hover:bg-red-50 disabled:opacity-40'}`}
               >
                 <i className={userFeedback === 'dislike' ? 'fa-solid fa-thumbs-down' : 'fa-regular fa-thumbs-down'}></i> {offer.dislikes || 0}
               </button>
               <SaveButton offerId={offerId} />
-            </div>
-          </div>
-
-          {/* CTA column */}
-          <div className="flex-shrink-0 flex flex-col items-stretch gap-3 w-full md:w-56">
-            {offer.retailerUrl && offer.retailerUrl !== '#' && (
-              <a
-                href={`${apiBaseUrl}/api/redirect/offer/${offer.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center gap-1 bg-gradient-to-r from-red-600 to-orange-500 text-white px-6 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-              >
-                <span className="font-black text-lg tracking-tight"><i className="fa-solid fa-bolt text-yellow-300"></i> {t.goToDeal}</span>
-                <span className="text-xs font-medium opacity-90">{t.at} {(lang !== 'en' && retailer?.[`name_${lang}`]) ? retailer[`name_${lang}`] : (retailer?.name || t.retailer)}</span>
-              </a>
-            )}
-            {pdfSrc && (
-              <button
-                onClick={() => setIsFlipbookOpen(true)}
-                className="flex items-center justify-center gap-2 bg-yellow-400 text-gray-900 px-6 py-4 rounded-xl font-extrabold text-lg shadow-md hover:bg-yellow-500 hover:scale-105 transition-all border border-yellow-500"
-              >
-                <i className="fa-solid fa-book-open"></i> {t.viewCatalog}
-              </button>
-            )}
-            {!offer.retailerUrl && offer.couponUrl && offer.couponUrl !== '#' && (
-              <a
-                href={`${apiBaseUrl}/api/redirect/offer/${offer.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-red-700 transition"
-              >
-                <i className="fa-solid fa-arrow-up-right-from-square"></i> {t.shopNow}
-              </a>
-            )}
-            {retailer?.websiteUrl && (
-              <a
-                href={`${apiBaseUrl}/api/redirect/retailer/${retailer.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-200 transition border border-gray-200"
-              >
-                <i className="fa-solid fa-globe"></i> {t.visit} {(lang !== 'en' && retailer[`name_${lang}`]) ? retailer[`name_${lang}`] : retailer.name}
-              </a>
-            )}
-            {/* Multi-platform Share */}
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 text-center">{t.shareThis}</p>
-              <div className="grid grid-cols-3 gap-2">
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`🔥 ${offer.title}\n${siteUrl}/view/${offerId}`)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-1 bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg transition text-xs font-bold"
-                >
-                  <i className="fa-brands fa-whatsapp text-lg"></i>WhatsApp
-                </a>
-                <a
-                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${siteUrl}/view/${offerId}`)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition text-xs font-bold"
-                >
-                  <i className="fa-brands fa-facebook-f text-lg"></i>Facebook
-                </a>
-                <a
-                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`🔥 ${offer.title}`)}&url=${encodeURIComponent(`${siteUrl}/view/${offerId}`)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-1 bg-gray-900 hover:bg-black text-white p-2 rounded-lg transition text-xs font-bold"
-                >
-                  <i className="fa-brands fa-x-twitter text-lg"></i>X
-                </a>
-                <a
-                  href={`https://t.me/share/url?url=${encodeURIComponent(`${siteUrl}/view/${offerId}`)}&text=${encodeURIComponent(`🔥 ${offer.title}`)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-1 bg-sky-500 hover:bg-sky-600 text-white p-2 rounded-lg transition text-xs font-bold"
-                >
-                  <i className="fa-brands fa-telegram text-lg"></i>Telegram
-                </a>
-                <a
-                  href={`mailto:?subject=${encodeURIComponent(offer.title)}&body=${encodeURIComponent(`Check out this deal: ${siteUrl}/view/${offerId}`)}`}
-                  className="flex flex-col items-center gap-1 bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg transition text-xs font-bold"
-                >
-                  <i className="fa-solid fa-envelope text-lg"></i>Email
-                </a>
+              {offer.couponCode && (
                 <button
-                  onClick={handleShare}
-                  className="flex flex-col items-center gap-1 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg transition text-xs font-bold"
+                  onClick={handleCopyCode}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full border text-sm font-bold transition ${copied ? 'bg-green-600 text-white border-green-600' : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'}`}
                 >
-                  <i className="fa-solid fa-link text-lg"></i>{t.copy}
+                  <i className={copied ? 'fa-solid fa-check' : 'fa-regular fa-copy'}></i>
+                  {copied ? t.copied : offer.couponCode}
                 </button>
-              </div>
+              )}
+              {(offer.retailerUrl || offer.couponUrl) && (
+                <a
+                  href={`${apiBaseUrl}/api/redirect/offer/${offer.id}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-red-600 to-orange-500 text-white px-4 py-2 rounded-full text-sm font-black shadow hover:shadow-md transition"
+                >
+                  <i className="fa-solid fa-bolt text-yellow-300"></i> {t.goToDeal}
+                </a>
+              )}
             </div>
           </div>
         </div>
 
-        <AdSlot format="horizontal" className="my-6" />
-
-        <div className="flex gap-6 items-start">
-          <div className="hidden lg:block flex-shrink-0 w-[300px]">
-            <AdSlot format="vertical" className="sticky top-4" />
-          </div>
-
-          <div className="flex-1 bg-white rounded-2xl shadow-md border border-gray-100 p-4 md:p-8 flex justify-center">
+        {/* Cover image fallback (shown only when no PDF) */}
+        {!pdfSrc && (
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 flex justify-center mb-4">
             <div className="relative w-full max-w-2xl" style={{ aspectRatio: '3/4' }}>
-              <SafeImage
-                src={offer.image}
-                alt={offer.title}
-                fill
-                sizes="(max-width: 768px) 100vw, 672px"
-                className="rounded-xl object-contain"
-                priority
-              />
+              <SafeImage src={offer.image} alt={offer.title} fill sizes="(max-width: 768px) 100vw, 672px" className="rounded-xl object-contain" priority />
             </div>
           </div>
+        )}
 
-          <div className="hidden lg:block flex-shrink-0 w-[300px]">
-            <AdSlot format="vertical" className="sticky top-4" />
+        {/* Open flipbook button (shown when PDF exists but flipbook was closed) */}
+        {pdfSrc && !isFlipbookOpen && (
+          <button
+            onClick={() => setIsFlipbookOpen(true)}
+            className="w-full flex items-center justify-center gap-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-extrabold text-xl py-5 rounded-2xl shadow-md transition mb-4"
+          >
+            <i className="fa-solid fa-book-open text-2xl"></i> {t.viewCatalog}
+          </button>
+        )}
+
+        <AdSlot format="horizontal" className="my-4" />
+
+        {/* Share panel */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">{t.shareThis}</p>
+          <div className="flex flex-wrap gap-2">
+            <a href={`https://wa.me/?text=${encodeURIComponent(`🔥 ${offer.title}\n${siteUrl}/view/${offerId}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-bold transition">
+              <i className="fa-brands fa-whatsapp"></i>WhatsApp
+            </a>
+            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${siteUrl}/view/${offerId}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-bold transition">
+              <i className="fa-brands fa-facebook-f"></i>Facebook
+            </a>
+            <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`🔥 ${offer.title}`)}&url=${encodeURIComponent(`${siteUrl}/view/${offerId}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-3 py-2 rounded-lg text-sm font-bold transition">
+              <i className="fa-brands fa-x-twitter"></i>X
+            </a>
+            <a href={`https://t.me/share/url?url=${encodeURIComponent(`${siteUrl}/view/${offerId}`)}&text=${encodeURIComponent(`🔥 ${offer.title}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white px-3 py-2 rounded-lg text-sm font-bold transition">
+              <i className="fa-brands fa-telegram"></i>Telegram
+            </a>
+            <button onClick={handleShare} className="flex items-center gap-2 bg-gray-700 hover:bg-gray-800 text-white px-3 py-2 rounded-lg text-sm font-bold transition">
+              <i className="fa-solid fa-link"></i>{t.copy}
+            </button>
           </div>
-        </div>
-
-        <div className="lg:hidden mt-4">
-          <AdSlot format="horizontal" />
         </div>
       </div>
 

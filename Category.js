@@ -7,6 +7,8 @@ const categorySchema = new mongoose.Schema({
     name_ur: { type: String, trim: true },
     name_hi: { type: String, trim: true },
     icon: { type: String, default: 'fa-tag' }, // FontAwesome icon class
+    metaTitle: { type: String, default: '', trim: true },
+    metaDescription: { type: String, default: '', trim: true },
     order: { type: Number, default: 0 }
 }, { timestamps: true });
 

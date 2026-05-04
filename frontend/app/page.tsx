@@ -100,17 +100,37 @@ export default async function HomePage() {
       <GeoDetect countries={(countries || []).map((c: any) => ({ id: c.id, name: c.name }))} />
       <CategoriesNav />
       <SocialProof />
-      <div className="px-4 max-w-6xl mx-auto"><AdSlot format="horizontal" /></div>
-      <MyRetailers />
-      <HomeHero
-        countries={countries}
-        topRetailers={topRetailers}
-        latestOffers={latestOffers}
-        expiringSoon={expiringSoon}
-        heroImages={heroImages}
-        customHomeMessage={settings?.homeMessage}
-      />
-      <div className="px-4 max-w-6xl mx-auto"><AdSlot format="horizontal" /></div>
+
+      {/* Top horizontal ad — full width, above all content */}
+      <div className="px-4 max-w-6xl mx-auto">
+        <AdSlot format="horizontal" />
+      </div>
+
+      {/* Main content + sidebar ad (desktop only) */}
+      <div className="max-w-6xl mx-auto px-4 flex gap-6 items-start">
+
+        {/* Main content column */}
+        <div className="flex-1 min-w-0">
+          <MyRetailers />
+          <HomeHero
+            countries={countries}
+            topRetailers={topRetailers}
+            latestOffers={latestOffers}
+            expiringSoon={expiringSoon}
+            heroImages={heroImages}
+            customHomeMessage={settings?.homeMessage}
+          />
+        </div>
+
+        {/* Sidebar ad — desktop only, sticky */}
+        <aside className="hidden xl:block flex-shrink-0 w-[300px]">
+          <div className="sticky top-20">
+            <AdSlot format="vertical" />
+          </div>
+        </aside>
+
+      </div>
+
       <PushNotification />
     </div>
   );

@@ -130,6 +130,9 @@ const admin = {
                 case 'maintenance':
                     html = this.renderMaintenance();
                     break;
+                case 'seo':
+                    html = await this.renderSEO();
+                    break;
             }
             this.contentDiv.innerHTML = html;
         } catch (error) {
@@ -164,7 +167,7 @@ const admin = {
                     <input type="text" id="new-country-id" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="e.g., kw">
                     
                     <label style="font-weight: bold; font-size: 0.85rem; color: #64748b; display: block; margin-bottom: 4px;">Country Name (English):</label>
-                    <input type="text" id="new-country-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Kuwait">
+                    <input type="text" id="new-country-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Kuwait" oninput="if(!document.getElementById('new-country-id').readOnly) admin.autoFillId('new-country-id', this.value)">
                     
                     <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -192,6 +195,12 @@ const admin = {
                     <label>Upload Cover Image (Optional):</label><br>
                     <input type="file" id="new-country-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
                     <input type="hidden" id="new-country-image">
+
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px; margin-bottom:15px;">
+                        <h4 style="margin:0 0 10px; font-size:0.9em; color:#166534;"><i class="fa-solid fa-magnifying-glass" style="margin-right:6px;"></i>SEO Settings (Optional)</h4>
+                        <input type="text" id="new-country-meta-title" placeholder="Custom SEO Title" style="width:100%; padding:8px; margin-bottom:8px; box-sizing:border-box;">
+                        <textarea id="new-country-meta-desc" placeholder="Custom SEO Description" rows="2" style="width:100%; padding:8px; box-sizing:border-box; resize:none;"></textarea>
+                    </div>
                     
                     <button class="action-btn" onclick="admin.saveCountry()">Save Country</button>
                     <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('new-country-id').readOnly=false; document.getElementById('add-country-form').style.display='none'; document.querySelector('#add-country-form h3').innerText='Add New Country';">Cancel</button>
@@ -218,17 +227,20 @@ const admin = {
                 const name_ar = document.getElementById('new-country-name-ar').value.trim();
                 const name_ur = document.getElementById('new-country-name-ur').value.trim();
                 const name_hi = document.getElementById('new-country-name-hi').value.trim();
+                const metaTitle = document.getElementById('new-country-meta-title').value.trim();
+                const metaDescription = document.getElementById('new-country-meta-desc').value.trim();
 
+                const payload = { name, image, name_ar, name_ur, name_hi, metaTitle, metaDescription };
                 if (isEdit) {
                     const res = await fetch(`/api/admin/countries/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                        body: JSON.stringify({ name, image, name_ar, name_ur, name_hi })
+                        body: JSON.stringify(payload)
                     });
                     if (!res.ok) throw new Error('Failed to update country');
                     alert('Country updated successfully!');
                 } else {
-                    await api.addCountry({ id, name, image, name_ar, name_ur, name_hi });
+                    await api.addCountry({ id, ...payload });
                     alert('Country securely saved to MongoDB permanently!');
                 }
                 document.getElementById('new-country-id').readOnly = false;
@@ -255,6 +267,8 @@ const admin = {
             document.getElementById('new-country-name-ar').value = country.name_ar || '';
             document.getElementById('new-country-name-ur').value = country.name_ur || '';
             document.getElementById('new-country-name-hi').value = country.name_hi || '';
+            document.getElementById('new-country-meta-title').value = country.metaTitle || '';
+            document.getElementById('new-country-meta-desc').value = country.metaDescription || '';
             document.querySelector('#add-country-form h3').innerText = 'Edit Country';
             window.scrollTo(0, 0);
         } catch(e) {
@@ -297,7 +311,7 @@ const admin = {
                     <input type="text" id="new-state-id" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="e.g., mh">
 
                     <label style="font-weight: bold; font-size: 0.85rem; color: #64748b; display: block; margin-bottom: 4px;">State/Province Name (English):</label>
-                    <input type="text" id="new-state-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Dubai Emirate">
+                    <input type="text" id="new-state-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Dubai Emirate" oninput="if(!document.getElementById('new-state-id').readOnly){const c=document.getElementById('new-state-country').value;admin.autoFillId('new-state-id','state',c,this.value);}">
                     
                     <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -323,13 +337,19 @@ const admin = {
                     </div>
 
                     <label>Belongs to Country:</label><br>
-                    <select id="new-state-country" style="width:100%; padding:8px; margin-bottom:10px;">
+                    <select id="new-state-country" style="width:100%; padding:8px; margin-bottom:10px;" onchange="if(!document.getElementById('new-state-id').readOnly){const n=document.getElementById('new-state-name').value;admin.autoFillId('new-state-id','state',this.value,n);}">
                         ${countryOptions}
                     </select>
 
                     <label>Upload Cover Image (Optional):</label><br>
                     <input type="file" id="new-state-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
                     <input type="hidden" id="new-state-image">
+
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px; margin-bottom:15px;">
+                        <h4 style="margin:0 0 10px; font-size:0.9em; color:#166534;"><i class="fa-solid fa-magnifying-glass" style="margin-right:6px;"></i>SEO Settings (Optional)</h4>
+                        <input type="text" id="new-state-meta-title" placeholder="Custom SEO Title" style="width:100%; padding:8px; margin-bottom:8px; box-sizing:border-box;">
+                        <textarea id="new-state-meta-desc" placeholder="Custom SEO Description" rows="2" style="width:100%; padding:8px; box-sizing:border-box; resize:none;"></textarea>
+                    </div>
 
                     <button class="action-btn" onclick="admin.saveState()">Save State</button>
                     <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('new-state-id').readOnly=false; document.getElementById('add-state-form').style.display='none'; document.querySelector('#add-state-form h3').innerText='Add New State';">Cancel</button>
@@ -359,12 +379,15 @@ const admin = {
             const name_ar = document.getElementById('new-state-name-ar').value.trim();
             const name_ur = document.getElementById('new-state-name-ur').value.trim();
             const name_hi = document.getElementById('new-state-name-hi').value.trim();
+            const metaTitle = document.getElementById('new-state-meta-title').value.trim();
+            const metaDescription = document.getElementById('new-state-meta-desc').value.trim();
 
+            const payload = { name, countryId, image, name_ar, name_ur, name_hi, metaTitle, metaDescription };
             if (isEdit) {
                 const res = await fetch(`/api/admin/states/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                    body: JSON.stringify({ name, countryId, image, name_ar, name_ur, name_hi })
+                    body: JSON.stringify(payload)
                 });
                 if (!res.ok) throw new Error('Failed to update state');
                 alert('State updated successfully!');
@@ -372,7 +395,7 @@ const admin = {
                 const res = await fetch('/api/states', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                    body: JSON.stringify({ id, name, countryId, image, name_ar, name_ur, name_hi })
+                    body: JSON.stringify({ id, ...payload })
                 });
                 if (!res.ok) throw new Error('Failed to save state');
                 alert('State saved!');
@@ -396,6 +419,8 @@ const admin = {
             document.getElementById('new-state-name-ar').value = state.name_ar || '';
             document.getElementById('new-state-name-ur').value = state.name_ur || '';
             document.getElementById('new-state-name-hi').value = state.name_hi || '';
+            document.getElementById('new-state-meta-title').value = state.metaTitle || '';
+            document.getElementById('new-state-meta-desc').value = state.metaDescription || '';
             document.querySelector('#add-state-form h3').innerText = 'Edit State';
             window.scrollTo(0, 0);
         } catch(e) { alert('Error loading state: ' + e.message); }
@@ -457,7 +482,7 @@ const admin = {
                     <input type="text" id="new-city-id" style="width:100%; padding:8px; margin-bottom:10px;">
                     
                     <label style="font-weight: bold; font-size: 0.85rem; color: #64748b; display: block; margin-bottom: 4px;">City Name (English):</label>
-                    <input type="text" id="new-city-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Deira">
+                    <input type="text" id="new-city-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Deira" oninput="admin._autoCityId()">
                     
                     <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -483,12 +508,12 @@ const admin = {
                     </div>
                     
                     <label>Belongs to Country:</label><br>
-                    <select id="new-city-country" style="width:100%; padding:8px; margin-bottom:10px;" onchange="admin.loadStatesForCity(this.value)">
+                    <select id="new-city-country" style="width:100%; padding:8px; margin-bottom:10px;" onchange="admin.loadStatesForCity(this.value); admin._autoCityId()">
                         ${countryOptions}
                     </select>
 
                     <label>Belongs to State (optional — only if country has states):</label><br>
-                    <select id="new-city-state" style="width:100%; padding:8px; margin-bottom:10px;">
+                    <select id="new-city-state" style="width:100%; padding:8px; margin-bottom:10px;" onchange="admin._autoCityId()">
                         <option value="">— No State (direct city) —</option>
                         ${allStates.map(s => `<option value="${s.id}">${s.name} (${s.countryId.toUpperCase()})</option>`).join('')}
                     </select>
@@ -496,6 +521,12 @@ const admin = {
                     <label>Upload Cover Image (Optional):</label><br>
                     <input type="file" id="new-city-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
                     <input type="hidden" id="new-city-image">
+
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px; margin-bottom:15px;">
+                        <h4 style="margin:0 0 10px; font-size:0.9em; color:#166534;"><i class="fa-solid fa-magnifying-glass" style="margin-right:6px;"></i>SEO Settings (Optional)</h4>
+                        <input type="text" id="new-city-meta-title" placeholder="Custom SEO Title" style="width:100%; padding:8px; margin-bottom:8px; box-sizing:border-box;">
+                        <textarea id="new-city-meta-desc" placeholder="Custom SEO Description" rows="2" style="width:100%; padding:8px; box-sizing:border-box; resize:none;"></textarea>
+                    </div>
                     
                     <button class="action-btn" onclick="admin.saveCity()">Save City</button>
                     <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('new-city-id').readOnly=false; document.getElementById('add-city-form').style.display='none'; document.querySelector('#add-city-form h3').innerText='Add New City';">Cancel</button>
@@ -520,17 +551,20 @@ const admin = {
                 const name_ar = document.getElementById('new-city-name-ar').value.trim();
                 const name_ur = document.getElementById('new-city-name-ur').value.trim();
                 const name_hi = document.getElementById('new-city-name-hi').value.trim();
+                const metaTitle = document.getElementById('new-city-meta-title').value.trim();
+                const metaDescription = document.getElementById('new-city-meta-desc').value.trim();
 
+                const payload = { name, countryId, stateId, image, name_ar, name_ur, name_hi, metaTitle, metaDescription };
                 if (isEdit) {
                     const res = await fetch(`/api/admin/cities/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                        body: JSON.stringify({ name, countryId, stateId, image, name_ar, name_ur, name_hi })
+                        body: JSON.stringify(payload)
                     });
                     if (!res.ok) throw new Error('Failed to update city');
                     alert('City updated successfully!');
                 } else {
-                    await api.addCity({ id, name, countryId, stateId, image, name_ar, name_ur, name_hi });
+                    await api.addCity({ id, ...payload });
                     alert('City saved!');
                 }
                 document.getElementById('new-city-id').readOnly = false;
@@ -555,6 +589,8 @@ const admin = {
             document.getElementById('new-city-name-ar').value = city.name_ar || '';
             document.getElementById('new-city-name-ur').value = city.name_ur || '';
             document.getElementById('new-city-name-hi').value = city.name_hi || '';
+            document.getElementById('new-city-meta-title').value = city.metaTitle || '';
+            document.getElementById('new-city-meta-desc').value = city.metaDescription || '';
             // Load states for this country then set the stateId
             await this.loadStatesForCity(city.countryId);
             document.getElementById('new-city-state').value = city.stateId || '';
@@ -583,7 +619,7 @@ const admin = {
                 <h3>Add New Retailer</h3>
                 <input type="text" id="new-ret-id" placeholder="Retailer ID (e.g. r20)" style="width:100%; padding:8px; margin-bottom:10px;">
                 <label style="font-weight: bold; font-size: 0.85rem; color: #64748b; display: block; margin-bottom: 4px;">Retailer Name (English):</label>
-                <input type="text" id="new-ret-name" placeholder="Retailer Name" style="width:100%; padding:8px; margin-bottom:12px;">
+                <input type="text" id="new-ret-name" placeholder="Retailer Name" style="width:100%; padding:8px; margin-bottom:12px;" oninput="if(!document.getElementById('new-ret-id').readOnly){const c=document.getElementById('new-ret-city').value;admin.autoFillId('new-ret-id','ret',c,this.value);}">
                 
                 <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -626,12 +662,18 @@ const admin = {
                 <select id="new-ret-category" style="width:100%; padding:8px; margin-bottom:10px;">${catOptions}</select>
 
                 <label style="font-weight: bold; font-size: 0.9em;">Primary City:</label>
-                <select id="new-ret-city" style="width:100%; padding:8px; margin-bottom:10px;">${cityOptions}</select>
+                <select id="new-ret-city" style="width:100%; padding:8px; margin-bottom:10px;" onchange="if(!document.getElementById('new-ret-id').readOnly){const n=document.getElementById('new-ret-name').value;admin.autoFillId('new-ret-id','ret',this.value,n);}">${cityOptions}</select>
                 <label style="font-weight: bold; font-size: 0.9em;">Additional Cities (Hold Ctrl/Cmd to select multiple, optional):</label>
                 <select id="new-ret-cityIds" multiple style="width:100%; height:80px; padding:8px; margin-bottom:10px;">${cityOptions}</select>
                 <label style="font-weight: bold; font-size: 0.9em;">Upload Logo/Image (Optional):</label><br>
                 <input type="file" id="new-ret-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
                 <input type="hidden" id="new-ret-image">
+
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px; margin-bottom:15px;">
+                    <h4 style="margin:0 0 10px; font-size:0.9em; color:#166534;"><i class="fa-solid fa-magnifying-glass" style="margin-right:6px;"></i>SEO Settings (Optional)</h4>
+                    <input type="text" id="new-ret-meta-title" placeholder="Custom SEO Title" style="width:100%; padding:8px; margin-bottom:8px; box-sizing:border-box;">
+                    <textarea id="new-ret-meta-desc" placeholder="Custom SEO Description" rows="2" style="width:100%; padding:8px; box-sizing:border-box; resize:none;"></textarea>
+                </div>
                 
                 <button class="action-btn" onclick="admin.saveRetailer()">Save Retailer</button>
                 <button class="action-btn" style="background:#e74c3c; margin-left:10px;" onclick="document.getElementById('new-ret-id').readOnly=false; document.getElementById('add-retailer-form').style.display='none'; document.querySelector('#add-retailer-form h3').innerText='Add New Retailer';">Cancel</button>
@@ -661,8 +703,10 @@ const admin = {
                 const name_ar = document.getElementById('new-ret-name-ar').value.trim();
                 const name_ur = document.getElementById('new-ret-name-ur').value.trim();
                 const name_hi = document.getElementById('new-ret-name-hi').value.trim();
+                const metaTitle = document.getElementById('new-ret-meta-title').value.trim();
+                const metaDescription = document.getElementById('new-ret-meta-desc').value.trim();
                 
-                const payload = { name, websiteUrl, cityId, cityIds, category, image, affiliateType, affiliateValue, name_ar, name_ur, name_hi };
+                const payload = { name, websiteUrl, cityId, cityIds, category, image, affiliateType, affiliateValue, name_ar, name_ur, name_hi, metaTitle, metaDescription };
                 if (isEdit) {
                     const res = await fetch(`/api/admin/retailers/${id}`, {
                         method: 'PUT',
@@ -672,7 +716,7 @@ const admin = {
                     if (!res.ok) throw new Error('Failed to update retailer');
                     alert('Retailer updated successfully!');
                 } else {
-                    await api.addRetailer({ id, name, websiteUrl, cityId, cityIds, category, image });
+                    await api.addRetailer({ id, ...payload });
                     alert('Retailer saved!');
                 }
                 document.getElementById('new-ret-id').readOnly = false;
@@ -708,6 +752,8 @@ const admin = {
             document.getElementById('new-ret-name-ar').value = retailer.name_ar || '';
             document.getElementById('new-ret-name-ur').value = retailer.name_ur || '';
             document.getElementById('new-ret-name-hi').value = retailer.name_hi || '';
+            document.getElementById('new-ret-meta-title').value = retailer.metaTitle || '';
+            document.getElementById('new-ret-meta-desc').value = retailer.metaDescription || '';
 
             document.querySelector('#add-retailer-form h3').innerText = 'Edit Retailer';
             window.scrollTo(0, 0);
@@ -738,11 +784,13 @@ const admin = {
         const archivedOffers = offers.filter(o => o.archived);
         const expiredOffers = offers.filter(o => new Date(o.validUntil) < now && !o.archived);
         
-        let rows = activeOffers.map(o => {
+        // Enrich active offers with lookup data for client-side filtering
+        window._allActiveOffers = activeOffers.map(o => {
             const ret = retMap[o.retailerId];
-            const retName = ret ? ret.name : o.retailerId.toUpperCase();
-            return `<tr><td>${o.title}</td><td>${retName}</td><td>${o.maxPagesViewed || 0}</td><td>${o.validFrom ? new Date(o.validFrom).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : ''} to ${o.validUntil ? new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : ''}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#7c3aed;" onclick="admin.archiveOffer('${o.id || o._id}')">Archive</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`;
-        }).join('');
+            const city = ret ? cityMap[ret.cityId] : null;
+            return { ...o, retName: ret ? ret.name : o.retailerId.toUpperCase(), cityId: ret ? ret.cityId : '', countryId: city ? city.countryId : '' };
+        });
+        const rows = admin._renderOfferRows(window._allActiveOffers);
         let countryOptions = countries.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
         let catOptions = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
@@ -930,8 +978,42 @@ const admin = {
                 </div>
             </div>
             
-            <h3 style="margin-top:30px;">Active Offers (${activeOffers.length})</h3>
-            <table class="admin-table" style="margin-top:10px;"><thead><tr><th>Title</th><th>Retailer</th><th>Max Pages Viewed</th><th>Validity</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No active offers</td></tr>'}</tbody></table>
+            <div style="margin-top:30px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; margin-bottom:10px;">
+                <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
+                    <div style="flex:2; min-width:160px;">
+                        <label style="font-size:0.8em; font-weight:600; color:#64748b; display:block; margin-bottom:4px;">Search Title</label>
+                        <input type="text" id="off-filter-title" placeholder="e.g. Weekend Sale" oninput="admin.filterOffers()" style="width:100%; padding:7px 10px; border:1px solid #e2e8f0; border-radius:6px; font-size:0.9em;">
+                    </div>
+                    <div style="flex:2; min-width:140px;">
+                        <label style="font-size:0.8em; font-weight:600; color:#64748b; display:block; margin-bottom:4px;">Retailer</label>
+                        <select id="off-filter-retailer" onchange="admin.filterOffers()" style="width:100%; padding:7px 10px; border:1px solid #e2e8f0; border-radius:6px; font-size:0.9em;">
+                            <option value="">All Retailers</option>
+                            ${retailers.map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div style="flex:2; min-width:130px;">
+                        <label style="font-size:0.8em; font-weight:600; color:#64748b; display:block; margin-bottom:4px;">Country</label>
+                        <select id="off-filter-country" onchange="admin.filterOffers()" style="width:100%; padding:7px 10px; border:1px solid #e2e8f0; border-radius:6px; font-size:0.9em;">
+                            <option value="">All Countries</option>
+                            ${countries.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div style="flex:1; min-width:120px;">
+                        <label style="font-size:0.8em; font-weight:600; color:#64748b; display:block; margin-bottom:4px;">Validity</label>
+                        <select id="off-filter-validity" onchange="admin.filterOffers()" style="width:100%; padding:7px 10px; border:1px solid #e2e8f0; border-radius:6px; font-size:0.9em;">
+                            <option value="">All</option>
+                            <option value="today">Expires Today</option>
+                            <option value="week">Expires This Week</option>
+                            <option value="month">Expires This Month</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button class="action-btn" style="background:#64748b; padding:7px 14px;" onclick="admin.clearOfferFilters()"><i class="fa-solid fa-xmark"></i> Clear</button>
+                    </div>
+                </div>
+            </div>
+            <h3 id="active-offers-count" style="margin-top:10px;">Active Offers (${activeOffers.length})</h3>
+            <table class="admin-table" style="margin-top:10px;"><thead><tr><th>Title</th><th>Retailer</th><th>Max Pages Viewed</th><th>Validity</th><th>Actions</th></tr></thead><tbody id="active-offers-tbody">${rows || '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No active offers</td></tr>'}</tbody></table>
             
             ${archivedSection}
             ${expiredSection}
@@ -2534,6 +2616,17 @@ const admin = {
                     <input type="number" id="new-cat-order" class="form-input" value="${cat ? cat.order : 0}">
                 </div>
             </div>
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px; margin-bottom:15px;">
+                <h4 style="margin:0 0 10px; font-size:0.9em; color:#166534;"><i class="fa-solid fa-magnifying-glass" style="margin-right:6px;"></i>SEO Settings (Optional)</h4>
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label style="font-size:0.8em;">Custom SEO Title</label>
+                    <input type="text" id="new-cat-meta-title" class="form-input" value="${cat ? (cat.metaTitle || '') : ''}" placeholder="Defaults to Category Name">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.8em;">Custom SEO Description</label>
+                    <textarea id="new-cat-meta-desc" class="form-input" rows="2" style="resize:none;" placeholder="Summary of this category">${cat ? (cat.metaDescription || '') : ''}</textarea>
+                </div>
+            </div>
             <div class="form-actions">
                 <button class="action-btn" style="background:#27ae60;" onclick="admin.saveCategory('${cat ? cat.id : ''}')">Save Category</button>
                 <button class="action-btn" style="background:#7f8c8d;" onclick="document.getElementById('category-form').style.display='none'">Cancel</button>
@@ -2550,7 +2643,9 @@ const admin = {
             name_ur: document.getElementById('new-cat-name-ur').value.trim(),
             name_hi: document.getElementById('new-cat-name-hi').value.trim(),
             icon: document.getElementById('new-cat-icon').value.trim(),
-            order: parseInt(document.getElementById('new-cat-order').value) || 0
+            order: parseInt(document.getElementById('new-cat-order').value) || 0,
+            metaTitle: document.getElementById('new-cat-meta-title').value.trim(),
+            metaDescription: document.getElementById('new-cat-meta-desc').value.trim()
         };
 
         if (!data.id || !data.name) return alert('ID and English Name are required');
@@ -2638,7 +2733,104 @@ const admin = {
         }
     },
 
-    autoTranslate: async function(fieldIdPrefix, types = ['title', 'excerpt', 'content']) {
+    _renderOfferRows: function(offers) {
+        if (!offers.length) return '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No offers match the filter</td></tr>';
+        return offers.map(o => {
+            const from = o.validFrom ? new Date(o.validFrom).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '';
+            const until = o.validUntil ? new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '';
+            return `<tr><td>${o.title}</td><td>${o.retName}</td><td>${o.maxPagesViewed || 0}</td><td>${from} to ${until}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#7c3aed;" onclick="admin.archiveOffer('${o.id || o._id}')">Archive</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`;
+        }).join('');
+    },
+
+    filterOffers: function() {
+        const title = (document.getElementById('off-filter-title')?.value || '').toLowerCase();
+        const retailerId = document.getElementById('off-filter-retailer')?.value || '';
+        const countryId = document.getElementById('off-filter-country')?.value || '';
+        const validity = document.getElementById('off-filter-validity')?.value || '';
+        const now = new Date();
+        const endOfDay = new Date(now); endOfDay.setHours(23,59,59,999);
+        const endOfWeek = new Date(now); endOfWeek.setDate(now.getDate() + 7);
+        const endOfMonth = new Date(now); endOfMonth.setDate(now.getDate() + 30);
+
+        const filtered = (window._allActiveOffers || []).filter(o => {
+            if (title && !o.title.toLowerCase().includes(title)) return false;
+            if (retailerId && o.retailerId !== retailerId) return false;
+            if (countryId && o.countryId !== countryId) return false;
+            if (validity) {
+                const exp = new Date(o.validUntil);
+                if (validity === 'today' && exp > endOfDay) return false;
+                if (validity === 'week' && exp > endOfWeek) return false;
+                if (validity === 'month' && exp > endOfMonth) return false;
+            }
+            return true;
+        });
+
+        const tbody = document.getElementById('active-offers-tbody');
+        const counter = document.getElementById('active-offers-count');
+        if (tbody) tbody.innerHTML = this._renderOfferRows(filtered);
+        if (counter) counter.textContent = `Active Offers (${filtered.length}${filtered.length !== (window._allActiveOffers||[]).length ? ' filtered' : ''})`;
+    },
+
+    clearOfferFilters: function() {
+        ['off-filter-title','off-filter-retailer','off-filter-country','off-filter-validity'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        this.filterOffers();
+    },
+
+        // Auto-generate a slug from name parts based on hierarchical rules
+    _genId: function(type, ...parts) {
+        const clean = (p) => (p || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (type === 'country') {
+            return clean(parts[0]).slice(0, 3);
+        }
+        if (type === 'state') {
+            const countryId = parts[0];
+            const stateName = parts[1];
+            return (countryId || '') + clean(stateName).slice(0, 2);
+        }
+        if (type === 'city') {
+            const countryId = parts[0];
+            const stateId = parts[1];
+            const cityName = parts[2];
+            // Rule: CountryID + StateLetters (if any) + CityLetters
+            const base = stateId ? stateId : countryId;
+            return (base || '') + clean(cityName).slice(0, 2);
+        }
+        if (type === 'ret') {
+            const cityId = parts[0];
+            const retName = parts[1];
+            return (cityId || '') + clean(retName).slice(0, 2);
+        }
+        if (type === 'off') {
+            const retId = parts[0];
+            const title = parts[1];
+            return (retId || '') + clean(title).slice(0, 2);
+        }
+        return parts
+            .filter(Boolean)
+            .map(p => clean(p).slice(0, 3))
+            .join('-');
+    },
+
+    // Called oninput on name fields to auto-fill ID (only when not editing)
+    autoFillId: function(targetId, type, ...sourceParts) {
+        const el = document.getElementById(targetId);
+        if (!el || el.readOnly) return;
+        el.value = this._genId(type, ...sourceParts);
+    },
+
+        _autoCityId: function() {
+        const el = document.getElementById('new-city-id');
+        if (!el || el.readOnly) return;
+        const country = document.getElementById('new-city-country')?.value || '';
+        const state = document.getElementById('new-city-state')?.value || '';
+        const name = document.getElementById('new-city-name')?.value || '';
+        el.value = this._genId('city', country, state || null, name);
+    },
+
+        autoTranslate: async function(fieldIdPrefix, types = ['title', 'excerpt', 'content']) {
         const event = window.event;
         const btn = event.currentTarget;
         const originalHtml = btn.innerHTML;
@@ -2686,6 +2878,74 @@ const admin = {
         } finally {
             btn.innerHTML = originalHtml;
             btn.disabled = false;
+        }
+    },
+
+    renderSEO: async function() {
+        const countries = await api.getCountries();
+        const cities = await api.getAllCities();
+        const retailers = await api.getAllRetailers();
+        const categories = await api.getCategories();
+        const states = await api.getAllStates();
+
+        const sections = [
+            { title: 'Countries', items: countries, type: 'countries' },
+            { title: 'States/Provinces', items: states, type: 'states' },
+            { title: 'Cities', items: cities, type: 'cities' },
+            { title: 'Retailers', items: retailers, type: 'retailers' },
+            { title: 'Categories', items: categories, type: 'categories' }
+        ];
+
+        let content = `
+            <h2>SEO Management Dashboard</h2>
+            <p style="color:#64748b; margin-bottom:20px;">Manage Meta Titles and Descriptions for all major entities in one place.</p>
+        `;
+
+        sections.forEach(sec => {
+            let rows = sec.items.map(item => `
+                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:15px; margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span style="font-weight:700; color:#1e293b;">${item.name} <small style="color:#64748b; font-weight:400;">(${item.id})</small></span>
+                        <button class="action-btn" style="background:#2563eb; font-size:0.75em; padding:4px 10px;" onclick="admin.saveSEO('${sec.type}', '${item.id}')">Update SEO</button>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px;">
+                        <div>
+                            <label style="font-size:0.75em; color:#64748b; display:block; margin-bottom:2px;">Meta Title</label>
+                            <input type="text" id="seo-${sec.type}-${item.id}-title" value="${item.metaTitle || ''}" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.85em;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.75em; color:#64748b; display:block; margin-bottom:2px;">Meta Description</label>
+                            <textarea id="seo-${sec.type}-${item.id}-desc" rows="1" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.85em; resize:vertical;">${item.metaDescription || ''}</textarea>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            content += `
+                <div style="margin-top:25px;">
+                    <h3 style="border-bottom:2px solid #e2e8f0; padding-bottom:8px; margin-bottom:15px; color:#475569;">${sec.title}</h3>
+                    ${rows || '<p style="color:#94a3b8; font-style:italic;">No items found.</p>'}
+                </div>
+            `;
+        });
+
+        return content;
+    },
+
+    saveSEO: async function(type, id) {
+        const title = document.getElementById(`seo-${type}-${id}-title`).value.trim();
+        const desc = document.getElementById(`seo-${type}-${id}-desc`).value.trim();
+        
+        try {
+            const res = await fetch(`/api/admin/${type}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                body: JSON.stringify({ metaTitle: title, metaDescription: desc })
+            });
+            if (!res.ok) throw new Error('Failed to update SEO');
+            alert('✅ SEO metadata updated successfully!');
+        } catch(e) {
+            alert('❌ Error: ' + e.message);
         }
     }
 };

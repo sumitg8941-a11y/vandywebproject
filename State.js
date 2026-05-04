@@ -7,6 +7,8 @@ const stateSchema = new mongoose.Schema({
     name_ur: { type: String, trim: true },
     name_hi: { type: String, trim: true },
     image: { type: String, required: true },
+    metaTitle: { type: String, default: '', trim: true },
+    metaDescription: { type: String, default: '', trim: true },
     countryId: { type: String, required: true, lowercase: true, trim: true } // Relationship to Country
 }, { timestamps: true });
 

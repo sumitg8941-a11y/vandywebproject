@@ -10,6 +10,8 @@ const retailerSchema = new mongoose.Schema({
     clicks: { type: Number, default: 0 },
     totalTimeSeconds: { type: Number, default: 0 }, // Time spent viewing retailer pages
     image: { type: String, required: true },
+    metaTitle: { type: String, default: '', trim: true },
+    metaDescription: { type: String, default: '', trim: true },
     category: { type: String, default: 'Supermarket' }, // e.g., Electronics, Fashion, Hypermarket
     cityId: { type: String, required: true, lowercase: true, trim: true }, // Primary city
     cityIds: [{ type: String, lowercase: true, trim: true }], // Additional cities this retailer operates in
