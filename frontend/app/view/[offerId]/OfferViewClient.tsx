@@ -27,7 +27,7 @@ function getExpiryLabel(validUntil: string, t: any): { text: string; className: 
 }
 
 export default function OfferViewClient({ offer: initialOffer, retailer, offerId }: Props) {
-  const { t } = useLang();
+  const { lang, t } = useLang();
   const [offer, setOffer] = useState(initialOffer);
   const [userFeedback, setUserFeedback] = useState<'like' | 'dislike' | null>(null);
   const [isFlipbookOpen, setIsFlipbookOpen] = useState(false);
@@ -163,7 +163,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
       <div className="bg-white shadow-sm border-b py-3 px-6 flex justify-between items-center">
         <Link href={`/offers/${offer.retailerId}`} className="text-gray-600 hover:text-gray-900 font-semibold transition flex items-center gap-2">
           <i className="fa-solid fa-arrow-left"></i>
-          <span className="hidden sm:inline">{t.backTo} {retailer?.name || t.retailer}</span>
+          <span className="hidden sm:inline">{t.backTo} {(lang !== 'en' && retailer?.[`name_${lang}`]) ? retailer[`name_${lang}`] : (retailer?.name || t.retailer)}</span>
           <span className="sm:hidden">{t.backTo}</span>
         </Link>
         <div className="flex items-center gap-3">
@@ -191,7 +191,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
             <div className="flex flex-wrap items-center gap-2 mb-3">
               {offer.badge && (
                 <span className="bg-red-100 text-red-700 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider border border-red-200">
-                  {offer.badge}
+                  {(lang !== 'en' && offer[`badge_${lang}`]) ? offer[`badge_${lang}`] : offer.badge}
                 </span>
               )}
               {expiryLabel && (
@@ -206,12 +206,14 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
               )}
             </div>
 
-            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3">{offer.title}</h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3">
+              {(lang !== 'en' && offer[`title_${lang}`]) ? offer[`title_${lang}`] : offer.title}
+            </h1>
 
             {retailer && (
               <Link href={`/offers/${retailer.id}`} className="inline-flex items-center gap-2 text-gray-600 hover:text-red-600 transition mb-3 font-medium">
                 <i className="fa-solid fa-store text-red-400"></i>
-                {retailer.name}
+                {(lang !== 'en' && retailer?.[`name_${lang}`]) ? retailer[`name_${lang}`] : retailer?.name}
               </Link>
             )}
 
@@ -294,7 +296,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                 className="flex flex-col items-center justify-center gap-1 bg-gradient-to-r from-red-600 to-orange-500 text-white px-6 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
               >
                 <span className="font-black text-lg tracking-tight"><i className="fa-solid fa-bolt text-yellow-300"></i> {t.goToDeal}</span>
-                <span className="text-xs font-medium opacity-90">{t.at} {retailer?.name || t.retailer}</span>
+                <span className="text-xs font-medium opacity-90">{t.at} {(lang !== 'en' && retailer?.[`name_${lang}`]) ? retailer[`name_${lang}`] : (retailer?.name || t.retailer)}</span>
               </a>
             )}
             {pdfSrc && (
@@ -322,7 +324,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-200 transition border border-gray-200"
               >
-                <i className="fa-solid fa-globe"></i> {t.visit} {retailer.name}
+                <i className="fa-solid fa-globe"></i> {t.visit} {(lang !== 'en' && retailer[`name_${lang}`]) ? retailer[`name_${lang}`] : retailer.name}
               </a>
             )}
             {/* Multi-platform Share */}
@@ -408,7 +410,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
         <PDFFlipbook
           pdfUrl={pdfSrc}
           onClose={() => setIsFlipbookOpen(false)}
-          title={offer.title}
+          title={(lang !== 'en' && offer[`title_${lang}`]) ? offer[`title_${lang}`] : offer.title}
           shareUrl={`${siteUrl}/view/${offerId}`}
           retailerUrl={offer.retailerUrl || offer.couponUrl}
           offerId={offer.id}

@@ -115,6 +115,9 @@ const admin = {
                 case 'blogs':
                     html = await this.renderBlogs();
                     break;
+                case 'categories':
+                    html = await this.renderCategories();
+                    break;
                 case 'users':
                     html = await this.renderUsers();
                     break;
@@ -123,6 +126,9 @@ const admin = {
                     break;
                 case 'feedback':
                     html = await this.renderFeedback();
+                    break;
+                case 'maintenance':
+                    html = this.renderMaintenance();
                     break;
             }
             this.contentDiv.innerHTML = html;
@@ -157,8 +163,26 @@ const admin = {
                     <label>Country Code (e.g., kw):</label><br>
                     <input type="text" id="new-country-id" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="e.g., kw">
                     
-                    <label>Country Name:</label><br>
-                    <input type="text" id="new-country-name" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="e.g., Kuwait">
+                    <label style="font-weight: bold; font-size: 0.85rem; color: #64748b; display: block; margin-bottom: 4px;">Country Name (English):</label>
+                    <input type="text" id="new-country-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Kuwait">
+                    
+                    <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
+                        <h4 style="margin:0 0 10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Arabic</label>
+                                <input type="text" id="new-country-name-ar" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Urdu</label>
+                                <input type="text" id="new-country-name-ur" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Hindi</label>
+                                <input type="text" id="new-country-name-hi" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                        </div>
+                    </div>
                     
                     <label>Upload Cover Image (Optional):</label><br>
                     <input type="file" id="new-country-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
@@ -186,16 +210,20 @@ const admin = {
         if(id && name) {
             try {
                 if (imageFile) image = await this.uploadFile(imageFile);
+                const name_ar = document.getElementById('new-country-name-ar').value.trim();
+                const name_ur = document.getElementById('new-country-name-ur').value.trim();
+                const name_hi = document.getElementById('new-country-name-hi').value.trim();
+
                 if (isEdit) {
                     const res = await fetch(`/api/admin/countries/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                        body: JSON.stringify({ name, image })
+                        body: JSON.stringify({ name, image, name_ar, name_ur, name_hi })
                     });
                     if (!res.ok) throw new Error('Failed to update country');
                     alert('Country updated successfully!');
                 } else {
-                    await api.addCountry({ id, name, image });
+                    await api.addCountry({ id, name, image, name_ar, name_ur, name_hi });
                     alert('Country securely saved to MongoDB permanently!');
                 }
                 document.getElementById('new-country-id').readOnly = false;
@@ -219,6 +247,9 @@ const admin = {
             document.getElementById('new-country-id').readOnly = true;
             document.getElementById('new-country-name').value = country.name;
             document.getElementById('new-country-image').value = country.image || '';
+            document.getElementById('new-country-name-ar').value = country.name_ar || '';
+            document.getElementById('new-country-name-ur').value = country.name_ur || '';
+            document.getElementById('new-country-name-hi').value = country.name_hi || '';
             document.querySelector('#add-country-form h3').innerText = 'Edit Country';
             window.scrollTo(0, 0);
         } catch(e) {
@@ -260,8 +291,26 @@ const admin = {
                     <label>State Code (e.g., mh for Maharashtra):</label><br>
                     <input type="text" id="new-state-id" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="e.g., mh">
 
-                    <label>State Name:</label><br>
-                    <input type="text" id="new-state-name" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="e.g., Maharashtra">
+                    <label style="font-weight: bold; font-size: 0.85rem; color: #64748b; display: block; margin-bottom: 4px;">State/Province Name (English):</label>
+                    <input type="text" id="new-state-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Dubai Emirate">
+                    
+                    <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
+                        <h4 style="margin:0 0 10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Arabic</label>
+                                <input type="text" id="new-state-name-ar" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Urdu</label>
+                                <input type="text" id="new-state-name-ur" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Hindi</label>
+                                <input type="text" id="new-state-name-hi" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                        </div>
+                    </div>
 
                     <label>Belongs to Country:</label><br>
                     <select id="new-state-country" style="width:100%; padding:8px; margin-bottom:10px;">
@@ -296,11 +345,16 @@ const admin = {
         try {
             if (imageFile) image = await this.uploadFile(imageFile);
             if (!image) image = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&q=80';
+            
+            const name_ar = document.getElementById('new-state-name-ar').value.trim();
+            const name_ur = document.getElementById('new-state-name-ur').value.trim();
+            const name_hi = document.getElementById('new-state-name-hi').value.trim();
+
             if (isEdit) {
                 const res = await fetch(`/api/admin/states/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                    body: JSON.stringify({ name, countryId, image })
+                    body: JSON.stringify({ name, countryId, image, name_ar, name_ur, name_hi })
                 });
                 if (!res.ok) throw new Error('Failed to update state');
                 alert('State updated successfully!');
@@ -308,7 +362,7 @@ const admin = {
                 const res = await fetch('/api/states', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                    body: JSON.stringify({ id, name, countryId, image })
+                    body: JSON.stringify({ id, name, countryId, image, name_ar, name_ur, name_hi })
                 });
                 if (!res.ok) throw new Error('Failed to save state');
                 alert('State saved!');
@@ -329,6 +383,9 @@ const admin = {
             document.getElementById('new-state-name').value = state.name;
             document.getElementById('new-state-country').value = state.countryId;
             document.getElementById('new-state-image').value = state.image || '';
+            document.getElementById('new-state-name-ar').value = state.name_ar || '';
+            document.getElementById('new-state-name-ur').value = state.name_ur || '';
+            document.getElementById('new-state-name-hi').value = state.name_hi || '';
             document.querySelector('#add-state-form h3').innerText = 'Edit State';
             window.scrollTo(0, 0);
         } catch(e) { alert('Error loading state: ' + e.message); }
@@ -389,8 +446,26 @@ const admin = {
                     <label>City Code (e.g., mct):</label><br>
                     <input type="text" id="new-city-id" style="width:100%; padding:8px; margin-bottom:10px;">
                     
-                    <label>City Name:</label><br>
-                    <input type="text" id="new-city-name" style="width:100%; padding:8px; margin-bottom:10px;">
+                    <label style="font-weight: bold; font-size: 0.85rem; color: #64748b; display: block; margin-bottom: 4px;">City Name (English):</label>
+                    <input type="text" id="new-city-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Deira">
+                    
+                    <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
+                        <h4 style="margin:0 0 10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Arabic</label>
+                                <input type="text" id="new-city-name-ar" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Urdu</label>
+                                <input type="text" id="new-city-name-ur" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Hindi</label>
+                                <input type="text" id="new-city-name-hi" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                        </div>
+                    </div>
                     
                     <label>Belongs to Country:</label><br>
                     <select id="new-city-country" style="width:100%; padding:8px; margin-bottom:10px;" onchange="admin.loadStatesForCity(this.value)">
@@ -427,16 +502,20 @@ const admin = {
         if(id && name && countryId) {
             try { 
                 if (imageFile) image = await this.uploadFile(imageFile);
+                const name_ar = document.getElementById('new-city-name-ar').value.trim();
+                const name_ur = document.getElementById('new-city-name-ur').value.trim();
+                const name_hi = document.getElementById('new-city-name-hi').value.trim();
+
                 if (isEdit) {
                     const res = await fetch(`/api/admin/cities/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                        body: JSON.stringify({ name, countryId, stateId, image })
+                        body: JSON.stringify({ name, countryId, stateId, image, name_ar, name_ur, name_hi })
                     });
                     if (!res.ok) throw new Error('Failed to update city');
                     alert('City updated successfully!');
                 } else {
-                    await api.addCity({ id, name, countryId, stateId, image });
+                    await api.addCity({ id, name, countryId, stateId, image, name_ar, name_ur, name_hi });
                     alert('City saved!');
                 }
                 document.getElementById('new-city-id').readOnly = false;
@@ -458,6 +537,9 @@ const admin = {
             document.getElementById('new-city-name').value = city.name;
             document.getElementById('new-city-country').value = city.countryId;
             document.getElementById('new-city-image').value = city.image || '';
+            document.getElementById('new-city-name-ar').value = city.name_ar || '';
+            document.getElementById('new-city-name-ur').value = city.name_ur || '';
+            document.getElementById('new-city-name-hi').value = city.name_hi || '';
             // Load states for this country then set the stateId
             await this.loadStatesForCity(city.countryId);
             document.getElementById('new-city-state').value = city.stateId || '';
@@ -471,9 +553,11 @@ const admin = {
     renderRetailers: async function() {
         const retailers = await api.getAllRetailers();
         const cities = await api.getAllCities();
+        const categories = await api.getCategories();
         
         let rows = retailers.map(r => `<tr><td>${r.id.toUpperCase()}</td><td>${r.name}</td><td>${r.cityId.toUpperCase()}</td><td><button class="action-btn" onclick="admin.editRetailer('${r.id}')">Edit</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteRetailer('${r.id}')">Delete</button></td></tr>`).join('');
         let cityOptions = cities.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        let catOptions = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
         return `
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -483,7 +567,26 @@ const admin = {
             <div id="add-retailer-form" style="display:none; background:#f9f9f9; padding:20px; border-radius:8px; margin-top:15px; border:1px solid #ddd;">
                 <h3>Add New Retailer</h3>
                 <input type="text" id="new-ret-id" placeholder="Retailer ID (e.g. r20)" style="width:100%; padding:8px; margin-bottom:10px;">
-                <input type="text" id="new-ret-name" placeholder="Retailer Name" style="width:100%; padding:8px; margin-bottom:10px;">
+                <label style="font-weight: bold; font-size: 0.85rem; color: #64748b; display: block; margin-bottom: 4px;">Retailer Name (English):</label>
+                <input type="text" id="new-ret-name" placeholder="Retailer Name" style="width:100%; padding:8px; margin-bottom:12px;">
+                
+                <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
+                    <h4 style="margin:0 0 10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="font-size:0.75em; color:#64748b; font-weight:600;">Arabic (العربية)</label>
+                            <input type="text" id="new-ret-name-ar" placeholder="الاسم" style="width:100%; padding:6px; font-size:0.85em;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.75em; color:#64748b; font-weight:600;">Urdu (اردو)</label>
+                            <input type="text" id="new-ret-name-ur" placeholder="نام" style="width:100%; padding:6px; font-size:0.85em;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.75em; color:#64748b; font-weight:600;">Hindi (हिन्दी)</label>
+                            <input type="text" id="new-ret-name-hi" placeholder="नाम" style="width:100%; padding:6px; font-size:0.85em;">
+                        </div>
+                    </div>
+                </div>
                 <input type="url" id="new-ret-web" placeholder="Official Website URL (Optional)" style="width:100%; padding:8px; margin-bottom:10px;">
                 
                 <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; margin-bottom:10px;">
@@ -498,6 +601,9 @@ const admin = {
                     <input type="text" id="new-ret-aff-val" placeholder="Affiliate Value (e.g. ?tag=id-21 or https://ad.link?url=)" style="width:100%; padding:8px; margin-bottom:5px; box-sizing:border-box;">
                     <p style="font-size:0.7em; color:#64748b; margin:4px 0 0;">Outbound links to this retailer will be rewritten using this structure.</p>
                 </div>
+
+                <label style="font-weight: bold; font-size: 0.9em;">Category:</label>
+                <select id="new-ret-category" style="width:100%; padding:8px; margin-bottom:10px;">${catOptions}</select>
 
                 <label style="font-weight: bold; font-size: 0.9em;">Primary City:</label>
                 <select id="new-ret-city" style="width:100%; padding:8px; margin-bottom:10px;">${cityOptions}</select>
@@ -521,6 +627,7 @@ const admin = {
         const cityId = document.getElementById('new-ret-city').value;
         const cityIdsSelect = document.getElementById('new-ret-cityIds');
         const cityIds = Array.from(cityIdsSelect.selectedOptions).map(opt => opt.value);
+        const category = document.getElementById('new-ret-category').value;
         const affiliateType = document.getElementById('new-ret-aff-type').value;
         const affiliateValue = document.getElementById('new-ret-aff-val').value;
         let image = document.getElementById('new-ret-image').value;
@@ -530,7 +637,12 @@ const admin = {
         if(id && name && cityId) {
             try { 
                 if (imageFile) image = await this.uploadFile(imageFile);
-                const payload = { name, websiteUrl, cityId, cityIds, image, affiliateType, affiliateValue };
+                
+                const name_ar = document.getElementById('new-ret-name-ar').value.trim();
+                const name_ur = document.getElementById('new-ret-name-ur').value.trim();
+                const name_hi = document.getElementById('new-ret-name-hi').value.trim();
+                
+                const payload = { name, websiteUrl, cityId, cityIds, category, image, affiliateType, affiliateValue, name_ar, name_ur, name_hi };
                 if (isEdit) {
                     const res = await fetch(`/api/admin/retailers/${id}`, {
                         method: 'PUT',
@@ -540,7 +652,7 @@ const admin = {
                     if (!res.ok) throw new Error('Failed to update retailer');
                     alert('Retailer updated successfully!');
                 } else {
-                    await api.addRetailer({ id, name, websiteUrl, cityId, cityIds, image });
+                    await api.addRetailer({ id, name, websiteUrl, cityId, cityIds, category, image });
                     alert('Retailer saved!');
                 }
                 document.getElementById('new-ret-id').readOnly = false;
@@ -563,6 +675,7 @@ const admin = {
             document.getElementById('new-ret-web').value = retailer.websiteUrl || '';
             document.getElementById('new-ret-aff-type').value = retailer.affiliateType || 'direct';
             document.getElementById('new-ret-aff-val').value = retailer.affiliateValue || '';
+            document.getElementById('new-ret-category').value = retailer.category || '';
             document.getElementById('new-ret-city').value = retailer.cityId;
             const cityIdsSelect = document.getElementById('new-ret-cityIds');
             if (cityIdsSelect) {
@@ -571,6 +684,11 @@ const admin = {
                 });
             }
             document.getElementById('new-ret-image').value = retailer.image || '';
+            
+            document.getElementById('new-ret-name-ar').value = retailer.name_ar || '';
+            document.getElementById('new-ret-name-ur').value = retailer.name_ur || '';
+            document.getElementById('new-ret-name-hi').value = retailer.name_hi || '';
+
             document.querySelector('#add-retailer-form h3').innerText = 'Edit Retailer';
             window.scrollTo(0, 0);
         } catch(e) {
@@ -583,6 +701,7 @@ const admin = {
         const retailers = await api.getAllRetailers();
         const countries = await api.getCountries();
         const cities = await api.getAllCities();
+        const categories = await api.getCategories();
         
         // Build lookup maps
         const retMap = {};
@@ -605,6 +724,7 @@ const admin = {
             return `<tr><td>${o.title}</td><td>${retName}</td><td>${o.maxPagesViewed || 0}</td><td>${o.validFrom ? new Date(o.validFrom).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : ''} to ${o.validUntil ? new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : ''}</td><td><button class="action-btn" onclick="admin.editOffer('${o.id || o._id}')">Edit</button> <button class="action-btn" style="background:#7c3aed;" onclick="admin.archiveOffer('${o.id || o._id}')">Archive</button> <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteOffer('${o.id || o._id}')">Delete</button></td></tr>`;
         }).join('');
         let countryOptions = countries.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        let catOptions = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
         let expiredSection = '';
         if (expiredOffers.length > 0) {
@@ -680,7 +800,26 @@ const admin = {
                 <h3>Add New Offer</h3>
                 <div style="margin-top:10px;">
                     <input type="hidden" id="new-off-id">
-                    <input type="text" id="new-off-title" placeholder="Offer Title (e.g., Weekend Sale)" style="width:100%; padding:8px; margin-bottom:10px;">
+                    <label style="font-weight: bold; font-size: 0.85rem; color: #64748b; display: block; margin-bottom: 4px;">Flyer Title (English):</label>
+                    <input type="text" id="new-off-title" placeholder="e.g., Weekend Sale" style="width:100%; padding:8px; margin-bottom:12px;">
+                    
+                    <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
+                        <h4 style="margin:0 0 10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Arabic (العربية)</label>
+                                <input type="text" id="new-off-title-ar" placeholder="العنوان" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Urdu (اردو)</label>
+                                <input type="text" id="new-off-title-ur" placeholder="عنوان" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Hindi (हिन्दी)</label>
+                                <input type="text" id="new-off-title-hi" placeholder="शीर्षक" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                        </div>
+                    </div>
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <div style="flex:1;">
                             <label style="font-weight: bold; font-size: 0.9em;">Valid From:</label>
@@ -715,6 +854,9 @@ const admin = {
                     <label style="font-weight: bold; font-size: 0.9em;">Target Retailer Website URL (Optional):</label>
                     <input type="url" id="new-off-retailer-url" placeholder="https://example.com/promo" style="width:100%; padding:8px; margin-bottom:10px;">
 
+                    <label style="font-weight: bold; font-size: 0.9em;">Category:</label>
+                    <select id="new-off-category" style="width:100%; padding:8px; margin-bottom:10px;">${catOptions}</select>
+
                     <label style="font-weight: bold; font-size: 0.9em; color:#0369a1;"><i class="fa-solid fa-link" style="margin-right:6px;"></i>Direct Affiliate Link (Optional Override):</label>
                     <input type="url" id="new-off-aff-override" placeholder="https://ad.link/custom-for-this-offer" style="width:100%; padding:8px; margin-bottom:15px;">
 
@@ -723,7 +865,26 @@ const admin = {
                     <input type="hidden" id="new-off-image">
                     
                     
-                    <input type="text" id="new-off-badge" placeholder="Badge (e.g. 50% OFF)" style="width:100%; padding:8px; margin-bottom:10px;">
+                    <label style="font-weight: bold; font-size: 0.85rem; color: #64748b; display: block; margin-bottom: 4px;">Badge (English):</label>
+                    <input type="text" id="new-off-badge" placeholder="e.g. 50% OFF" style="width:100%; padding:8px; margin-bottom:12px;">
+                    
+                    <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Badge (Arabic)</label>
+                                <input type="text" id="new-off-badge-ar" placeholder="خصم" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Badge (Urdu)</label>
+                                <input type="text" id="new-off-badge-ur" placeholder="آفر" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75em; color:#64748b; font-weight:600;">Badge (Hindi)</label>
+                                <input type="text" id="new-off-badge-hi" placeholder="छूट" style="width:100%; padding:6px; font-size:0.85em;">
+                            </div>
+                        </div>
+                    </div>
+
                     <input type="text" id="new-off-coupon" placeholder="Coupon Code (optional)" style="width:100%; padding:8px; margin-bottom:15px;">
 
                     <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px; margin-bottom:15px;">
@@ -781,6 +942,14 @@ const admin = {
         document.getElementById('new-off-pdf').value = '';
         document.getElementById('new-off-retailer-url').value = '';
         document.getElementById('new-off-image').value = '';
+        document.getElementById('new-off-category').value = '';
+        
+        document.getElementById('new-off-title-ar').value = '';
+        document.getElementById('new-off-title-ur').value = '';
+        document.getElementById('new-off-title-hi').value = '';
+        document.getElementById('new-off-badge-ar').value = '';
+        document.getElementById('new-off-badge-ur').value = '';
+        document.getElementById('new-off-badge-hi').value = '';
         
         // Reset cascading dropdowns
         const countryEl = document.getElementById('new-off-country');
@@ -864,8 +1033,16 @@ const admin = {
             document.getElementById('new-off-badge').value = offer.badge || '';
             document.getElementById('new-off-pdf').value = (offer.pdfUrl && offer.pdfUrl !== '#') ? offer.pdfUrl : '';
             document.getElementById('new-off-retailer-url').value = offer.retailerUrl || '';
+            document.getElementById('new-off-category').value = offer.category || '';
             document.getElementById('new-off-aff-override').value = offer.affiliateOverrideUrl || '';
             document.getElementById('new-off-image').value = offer.image || '';
+
+            document.getElementById('new-off-title-ar').value = offer.title_ar || '';
+            document.getElementById('new-off-title-ur').value = offer.title_ur || '';
+            document.getElementById('new-off-title-hi').value = offer.title_hi || '';
+            document.getElementById('new-off-badge-ar').value = offer.badge_ar || '';
+            document.getElementById('new-off-badge-ur').value = offer.badge_ur || '';
+            document.getElementById('new-off-badge-hi').value = offer.badge_hi || '';
 
             const saveBtn = document.getElementById('save-offer-btn');
             saveBtn.innerText = 'Update Offer';
@@ -894,6 +1071,7 @@ const admin = {
 
         let pdfUrl = document.getElementById('new-off-pdf').value || '#';
         let retailerUrl = document.getElementById('new-off-retailer-url').value || '';
+        let category = document.getElementById('new-off-category').value;
         let image = document.getElementById('new-off-image').value;
 
         const pdfFile = document.getElementById('new-off-pdf-file').files[0];
@@ -912,8 +1090,18 @@ const admin = {
 
             const affiliateOverrideUrl = document.getElementById('new-off-aff-override')?.value || '';
 
+            const title_ar = document.getElementById('new-off-title-ar').value.trim();
+            const title_ur = document.getElementById('new-off-title-ur').value.trim();
+            const title_hi = document.getElementById('new-off-title-hi').value.trim();
+            const badge_ar = document.getElementById('new-off-badge-ar').value.trim();
+            const badge_ur = document.getElementById('new-off-badge-ur').value.trim();
+            const badge_hi = document.getElementById('new-off-badge-hi').value.trim();
+
             if(id && title && validFrom && validUntil && retailerId) {
-                const payload = { id, title, validFrom, validUntil, retailerId, pdfUrl, retailerUrl, image, badge, couponCode, metaTitle, metaDescription, affiliateOverrideUrl };
+                const payload = { 
+                    id, title, validFrom, validUntil, retailerId, pdfUrl, retailerUrl, category, image, badge, couponCode, metaTitle, metaDescription, affiliateOverrideUrl,
+                    title_ar, title_ur, title_hi, badge_ar, badge_ur, badge_hi
+                };
                 if (editId) {
                     const res = await fetch(`/api/admin/offers/${editId}`, {
                         method: 'PUT',
@@ -1507,6 +1695,28 @@ const admin = {
                 <label style="font-weight: bold; font-size: 0.9em;">Content (HTML supported):</label>
                 <textarea id="new-blog-content" rows="10" style="width:100%; padding:8px; margin-bottom:10px; font-family:monospace;"></textarea>
                 
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; margin-bottom:15px;">
+                    <h4 style="margin:0 0-10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                    <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+                        <label style="font-size:0.75em; color:#64748b; font-weight:600;">ARABIC (العربية)</label>
+                        <input type="text" id="new-blog-title-ar" placeholder="Title AR" style="width:100%; padding:6px; margin-bottom:5px;">
+                        <textarea id="new-blog-excerpt-ar" placeholder="Excerpt AR" rows="2" style="width:100%; padding:6px; margin-bottom:5px;"></textarea>
+                        <textarea id="new-blog-content-ar" placeholder="Content AR" rows="5" style="width:100%; padding:6px; margin-bottom:10px;"></textarea>
+                    </div>
+                    <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+                        <label style="font-size:0.75em; color:#64748b; font-weight:600;">URDU (اردو)</label>
+                        <input type="text" id="new-blog-title-ur" placeholder="Title UR" style="width:100%; padding:6px; margin-bottom:5px;">
+                        <textarea id="new-blog-excerpt-ur" placeholder="Excerpt UR" rows="2" style="width:100%; padding:6px; margin-bottom:5px;"></textarea>
+                        <textarea id="new-blog-content-ur" placeholder="Content UR" rows="5" style="width:100%; padding:6px; margin-bottom:10px;"></textarea>
+                    </div>
+                    <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+                        <label style="font-size:0.75em; color:#64748b; font-weight:600;">HINDI (हिन्दी)</label>
+                        <input type="text" id="new-blog-title-hi" placeholder="Title HI" style="width:100%; padding:6px; margin-bottom:5px;">
+                        <textarea id="new-blog-excerpt-hi" placeholder="Excerpt HI" rows="2" style="width:100%; padding:6px; margin-bottom:5px;"></textarea>
+                        <textarea id="new-blog-content-hi" placeholder="Content HI" rows="5" style="width:100%; padding:6px;"></textarea>
+                    </div>
+                </div>
+                
                 <label style="font-weight: bold; font-size: 0.9em;">Featured Image:</label>
                 <input type="file" id="new-blog-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
                 <input type="hidden" id="new-blog-image">
@@ -1550,6 +1760,16 @@ const admin = {
         document.getElementById('new-blog-meta-title').value = '';
         document.getElementById('new-blog-meta-desc').value = '';
         document.getElementById('new-blog-status').value = 'published';
+
+        document.getElementById('new-blog-title-ar').value = '';
+        document.getElementById('new-blog-excerpt-ar').value = '';
+        document.getElementById('new-blog-content-ar').value = '';
+        document.getElementById('new-blog-title-ur').value = '';
+        document.getElementById('new-blog-excerpt-ur').value = '';
+        document.getElementById('new-blog-content-ur').value = '';
+        document.getElementById('new-blog-title-hi').value = '';
+        document.getElementById('new-blog-excerpt-hi').value = '';
+        document.getElementById('new-blog-content-hi').value = '';
     },
 
     saveBlog: async function() {
@@ -1583,7 +1803,20 @@ const admin = {
                 return;
             }
 
-            const payload = { slug, title, excerpt, content, image, metaTitle, metaDescription, status };
+            const title_ar = document.getElementById('new-blog-title-ar').value.trim();
+            const excerpt_ar = document.getElementById('new-blog-excerpt-ar').value.trim();
+            const content_ar = document.getElementById('new-blog-content-ar').value.trim();
+            const title_ur = document.getElementById('new-blog-title-ur').value.trim();
+            const excerpt_ur = document.getElementById('new-blog-excerpt-ur').value.trim();
+            const content_ur = document.getElementById('new-blog-content-ur').value.trim();
+            const title_hi = document.getElementById('new-blog-title-hi').value.trim();
+            const excerpt_hi = document.getElementById('new-blog-excerpt-hi').value.trim();
+            const content_hi = document.getElementById('new-blog-content-hi').value.trim();
+
+            const payload = { 
+                slug, title, excerpt, content, image, metaTitle, metaDescription, status,
+                title_ar, excerpt_ar, content_ar, title_ur, excerpt_ur, content_ur, title_hi, excerpt_hi, content_hi
+            };
             let res;
             
             if (editId) {
@@ -1633,6 +1866,16 @@ const admin = {
             document.getElementById('new-blog-meta-desc').value = blog.metaDescription || '';
             document.getElementById('new-blog-status').value = blog.status || 'published';
             
+            document.getElementById('new-blog-title-ar').value = blog.title_ar || '';
+            document.getElementById('new-blog-excerpt-ar').value = blog.excerpt_ar || '';
+            document.getElementById('new-blog-content-ar').value = blog.content_ar || '';
+            document.getElementById('new-blog-title-ur').value = blog.title_ur || '';
+            document.getElementById('new-blog-excerpt-ur').value = blog.excerpt_ur || '';
+            document.getElementById('new-blog-content-ur').value = blog.content_ur || '';
+            document.getElementById('new-blog-title-hi').value = blog.title_hi || '';
+            document.getElementById('new-blog-excerpt-hi').value = blog.excerpt_hi || '';
+            document.getElementById('new-blog-content-hi').value = blog.content_hi || '';
+
             window.scrollTo(0, 0);
         } catch(e) {
             alert('Error loading blog: ' + e.message);
@@ -1945,6 +2188,204 @@ const admin = {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+    },
+
+    renderCategories: async function() {
+        const categories = await api.getCategories();
+        let rows = categories.map(c => `
+            <tr>
+                <td>${c.id}</td>
+                <td>${c.name}</td>
+                <td>${c.name_ar || '—'}</td>
+                <td>${c.name_ur || '—'}</td>
+                <td>${c.name_hi || '—'}</td>
+                <td><i class="fa-solid ${c.icon}"></i></td>
+                <td>${c.order}</td>
+                <td>
+                    <button class="action-btn" onclick="admin.editCategory('${c.id}')">Edit</button>
+                    <button class="action-btn" style="background:#e74c3c;" onclick="admin.deleteCategory('${c.id}')">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+
+        return `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>Categories</h2>
+                <button class="action-btn" style="background:#27ae60;" onclick="admin.addCategory()">+ Add Category</button>
+            </div>
+            <div id="category-form" class="form-card"></div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name (EN)</th>
+                        <th>Name (AR)</th>
+                        <th>Name (UR)</th>
+                        <th>Name (HI)</th>
+                        <th>Icon</th>
+                        <th>Order</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    },
+
+    addCategory: function() {
+        this.renderCategoryForm();
+    },
+
+    editCategory: async function(id) {
+        const categories = await api.getCategories();
+        const cat = categories.find(c => c.id === id);
+        this.renderCategoryForm(cat);
+    },
+
+    renderCategoryForm: function(cat = null) {
+        const formDiv = document.getElementById('category-form');
+        if (!formDiv) return;
+        formDiv.style.display = 'block';
+        formDiv.innerHTML = `
+            <h3>${cat ? 'Edit' : 'Add'} Category</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>ID (unique, lowercase)</label>
+                    <input type="text" id="cat-id" class="form-input" value="${cat ? cat.id : ''}" ${cat ? 'disabled' : ''}>
+                </div>
+                <div class="form-group">
+                    <label>Name (English)</label>
+                    <input type="text" id="cat-name" class="form-input" value="${cat ? cat.name : ''}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Name (Arabic)</label>
+                    <input type="text" id="cat-name-ar" class="form-input" value="${cat ? (cat.name_ar || '') : ''}" dir="rtl">
+                </div>
+                <div class="form-group">
+                    <label>Name (Urdu)</label>
+                    <input type="text" id="cat-name-ur" class="form-input" value="${cat ? (cat.name_ur || '') : ''}" dir="rtl">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Name (Hindi)</label>
+                    <input type="text" id="cat-name-hi" class="form-input" value="${cat ? (cat.name_hi || '') : ''}">
+                </div>
+                <div class="form-group">
+                    <label>Icon (FontAwesome class)</label>
+                    <input type="text" id="cat-icon" class="form-input" value="${cat ? cat.icon : 'fa-tag'}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Display Order</label>
+                    <input type="number" id="cat-order" class="form-input" value="${cat ? cat.order : 0}">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="action-btn" style="background:#27ae60;" onclick="admin.saveCategory('${cat ? cat.id : ''}')">Save Category</button>
+                <button class="action-btn" style="background:#7f8c8d;" onclick="document.getElementById('category-form').style.display='none'">Cancel</button>
+            </div>
+        `;
+        window.scrollTo({ top: formDiv.offsetTop - 100, behavior: 'smooth' });
+    },
+
+    saveCategory: async function(existingId) {
+        const data = {
+            id: document.getElementById('cat-id').value.trim().toLowerCase(),
+            name: document.getElementById('cat-name').value.trim(),
+            name_ar: document.getElementById('cat-name-ar').value.trim(),
+            name_ur: document.getElementById('cat-name-ur').value.trim(),
+            name_hi: document.getElementById('cat-name-hi').value.trim(),
+            icon: document.getElementById('cat-icon').value.trim(),
+            order: parseInt(document.getElementById('cat-order').value) || 0
+        };
+
+        if (!data.id || !data.name) return alert('ID and English Name are required');
+
+        try {
+            if (existingId) {
+                await api.updateCategory(existingId, data);
+            } else {
+                await api.addCategory(data);
+            }
+            this.showTab('categories');
+        } catch (err) {
+            alert(err.message);
+        }
+    },
+
+    deleteCategory: async function(id) {
+        if (!confirm('Are you sure? This might affect existing retailers and flyers.')) return;
+        try {
+            await api.deleteCategory(id);
+            this.showTab('categories');
+        } catch (err) { alert(err.message); }
+    },
+
+    renderMaintenance: function() {
+        return `
+            <h2>System Maintenance</h2>
+            <div style="background:#fff; border-radius:12px; border:1px solid #e2e8f0; padding:24px; max-width:800px; box-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                <div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:24px;">
+                    <div style="width:48px; height:48px; background:#fef2f2; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="fa-solid fa-chart-column" style="color:#ef4444; font-size:1.25rem;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0 0 4px; font-size:1.1rem; color:#0f172a;">Performance Metrics Management</h3>
+                        <p style="margin:0; font-size:0.9rem; color:#64748b; line-height:1.5;">This tool allows you to reset all tracking data across the platform. This is typically done at the start of a new month or year if you want to clear historical engagement data.</p>
+                    </div>
+                </div>
+                
+                <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:16px; margin-bottom:24px;">
+                    <div style="display:flex; gap:12px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="color:#f97316; margin-top:3px;"></i>
+                        <div>
+                            <h4 style="margin:0 0 4px; font-size:0.9rem; color:#9a3412;">Caution: Irreversible Action</h4>
+                            <p style="margin:0; font-size:0.85rem; color:#c2410c;">Resetting metrics will permanently set clicks, visits, likes, saves, and ratings to zero across all Countries, Cities, Retailers, and Flyers. This action <strong>cannot</strong> be undone.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end;">
+                    <button class="action-btn" style="background:#ef4444; padding:12px 24px; font-weight:600;" onclick="admin.resetMetrics()">
+                        <i class="fa-solid fa-trash-can" style="margin-right:8px;"></i> Reset All Metrics Now
+                    </button>
+                </div>
+            </div>
+            
+            <div style="margin-top:24px; background:#fff; border-radius:12px; border:1px solid #e2e8f0; padding:24px; max-width:800px; box-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                <h3 style="margin:0 0 12px; font-size:1.1rem; color:#0f172a;"><i class="fa-solid fa-microchip" style="margin-right:8px; color:#6366f1;"></i> System Info</h3>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <div style="padding:12px; background:#f8fafc; border-radius:8px; border:1px solid #f1f5f9;">
+                        <div style="font-size:0.75rem; color:#64748b; text-transform:uppercase; letter-spacing:0.05em; font-weight:700;">Admin Role</div>
+                        <div style="font-size:1rem; color:#334155; font-weight:600; margin-top:2px;">${localStorage.getItem('adminRole') || 'Administrator'}</div>
+                    </div>
+                    <div style="padding:12px; background:#f8fafc; border-radius:8px; border:1px solid #f1f5f9;">
+                        <div style="font-size:0.75rem; color:#64748b; text-transform:uppercase; letter-spacing:0.05em; font-weight:700;">Platform Version</div>
+                        <div style="font-size:1rem; color:#334155; font-weight:600; margin-top:2px;">v3.2.0 (LTS)</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    resetMetrics: async function() {
+        if (!confirm('Are you ABSOLUTELY sure? This will delete all engagement statistics (clicks, visits, likes, saves) from the database forever.')) return;
+        
+        try {
+            const res = await fetch('/api/admin/maintenance/reset-metrics', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+            });
+            if (!res.ok) throw new Error('Reset failed');
+            alert('✅ All metrics have been reset to zero.');
+            this.showTab('stats');
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
     }
 };
 

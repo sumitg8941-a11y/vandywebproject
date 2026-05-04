@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const offerSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true, lowercase: true, trim: true },
     title: { type: String, required: true, trim: true },
+    title_ar: { type: String, trim: true },
+    title_ur: { type: String, trim: true },
+    title_hi: { type: String, trim: true },
     validFrom: { type: Date, required: true },
     validUntil: { type: Date, required: true },
     pdfUrl: { type: String, default: '#' },
@@ -16,6 +19,9 @@ const offerSchema = new mongoose.Schema({
     savedCount: { type: Number, default: 0 },
     image: { type: String, default: '' },
     badge: { type: String, trim: true },
+    badge_ar: { type: String, trim: true },
+    badge_ur: { type: String, trim: true },
+    badge_hi: { type: String, trim: true },
     isSponsored: { type: Boolean, default: false }, // Ad Integration: Highlights and pins to the top
     externalAdLink: { type: String, default: '' }, // If it's a 3rd party Ad, clicking it takes them here
     category: { type: String, default: 'General', trim: true }, // For grouping offers like D4D

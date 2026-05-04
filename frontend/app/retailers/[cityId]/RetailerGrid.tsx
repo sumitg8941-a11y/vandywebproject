@@ -3,11 +3,15 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import SafeImage from '../../SafeImage';
+import { useLang } from '../../LangToggle';
 
 interface Retailer {
   id: string;
   _id?: string;
   name: string;
+  name_ar?: string;
+  name_ur?: string;
+  name_hi?: string;
   logo?: string;
   image?: string;
   category?: string;
@@ -15,6 +19,7 @@ interface Retailer {
 }
 
 export default function RetailerGrid({ retailers }: { retailers: Retailer[] }) {
+  const { lang, t } = useLang();
   const [activeCategory, setActiveCategory] = useState('All');
 
   const categories = useMemo(() => {
@@ -70,12 +75,14 @@ export default function RetailerGrid({ retailers }: { retailers: Retailer[] }) {
                   />
                 </div>
                 <div className="p-3 text-center border-t border-gray-100">
-                  <h3 className="text-sm font-bold text-gray-800">{r.name}</h3>
+                  <h3 className="text-sm font-bold text-gray-800">
+                    {(lang !== 'en' && (r as any)[`name_${lang}`]) ? (r as any)[`name_${lang}`] : r.name}
+                  </h3>
                   {r.category && (
                     <p className="text-[10px] text-gray-400 uppercase tracking-wider">{r.category}</p>
                   )}
                   <p className="text-xs text-red-600 font-semibold mt-1">
-                    <i className="fa-solid fa-tag mr-1"></i>{r.offerCount} {r.offerCount === 1 ? 'offer' : 'offers'}
+                    <i className="fa-solid fa-tag mr-1"></i>{r.offerCount} {r.offerCount === 1 ? t.offer : t.offers}
                   </p>
                 </div>
               </div>

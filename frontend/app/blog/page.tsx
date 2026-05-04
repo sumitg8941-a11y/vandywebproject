@@ -7,7 +7,7 @@ import Breadcrumbs from '../Breadcrumbs';
 import { useLang } from '../LangToggle';
 
 export default function BlogListingPage() {
-  const { t } = useLang();
+  const { lang, t } = useLang();
   const [blogs, setBlogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,10 +55,10 @@ export default function BlogListingPage() {
                     {new Date(blog.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </p>
                   <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-red-600 transition-colors">
-                    {blog.title}
+                    {(lang !== 'en' && blog[`title_${lang}`]) ? blog[`title_${lang}`] : blog.title}
                   </h2>
                   <p className="text-gray-600 line-clamp-3 mb-4 flex-grow">
-                    {blog.excerpt}
+                    {(lang !== 'en' && blog[`excerpt_${lang}`]) ? blog[`excerpt_${lang}`] : blog.excerpt}
                   </p>
                   <div className="mt-auto text-sm font-semibold text-red-600 flex items-center">
                     {t.readMore} <i className="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>

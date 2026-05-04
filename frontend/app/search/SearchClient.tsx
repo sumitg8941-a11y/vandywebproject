@@ -9,7 +9,7 @@ import AdSlot from '../AdSlot';
 import { useLang } from '../LangToggle';
 
 function SearchContent() {
-  const { t } = useLang();
+  const { lang, t } = useLang();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -136,7 +136,11 @@ function SearchContent() {
                 <label className="block text-sm font-bold text-gray-700 mb-2"><i className="fa-solid fa-location-dot mr-2"></i>{t.city || 'City'}</label>
                 <select value={cityId} onChange={(e) => handleCityChange(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none bg-white">
                   <option value="all">{t.allCities || 'All Cities'}</option>
-                  {filters.cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}
+                  {filters.cities.map((city) => (
+                    <option key={city.id} value={city.id}>
+                      {(lang !== 'en' && city[`name_${lang}`]) ? city[`name_${lang}`] : city.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -144,7 +148,11 @@ function SearchContent() {
                 <label className="block text-sm font-bold text-gray-700 mb-2"><i className="fa-solid fa-store mr-2"></i>{t.retailer || 'Retailer'}</label>
                 <select value={retailerId} onChange={(e) => handleRetailerChange(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none bg-white" disabled={filteredRetailers.length === 0}>
                   <option value="all">{t.allRetailers || 'All Retailers'}</option>
-                  {filteredRetailers.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  {filteredRetailers.map((r: any) => (
+                    <option key={r.id} value={r.id}>
+                      {(lang !== 'en' && r[`name_${lang}`]) ? r[`name_${lang}`] : r.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -185,13 +193,23 @@ function SearchContent() {
                   )}
                   {cityId !== 'all' && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-700">{t.city || 'City'}: <strong>{filters.cities.find(c => c.id === cityId)?.name}</strong></span>
+                      <span className="text-gray-700">{t.city || 'City'}: <strong>
+                        {(() => {
+                          const c = filters.cities.find(c => c.id === cityId);
+                          return c ? ((lang !== 'en' && c[`name_${lang}`]) ? c[`name_${lang}`] : c.name) : cityId;
+                        })()}
+                      </strong></span>
                       <button onClick={() => handleCityChange('all')} className="text-red-600"><i className="fa-solid fa-xmark"></i></button>
                     </div>
                   )}
                   {retailerId !== 'all' && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-700">{t.retailer || 'Retailer'}: <strong>{filters.retailers.find(r => r.id === retailerId)?.name}</strong></span>
+                      <span className="text-gray-700">{t.retailer || 'Retailer'}: <strong>
+                        {(() => {
+                          const r = filters.retailers.find(r => r.id === retailerId);
+                          return r ? ((lang !== 'en' && r[`name_${lang}`]) ? r[`name_${lang}`] : r.name) : retailerId;
+                        })()}
+                      </strong></span>
                       <button onClick={() => handleRetailerChange('all')} className="text-red-600"><i className="fa-solid fa-xmark"></i></button>
                     </div>
                   )}
@@ -223,7 +241,9 @@ function SearchContent() {
                         <div className="relative w-full h-16 mb-2">
                           <SafeImage src={r.image} alt={r.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-contain" loading="lazy" />
                         </div>
-                        <p className="font-bold text-center text-sm">{r.name}</p>
+                        <p className="font-bold text-center text-sm">
+                          {(lang !== 'en' && r[`name_${lang}`]) ? r[`name_${lang}`] : r.name}
+                        </p>
                         {r.category && <p className="text-xs text-gray-500 text-center mt-1">{r.category}</p>}
                       </Link>
                     ))}
@@ -245,7 +265,7 @@ function SearchContent() {
                       <Link href={`/view/${o.id}`} key={o.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 group relative">
                         {o.badge && (
                           <div className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow">
-                            {o.badge}
+                            {(lang !== 'en' && o[`badge_${lang}`]) ? o[`badge_${lang}`] : o.badge}
                           </div>
                         )}
                         <div className="aspect-[3/4] bg-gray-50 relative">
@@ -259,7 +279,9 @@ function SearchContent() {
                           />
                         </div>
                         <div className="p-3 border-t border-gray-100">
-                          <h3 className="text-xs font-bold text-gray-800 truncate mb-1">{o.title}</h3>
+                          <h3 className="text-xs font-bold text-gray-800 truncate mb-1">
+                            {(lang !== 'en' && o[`title_${lang}`]) ? o[`title_${lang}`] : o.title}
+                          </h3>
                           {o.category && (
                             <span className="inline-block text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
                               {o.category}

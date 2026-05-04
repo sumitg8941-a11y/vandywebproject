@@ -105,6 +105,11 @@ const api = {
         if (!res.ok) throw new Error('Database connection failed');
         return await res.json();
     },
+    getCategories: async () => {
+        const res = await fetch('/api/categories');
+        if (!res.ok) throw new Error('Database connection failed');
+        return await res.json();
+    },
     
     // Tracking API
     trackVisit: () => fetch('/api/track/visit', { method: 'POST' }).catch(()=>null),
@@ -188,6 +193,30 @@ const api = {
             method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(offerData)
         });
         if (!res.ok) throw new Error('Failed to save to MongoDB');
+        return await res.json();
+    },
+    addCategory: async (data) => {
+        const res = await fetch('/api/admin/categories', {
+            method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data)
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Failed to save category');
+        }
+        return await res.json();
+    },
+    updateCategory: async (id, data) => {
+        const res = await fetch(`/api/admin/categories/${id}`, {
+            method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Failed to update category');
+        return await res.json();
+    },
+    deleteCategory: async (id) => {
+        const res = await fetch(`/api/admin/categories/${id}`, {
+            method: 'DELETE', headers: getAuthHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to delete category');
         return await res.json();
     }
 };

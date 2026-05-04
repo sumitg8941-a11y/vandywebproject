@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 const countrySchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true, lowercase: true, trim: true },
     name: { type: String, required: true, trim: true },
+    name_ar: { type: String, trim: true },
+    name_ur: { type: String, trim: true },
+    name_hi: { type: String, trim: true },
     image: { type: String, required: true },
     visits: { type: Number, default: 0 }, // Track country page visits
     offerViews: { type: Number, default: 0 } // Track offers viewed from this country

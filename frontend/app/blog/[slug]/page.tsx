@@ -8,7 +8,7 @@ import AdSlot from '../../AdSlot';
 import { useLang } from '../../LangToggle';
 
 export default function BlogPostPage({ params }: { params: any }) {
-  const { t } = useLang();
+  const { lang, t } = useLang();
   const [blog, setBlog] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,7 +28,10 @@ export default function BlogPostPage({ params }: { params: any }) {
 
   return (
     <div className="bg-gray-50 min-h-screen pb-12">
-      <Breadcrumbs items={[{ label: t.blogTitle || 'Blog', href: '/blog' }, { label: blog.title }]} />
+      <Breadcrumbs items={[
+        { label: t.blogTitle || 'Blog', href: '/blog' }, 
+        { label: (lang !== 'en' && blog[`title_${lang}`]) ? blog[`title_${lang}`] : blog.title }
+      ]} />
 
       <div className="max-w-4xl mx-auto px-6 py-6">
         <div className="mb-6">
@@ -59,7 +62,7 @@ export default function BlogPostPage({ params }: { params: any }) {
             </div>
 
             <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
-              {blog.title}
+              {(lang !== 'en' && blog[`title_${lang}`]) ? blog[`title_${lang}`] : blog.title}
             </h1>
 
             <div 
@@ -67,7 +70,7 @@ export default function BlogPostPage({ params }: { params: any }) {
                          prose-headings:text-gray-900 prose-headings:font-bold
                          prose-a:text-red-600 prose-a:no-underline hover:prose-a:underline
                          prose-img:rounded-xl prose-img:shadow-md"
-              dangerouslySetInnerHTML={{ __html: blog.content }}
+              dangerouslySetInnerHTML={{ __html: (lang !== 'en' && blog[`content_${lang}`]) ? blog[`content_${lang}`] : blog.content }}
             />
           </div>
         </article>

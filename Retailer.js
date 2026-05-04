@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const retailerSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true, lowercase: true, trim: true },
     name: { type: String, required: true, trim: true },
+    name_ar: { type: String, trim: true },
+    name_ur: { type: String, trim: true },
+    name_hi: { type: String, trim: true },
     websiteUrl: { type: String, default: '' },
     clicks: { type: Number, default: 0 },
     totalTimeSeconds: { type: Number, default: 0 }, // Time spent viewing retailer pages

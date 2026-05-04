@@ -39,7 +39,7 @@ export default function HomeHero({
   heroImages: any[];
   customHomeMessage?: string;
 }) {
-  const { t } = useLang();
+  const { lang, t } = useLang();
 
   return (
     <div>
@@ -79,7 +79,9 @@ export default function HomeHero({
                       className="object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <div className="p-3 text-center">
-                    <h3 className="text-sm font-bold text-gray-800">{c.name}</h3>
+                    <h3 className="text-sm font-bold text-gray-800">
+                      {(lang !== 'en' && c[`name_${lang}`]) ? c[`name_${lang}`] : c.name}
+                    </h3>
                   </div>
                 </div>
               </Link>
@@ -111,7 +113,9 @@ export default function HomeHero({
                       className="object-contain p-3 group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <div className="p-3 text-center border-t border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-800 truncate">{r.name}</h3>
+                    <h3 className="text-sm font-bold text-gray-800 truncate">
+                      {(lang !== 'en' && r[`name_${lang}`]) ? r[`name_${lang}`] : r.name}
+                    </h3>
                     {r.category && (
                       <span className="inline-block text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full mt-1">{r.category}</span>
                     )}
@@ -152,7 +156,7 @@ export default function HomeHero({
                     </div>
                     {o.badge && (
                       <div className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow">
-                        {o.badge}
+                        {(lang !== 'en' && o[`badge_${lang}`]) ? o[`badge_${lang}`] : o.badge}
                       </div>
                     )}
                     <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
@@ -160,7 +164,9 @@ export default function HomeHero({
                         className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                     </div>
                     <div className="p-3 border-t border-gray-100">
-                      <h3 className="text-xs font-bold text-gray-800 truncate">{o.title}</h3>
+                      <h3 className="text-xs font-bold text-gray-800 truncate">
+                        {(lang !== 'en' && o[`title_${lang}`]) ? o[`title_${lang}`] : o.title}
+                      </h3>
                       <p className="text-xs text-orange-600 font-semibold mt-1">
                         <i className="fa-regular fa-calendar mr-1"></i>
                         {t.until} {new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})}
@@ -202,7 +208,7 @@ export default function HomeHero({
                     )}
                     {o.badge && (
                       <div className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow">
-                        {o.badge}
+                        {(lang !== 'en' && o[`badge_${lang}`]) ? o[`badge_${lang}`] : o.badge}
                       </div>
                     )}
                     <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
@@ -210,10 +216,13 @@ export default function HomeHero({
                         className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                     </div>
                     <div className="p-3 border-t border-gray-100">
-                      <h3 className="text-xs font-bold text-gray-800 truncate mb-1">{o.title}</h3>
+                      <h3 className="text-xs font-bold text-gray-800 truncate mb-1">
+                        {(lang !== 'en' && o[`title_${lang}`]) ? o[`title_${lang}`] : o.title}
+                      </h3>
                       {o.retailerName && (
                         <p className="text-xs text-gray-500 truncate">
-                          <i className="fa-solid fa-store mr-1 text-red-400"></i>{o.retailerName}
+                          <i className="fa-solid fa-store mr-1 text-red-400"></i>
+                          {(lang !== 'en' && o[`retailerName_${lang}`]) ? o[`retailerName_${lang}`] : o.retailerName}
                         </p>
                       )}
                       {o.validUntil && (

@@ -107,6 +107,7 @@ const City = require('./City');
 const Retailer = require('./Retailer');
 const Offer = require('./Offer');
 const Blog = require('./Blog');
+const Category = require('./Category');
 const User = require('./User');
 const SiteStat = require('./SiteStat');
 const Feedback = require('./Feedback');
@@ -221,6 +222,51 @@ app.get('/api/cities/:countryId', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch cities' });
     }
+});
+
+// Get all categories
+app.get('/api/categories', async (req, res) => {
+    try {
+        const categories = await Category.find().sort({ order: 1, name: 1 });
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+});
+
+// Admin Categories CRUD
+app.get('/api/admin/categories', verifyAdmin, async (req, res) => {
+    try {
+        const cats = await Category.find().sort({ order: 1, name: 1 });
+        res.json(cats);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/admin/categories', verifyAdmin, async (req, res) => {
+    try {
+        if (!validateId(req.body.id)) return res.status(400).json({ error: 'Invalid ID' });
+        const exists = await Category.findOne({ id: req.body.id.toLowerCase() });
+        if (exists) return res.status(400).json({ error: 'Category ID already exists' });
+        const cat = new Category(req.body);
+        await cat.save();
+        res.status(201).json(cat);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/admin/categories/:id', verifyAdmin, async (req, res) => {
+    try {
+        const cat = await Category.findOneAndUpdate({ id: req.params.id.toLowerCase() }, req.body, { new: true });
+        if (!cat) return res.status(404).json({ error: 'Not found' });
+        res.json(cat);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/admin/categories/:id', verifyAdmin, async (req, res) => {
+    try {
+        const cat = await Category.findOneAndDelete({ id: req.params.id.toLowerCase() });
+        if (!cat) return res.status(404).json({ error: 'Not found' });
+        res.json({ message: 'Deleted' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // Get retailers by city ID
@@ -896,6 +942,22 @@ app.get('/api/stats', async (req, res) => {
     } catch (err) {
         console.error('Stats API Error:', err);
         res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+});
+
+// MAINTENANCE: Reset Metrics (Super Admin only)
+app.post('/api/admin/maintenance/reset-metrics', verifySuperAdmin, async (req, res) => {
+    try {
+        await Promise.all([
+            Offer.updateMany({}, { $set: { clicks: 0, totalTimeSeconds: 0, maxPagesViewed: 0, likes: 0, dislikes: 0, savedCount: 0, rating: 0, ratingCount: 0 } }),
+            Retailer.updateMany({}, { $set: { clicks: 0, totalTimeSeconds: 0 } }),
+            Country.updateMany({}, { $set: { visits: 0, offerViews: 0 } }),
+            City.updateMany({}, { $set: { visits: 0 } }),
+            SiteStat.findOneAndUpdate({ id: 'global' }, { $set: { visits: 0, totalSaves: 0, totalRatings: 0 } }, { upsert: true })
+        ]);
+        res.json({ message: 'All metrics have been reset successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
