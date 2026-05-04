@@ -9,6 +9,7 @@ import LogoLink from './LogoLink'
 import FindDealsButton from './FindDealsButton'
 import Tracker from './Tracker'
 import FooterClient from './FooterClient'
+import SavedLink from './SavedLink'
 import './globals.css'
 
 const poppins = Poppins({
@@ -116,6 +117,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <NavLinks />
 
             <div className="hidden md:flex items-center gap-3">
+              <SavedLink />
               <LangToggle />
               <FindDealsButton />
             </div>
@@ -124,6 +126,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link href="/search" className="text-gray-700 hover:text-red-600 transition text-xl">
                 <i className="fa-solid fa-magnifying-glass"></i>
               </Link>
+              <SavedLink />
               <MobileNav />
             </div>
           </div>

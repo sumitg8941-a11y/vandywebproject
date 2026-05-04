@@ -18,17 +18,25 @@ function SearchContent() {
   const initialCityId = searchParams.get('cityId') || 'all';
   const initialRetailerId = searchParams.get('retailerId') || 'all';
   const initialValidity = searchParams.get('validity') || 'all';
+  const initialMinDiscount = parseInt(searchParams.get('minDiscount') || '0', 10);
 
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
   const [cityId, setCityId] = useState(initialCityId);
   const [retailerId, setRetailerId] = useState(initialRetailerId);
   const [validity, setValidity] = useState(initialValidity);
+  const [minDiscount, setMinDiscount] = useState(isNaN(initialMinDiscount) ? 0 : initialMinDiscount);
   const [showFilters, setShowFilters] = useState(false);
 
   const [results, setResults] = useState<{ retailers: any[]; offers: any[] }>({ retailers: [], offers: [] });
   const [filters, setFilters] = useState<{ categories: string[]; cities: any[]; retailers: any[] }>({ categories: [], cities: [], retailers: [] });
   const [loading, setLoading] = useState(false);
+
+  // Sync minDiscount from URL when nav slider changes it externally
+  useEffect(() => {
+    const v = parseInt(searchParams.get('minDiscount') || '0', 10);
+    setMinDiscount(isNaN(v) ? 0 : v);
+  }, [searchParams]);
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
@@ -46,6 +54,7 @@ function SearchContent() {
     if (newCityId && newCityId !== 'all') params.set('cityId', newCityId);
     if (newRetailerId && newRetailerId !== 'all') params.set('retailerId', newRetailerId);
     if (newValidity && newValidity !== 'all') params.set('validity', newValidity);
+    if (minDiscount > 0) params.set('minDiscount', String(minDiscount));
     const queryString = params.toString();
     router.push(`/search${queryString ? `?${queryString}` : ''}`, { scroll: false });
   };
@@ -61,6 +70,7 @@ function SearchContent() {
         if (cityId && cityId !== 'all') params.set('cityId', cityId);
         if (retailerId && retailerId !== 'all') params.set('retailerId', retailerId);
         if (validity && validity !== 'all') params.set('validity', validity);
+        if (minDiscount > 0) params.set('minDiscount', String(minDiscount));
         const res = await fetch(`${apiBaseUrl}/api/search?${params.toString()}`);
         const data = await res.json();
         if (active) setResults(data);
@@ -70,14 +80,14 @@ function SearchContent() {
       if (active) setLoading(false);
     }, 300);
     return () => { active = false; clearTimeout(timer); };
-  }, [query, category, cityId, retailerId, validity, apiBaseUrl]);
+  }, [query, category, cityId, retailerId, validity, minDiscount, apiBaseUrl]);
 
   const handleQueryChange = (v: string) => { setQuery(v); updateURL(v, category, cityId, retailerId, validity); };
   const handleCategoryChange = (v: string) => { setCategory(v); updateURL(query, v, cityId, retailerId, validity); };
   const handleCityChange = (v: string) => { setCityId(v); setRetailerId('all'); updateURL(query, category, v, 'all', validity); };
   const handleRetailerChange = (v: string) => { setRetailerId(v); updateURL(query, category, cityId, v, validity); };
   const handleValidityChange = (v: string) => { setValidity(v); updateURL(query, category, cityId, retailerId, v); };
-  const clearFilters = () => { setQuery(''); setCategory('all'); setCityId('all'); setRetailerId('all'); setValidity('all'); router.push('/search', { scroll: false }); };
+  const clearFilters = () => { setQuery(''); setCategory('all'); setCityId('all'); setRetailerId('all'); setValidity('all'); setMinDiscount(0); router.push('/search', { scroll: false }); };
 
   const activeFiltersCount = [category !== 'all', cityId !== 'all', retailerId !== 'all', validity !== 'all'].filter(Boolean).length;
   const filteredRetailers = cityId === 'all' ? filters.retailers : filters.retailers.filter((r: any) => r.cityId === cityId);

@@ -167,7 +167,12 @@ const admin = {
                     <input type="text" id="new-country-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Kuwait">
                     
                     <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
-                        <h4 style="margin:0 0 10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h4 style="margin:0; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                            <button type="button" onclick="admin.autoTranslate('country', ['name'])" class="action-btn" style="background:linear-gradient(135deg, #6366f1, #a855f7); font-size:0.75em; padding:4px 10px; border:none;">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Magic Translate
+                            </button>
+                        </div>
                         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
                             <div>
                                 <label style="font-size:0.75em; color:#64748b; font-weight:600;">Arabic</label>
@@ -295,7 +300,12 @@ const admin = {
                     <input type="text" id="new-state-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Dubai Emirate">
                     
                     <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
-                        <h4 style="margin:0 0 10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h4 style="margin:0; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                            <button type="button" onclick="admin.autoTranslate('state', ['name'])" class="action-btn" style="background:linear-gradient(135deg, #6366f1, #a855f7); font-size:0.75em; padding:4px 10px; border:none;">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Magic Translate
+                            </button>
+                        </div>
                         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
                             <div>
                                 <label style="font-size:0.75em; color:#64748b; font-weight:600;">Arabic</label>
@@ -450,7 +460,12 @@ const admin = {
                     <input type="text" id="new-city-name" style="width:100%; padding:8px; margin-bottom:12px;" placeholder="e.g., Deira">
                     
                     <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
-                        <h4 style="margin:0 0 10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h4 style="margin:0; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                            <button type="button" onclick="admin.autoTranslate('city', ['name'])" class="action-btn" style="background:linear-gradient(135deg, #6366f1, #a855f7); font-size:0.75em; padding:4px 10px; border:none;">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Magic Translate
+                            </button>
+                        </div>
                         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
                             <div>
                                 <label style="font-size:0.75em; color:#64748b; font-weight:600;">Arabic</label>
@@ -571,7 +586,12 @@ const admin = {
                 <input type="text" id="new-ret-name" placeholder="Retailer Name" style="width:100%; padding:8px; margin-bottom:12px;">
                 
                 <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
-                    <h4 style="margin:0 0 10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h4 style="margin:0; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                        <button type="button" onclick="admin.autoTranslate('ret', ['name'])" class="action-btn" style="background:linear-gradient(135deg, #6366f1, #a855f7); font-size:0.75em; padding:4px 10px; border:none;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Magic Translate
+                        </button>
+                    </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
                         <div>
                             <label style="font-size:0.75em; color:#64748b; font-weight:600;">Arabic (العربية)</label>
@@ -804,7 +824,12 @@ const admin = {
                     <input type="text" id="new-off-title" placeholder="e.g., Weekend Sale" style="width:100%; padding:8px; margin-bottom:12px;">
                     
                     <div style="background:#f1f5f9; border-radius:8px; padding:14px; margin-bottom:15px; border:1px solid #e2e8f0;">
-                        <h4 style="margin:0 0 10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h4 style="margin:0; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                            <button type="button" onclick="admin.autoTranslate('off', ['title', 'badge'])" class="action-btn" style="background:linear-gradient(135deg, #6366f1, #a855f7); font-size:0.75em; padding:4px 10px; border:none;">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Magic Translate
+                            </button>
+                        </div>
                         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
                             <div>
                                 <label style="font-size:0.75em; color:#64748b; font-weight:600;">Arabic (العربية)</label>
@@ -859,6 +884,12 @@ const admin = {
 
                     <label style="font-weight: bold; font-size: 0.9em; color:#0369a1;"><i class="fa-solid fa-link" style="margin-right:6px;"></i>Direct Affiliate Link (Optional Override):</label>
                     <input type="url" id="new-off-aff-override" placeholder="https://ad.link/custom-for-this-offer" style="width:100%; padding:8px; margin-bottom:15px;">
+
+                    <label style="font-weight: bold; font-size: 0.9em;">Discount % (0-100):</label>
+                    <input type="number" id="new-off-discount-percent" min="0" max="100" placeholder="e.g. 50" style="width:100%; padding:8px; margin-bottom:15px;">
+
+                    <label style="font-weight: bold; font-size: 0.9em;">Hotspots (JSON array, optional):</label>
+                    <textarea id="new-off-hotspots" rows="3" placeholder='[{&quot;id&quot;:&quot;h1&quot;,&quot;x&quot;:0.3,&quot;y&quot;:0.45,&quot;label&quot;:&quot;Product&quot;,&quot;price&quot;:&quot;AED 99&quot;,&quot;stock&quot;:&quot;In Stock&quot;}]' style="width:100%; padding:8px; margin-bottom:15px; font-family:monospace; font-size:0.8em; box-sizing:border-box; resize:vertical;"></textarea>
 
                     <label style="font-weight: bold; font-size: 0.9em;">Upload Cover Image (Optional):</label>
                     <input type="file" id="new-off-image-file" accept="image/*" style="width:100%; padding:8px; margin-bottom:5px;">
@@ -1035,6 +1066,9 @@ const admin = {
             document.getElementById('new-off-retailer-url').value = offer.retailerUrl || '';
             document.getElementById('new-off-category').value = offer.category || '';
             document.getElementById('new-off-aff-override').value = offer.affiliateOverrideUrl || '';
+
+            document.getElementById('new-off-discount-percent').value = offer.discountPercent || 0;
+            document.getElementById('new-off-hotspots').value = offer.hotspots ? JSON.stringify(offer.hotspots) : '';
             document.getElementById('new-off-image').value = offer.image || '';
 
             document.getElementById('new-off-title-ar').value = offer.title_ar || '';
@@ -1090,6 +1124,9 @@ const admin = {
 
             const affiliateOverrideUrl = document.getElementById('new-off-aff-override')?.value || '';
 
+            const discountPercent = parseInt(document.getElementById('new-off-discount-percent')?.value || '0', 10) || 0;
+            let hotspots = [];
+            try { hotspots = JSON.parse(document.getElementById('new-off-hotspots')?.value || '[]'); } catch(e) { hotspots = []; }
             const title_ar = document.getElementById('new-off-title-ar').value.trim();
             const title_ur = document.getElementById('new-off-title-ur').value.trim();
             const title_hi = document.getElementById('new-off-title-hi').value.trim();
@@ -1100,7 +1137,7 @@ const admin = {
             if(id && title && validFrom && validUntil && retailerId) {
                 const payload = { 
                     id, title, validFrom, validUntil, retailerId, pdfUrl, retailerUrl, category, image, badge, couponCode, metaTitle, metaDescription, affiliateOverrideUrl,
-                    title_ar, title_ur, title_hi, badge_ar, badge_ur, badge_hi
+                    title_ar, title_ur, title_hi, badge_ar, badge_ur, badge_hi, discountPercent, hotspots
                 };
                 if (editId) {
                     const res = await fetch(`/api/admin/offers/${editId}`, {
@@ -1697,8 +1734,13 @@ const admin = {
                 <textarea id="new-blog-content" rows="10" style="width:100%; padding:8px; margin-bottom:10px; font-family:monospace;"></textarea>
                 
                 <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; margin-bottom:15px;">
-                    <h4 style="margin:0 0-10px; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
-                    <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h4 style="margin:0; font-size:0.85em; color:#475569;"><i class="fa-solid fa-language" style="margin-right:6px;"></i>Translations (Optional)</h4>
+                        <button type="button" onclick="admin.autoTranslate('blog', ['title', 'excerpt', 'content'])" class="action-btn" style="background:linear-gradient(135deg, #6366f1, #a855f7); font-size:0.75em; padding:4px 10px; border:none;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Magic Translate
+                        </button>
+                    </div>
+                    <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
                         <label style="font-size:0.75em; color:#64748b; font-weight:600;">ARABIC (العربية)</label>
                         <input type="text" id="new-blog-title-ar" placeholder="Title AR" style="width:100%; padding:6px; margin-bottom:5px;">
                         <textarea id="new-blog-excerpt-ar" placeholder="Excerpt AR" rows="2" style="width:100%; padding:6px; margin-bottom:5px;"></textarea>
@@ -2450,7 +2492,12 @@ const admin = {
         if (!formDiv) return;
         formDiv.style.display = 'block';
         formDiv.innerHTML = `
-            <h3>${cat ? 'Edit' : 'Add'} Category</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0;">${cat ? 'Edit' : 'Add'} Category</h3>
+                <button type="button" onclick="admin.autoTranslate('cat', ['name'])" class="action-btn" style="background:linear-gradient(135deg, #6366f1, #a855f7); font-size:0.75em; padding:6px 12px; border:none;">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Magic Translate
+                </button>
+            </div>
             <div class="form-row">
                 <div class="form-group">
                     <label>ID (unique, lowercase)</label>
@@ -2588,6 +2635,57 @@ const admin = {
             this.showTab('stats');
         } catch (e) {
             alert('Error: ' + e.message);
+        }
+    },
+
+    autoTranslate: async function(fieldIdPrefix, types = ['title', 'excerpt', 'content']) {
+        const event = window.event;
+        const btn = event.currentTarget;
+        const originalHtml = btn.innerHTML;
+        
+        // Find the main English source field for reference (usually the first type, e.g. 'title')
+        const sourceId = `new-${fieldIdPrefix}-${types[0]}`;
+        const sourceElem = document.getElementById(sourceId);
+        if (!sourceElem || !sourceElem.value.trim()) {
+            return alert(`Please enter the English ${types[0]} first.`);
+        }
+
+        btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles fa-spin"></i> Translating...';
+        btn.disabled = true;
+
+        try {
+            const langs = ['ar', 'ur', 'hi'];
+            
+            for (const type of types) {
+                const inputId = `new-${fieldIdPrefix}-${type}`;
+                const inputElem = document.getElementById(inputId);
+                if (!inputElem || !inputElem.value.trim()) continue;
+
+                const text = inputElem.value.trim();
+                const res = await fetch('/api/admin/translate', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Authorization': `Bearer ${localStorage.getItem('adminToken')}` 
+                    },
+                    body: JSON.stringify({ text, targetLangs: langs })
+                });
+
+                if (res.ok) {
+                    const translations = await res.json();
+                    langs.forEach(l => {
+                        const targetId = `new-${fieldIdPrefix}-${type}-${l}`;
+                        const targetElem = document.getElementById(targetId);
+                        if (targetElem) targetElem.value = translations[l];
+                    });
+                }
+            }
+            alert('✨ Magic Translation complete!');
+        } catch (e) {
+            alert('Magic translation failed: ' + e.message);
+        } finally {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
         }
     }
 };

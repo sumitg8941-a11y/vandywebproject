@@ -15,7 +15,7 @@ function getUrgencyBadge(validUntil: string, t: any, createdAt?: string): { text
   const days = getDaysLeft(validUntil);
   if (days <= 0) return null;
   if (days === 1) return { text: t.expiresToday, cls: 'bg-red-600 text-white' };
-  if (days <= 3) return { text: `${days} ${t.daysLeft}`, cls: 'bg-orange-500 text-white' };
+  if (days <= 3) return { text: t.endingSoon, cls: 'backdrop-blur-md bg-orange-500/80 text-white border border-white/20 shadow-lg font-black' };
   if (days <= 7) return { text: `${days} ${t.daysLeft}`, cls: 'bg-yellow-500 text-gray-900' };
   if (createdAt) {
     const addedDaysAgo = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24));
@@ -151,23 +151,30 @@ export default function HomeHero({
               return (
                 <Link href={`/view/${o.id || o._id}`} key={o.id || o._id}>
                   <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-orange-200 group relative">
-                    <div className="absolute top-2 right-2 z-10 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded shadow">
+                    <div className="absolute top-2 right-2 z-20 bg-orange-500 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg backdrop-blur-md">
                       {days === 0 ? t.expiresToday : `${days}${t.daysLeft.split(' ')[0]} ${t.daysLeft.split(' ')[1] || ''}`}
                     </div>
                     {o.badge && (
-                      <div className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow">
+                      <div className="absolute top-2 left-2 z-20 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg">
                         {(lang !== 'en' && o[`badge_${lang}`]) ? o[`badge_${lang}`] : o.badge}
                       </div>
                     )}
                     <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
                       <SafeImage src={o.image} alt={o.title} fill sizes="(max-width: 640px) 50vw, 25vw"
                         className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      
+                      {/* Quick View Overlay */}
+                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                        <div className="bg-white/90 backdrop-blur-md text-gray-900 text-[10px] font-black px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all">
+                          <i className="fa-solid fa-eye text-red-500"></i> {t.quickView.toUpperCase()}
+                        </div>
+                      </div>
                     </div>
                     <div className="p-3 border-t border-gray-100">
-                      <h3 className="text-xs font-bold text-gray-800 truncate">
+                      <h3 className="text-xs font-bold text-gray-800 truncate h-4">
                         {(lang !== 'en' && o[`title_${lang}`]) ? o[`title_${lang}`] : o.title}
                       </h3>
-                      <p className="text-xs text-orange-600 font-semibold mt-1">
+                      <p className="text-[11px] text-orange-600 font-bold mt-2 uppercase tracking-tighter">
                         <i className="fa-regular fa-calendar mr-1"></i>
                         {t.until} {new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})}
                       </p>
@@ -202,18 +209,25 @@ export default function HomeHero({
                 <Link href={`/view/${o.id || o._id}`} key={o.id || o._id}>
                   <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 hover:border-red-200 group relative">
                     {urgency && (
-                      <div className={`absolute top-2 right-2 z-10 text-xs font-bold px-2 py-1 rounded shadow ${urgency.cls}`}>
+                      <div className={`absolute top-2 right-2 z-20 text-[10px] font-black px-2 py-1 rounded-lg shadow-lg ${urgency.cls}`}>
                         {urgency.text}
                       </div>
                     )}
                     {o.badge && (
-                      <div className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow">
+                      <div className="absolute top-2 left-2 z-20 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg">
                         {(lang !== 'en' && o[`badge_${lang}`]) ? o[`badge_${lang}`] : o.badge}
                       </div>
                     )}
                     <div className="overflow-hidden aspect-[3/4] bg-gray-50 relative">
                       <SafeImage src={o.image} alt={o.title} fill sizes="(max-width: 640px) 50vw, 25vw"
                         className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      
+                      {/* Quick View Overlay */}
+                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                        <div className="bg-white/90 backdrop-blur-md text-gray-900 text-[10px] font-black px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all">
+                          <i className="fa-solid fa-eye text-red-500"></i> {t.quickView.toUpperCase()}
+                        </div>
+                      </div>
                     </div>
                     <div className="p-3 border-t border-gray-100">
                       <h3 className="text-xs font-bold text-gray-800 truncate mb-1">
@@ -226,7 +240,7 @@ export default function HomeHero({
                         </p>
                       )}
                       {o.validUntil && (
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-[11px] text-gray-400 mt-1 font-semibold uppercase">
                           <i className="fa-regular fa-calendar mr-1"></i>
                           {t.until} {new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})}
                         </p>

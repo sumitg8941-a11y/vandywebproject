@@ -91,6 +91,8 @@ export const translations = {
     saved: 'تم الحفظ',
     you: 'أنت',
     rateThis: 'قيم هذا',
+    endingSoon: 'تنتهي قريباً',
+    quickView: 'عرض سريع',
   },
   en: {
     home: 'Home',
@@ -178,6 +180,8 @@ export const translations = {
     saved: 'Saved',
     you: 'You',
     rateThis: 'Rate this',
+    endingSoon: 'Ending Soon',
+    quickView: 'Quick View',
   },
   ur: {
     home: 'ہوم',
@@ -265,6 +269,8 @@ export const translations = {
     saved: 'محفوظ کر لیا گیا',
     you: 'آپ',
     rateThis: 'اس کی درجہ بندی کریں',
+    endingSoon: 'جلد ختم ہو رہا ہے',
+    quickView: 'فوری دیکھیں',
   },
   hi: {
     home: 'होम',
@@ -352,6 +358,8 @@ export const translations = {
     saved: 'सेव किया गया',
     you: 'आप',
     rateThis: 'इसे रेट करें',
+    endingSoon: 'जल्द समाप्त',
+    quickView: 'त्वरित देखें',
   },
 } as const;
 

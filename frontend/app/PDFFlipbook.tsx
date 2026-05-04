@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import AdSlot from './AdSlot';
+import HotspotOverlay, { type Hotspot } from './HotspotOverlay';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -15,11 +16,22 @@ interface PDFFlipbookProps {
   shareUrl?: string;
   retailerUrl?: string;
   offerId?: string;
+  /** Hotspots keyed by 1-indexed page number */
+  hotspots?: Record<number, Hotspot[]>;
 }
 
-export default function PDFFlipbook({ pdfUrl, onClose, title, shareUrl, retailerUrl, offerId }: PDFFlipbookProps) {
+export default function PDFFlipbook({ pdfUrl, onClose, title, shareUrl, retailerUrl, offerId, hotspots = {} }: PDFFlipbookProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
+  const [pageWidth, setPageWidth] = useState<number>(
+    typeof window !== 'undefined' ? Math.min(window.innerWidth - 40, 900) : 900
+  );
+
+  useEffect(() => {
+    const onResize = () => setPageWidth(Math.min(window.innerWidth - 40, 900));
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
@@ -99,13 +111,20 @@ export default function PDFFlipbook({ pdfUrl, onClose, title, shareUrl, retailer
           loading={<div className="text-white text-xl">Loading PDF...</div>}
           error={<div className="text-red-500 text-xl">Failed to load PDF</div>}
         >
-          <Page
-            pageNumber={pageNumber}
-            renderTextLayer={true}
-            renderAnnotationLayer={true}
-            className="shadow-2xl"
-            width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 40, 900) : 900}
-          />
+          <div className="relative inline-block">
+            <Page
+              pageNumber={pageNumber}
+              renderTextLayer={true}
+              renderAnnotationLayer={true}
+              className="shadow-2xl"
+              width={pageWidth}
+            />
+            <HotspotOverlay
+              hotspots={hotspots[pageNumber] || []}
+              page={pageNumber}
+              currentPage={pageNumber}
+            />
+          </div>
         </Document>
 
         {retailerUrl && retailerUrl !== '#' && offerId && (

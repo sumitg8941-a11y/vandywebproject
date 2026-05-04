@@ -1,4 +1,5 @@
 require('dotenv').config();
+const translate = require('translate');
 const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
@@ -655,6 +656,12 @@ app.get('/api/search', async (req, res) => {
             offerFilter.validUntil = { $gte: now2, $lte: in30 };
         } else {
             offerFilter.validUntil = { $gte: now2 };
+        }
+
+        // Filter by minimum discount percent
+        const minDiscount = parseInt(req.query.minDiscount || '0', 10);
+        if (!isNaN(minDiscount) && minDiscount > 0) {
+            offerFilter.discountPercent = { $gte: minDiscount };
         }
 
         // Fetch offers based on filters
@@ -1485,15 +1492,29 @@ app.post('/api/admin/offers/:id/reset-metrics', verifyAdmin, async (req, res) =>
 // Public: Submit Feedback
 app.post('/api/feedback', async (req, res) => {
     try {
-        const { name, email, message, recaptchaToken } = req.body;
+        const { name, email, message, recaptchaToken, honeypot, mathAnswer, mathProblem } = req.body;
+        
+        // Anti-spam 1: Honeypot (Bot trap)
+        if (honeypot) {
+            console.log('Spam blocked (Honeypot filled)');
+            return res.status(400).json({ error: 'Spam detected.' });
+        }
+
         if (!name || !email || !message) return res.status(400).json({ error: 'All fields are required.' });
 
         // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
         if (!emailRegex.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
 
-        // reCAPTCHA verification (only if secret key is configured)
+        // Anti-spam 2: Math Challenge (if no reCAPTCHA)
         const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
+        if (!recaptchaSecret && mathProblem) {
+            if (parseInt(mathAnswer) !== (mathProblem.a + mathProblem.b)) {
+                return res.status(400).json({ error: 'Security check failed. Please try again.' });
+            }
+        }
+
+        // reCAPTCHA verification
         if (recaptchaSecret) {
             if (!recaptchaToken) return res.status(400).json({ error: 'Please complete the CAPTCHA verification.' });
             try {
@@ -1506,7 +1527,6 @@ app.post('/api/feedback', async (req, res) => {
                 if (!verifyData.success) return res.status(400).json({ error: 'CAPTCHA verification failed. Please try again.' });
             } catch (e) {
                 console.error('reCAPTCHA verify error:', e.message);
-                // Allow submission if reCAPTCHA service is down
             }
         }
 
@@ -1651,6 +1671,30 @@ app.delete('/api/admin/users/:id', verifySuperAdmin, async (req, res) => {
 });
 
 // Start the server
+// ADMIN: Magic Translate
+app.post('/api/admin/translate', verifyAdmin, async (req, res) => {
+    const { text, targetLangs } = req.body;
+    if (!text) return res.status(400).json({ error: 'Text is required' });
+    if (!targetLangs || !Array.isArray(targetLangs)) return res.status(400).json({ error: 'targetLangs array is required' });
+
+    try {
+        const results = {};
+        // Note: translate package is async
+        for (const lang of targetLangs) {
+            try {
+                results[lang] = await translate(text, { from: 'en', to: lang });
+            } catch (err) {
+                console.error(`Failed to translate to ${lang}:`, err);
+                results[lang] = ""; // Fallback to empty if a specific language fails
+            }
+        }
+        res.json(results);
+    } catch (error) {
+        console.error('Global Translation error:', error);
+        res.status(500).json({ error: 'Translation service unavailable' });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.use((err, req, res, next) => {

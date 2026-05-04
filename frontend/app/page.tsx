@@ -4,6 +4,7 @@ import HomeHero from './HomeHero';
 import SocialProof from './SocialProof';
 import PushNotification from './PushNotification';
 import AdSlot from './AdSlot';
+import CategoriesNav from './CategoriesNav';
 
 const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
@@ -97,6 +98,7 @@ export default async function HomePage() {
   return (
     <div>
       <GeoDetect countries={(countries || []).map((c: any) => ({ id: c.id, name: c.name }))} />
+      <CategoriesNav />
       <SocialProof />
       <div className="px-4 max-w-6xl mx-auto"><AdSlot format="horizontal" /></div>
       <MyRetailers />

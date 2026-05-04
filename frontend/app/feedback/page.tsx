@@ -15,7 +15,17 @@ export default function FeedbackPage() {
     const [recaptchaToken, setRecaptchaToken] = useState('');
     const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
     const [errorMsg, setErrorMsg] = useState('');
+    const [honeypot, setHoneypot] = useState(''); // Bot trap
+    const [mathValue, setMathValue] = useState('');
+    const [mathProblem, setMathProblem] = useState({ a: 0, b: 0 });
     const recaptchaRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        setMathProblem({
+            a: Math.floor(Math.random() * 9) + 1,
+            b: Math.floor(Math.random() * 9) + 1
+        });
+    }, []);
 
     const validateEmail = (val: string) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -40,6 +50,16 @@ export default function FeedbackPage() {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setErrorMsg('');
+        
+        // Anti-spam 1: Honeypot
+        if (honeypot) return; 
+
+        // Anti-spam 2: Math Challenge
+        if (!RECAPTCHA_SITE_KEY && parseInt(mathValue) !== (mathProblem.a + mathProblem.b)) {
+            setErrorMsg('Incorrect math answer. Please try again.');
+            return;
+        }
+
         if (!validateEmail(email)) return;
         if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
             setErrorMsg('Please complete the verification.');
@@ -51,12 +71,20 @@ export default function FeedbackPage() {
             const res = await fetch(`${apiUrl}/api/feedback`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, message, recaptchaToken }),
+                body: JSON.stringify({ 
+                    name, 
+                    email, 
+                    message, 
+                    recaptchaToken,
+                    honeypot, // Send to backend for double check
+                    mathAnswer: mathValue,
+                    mathProblem // Send numbers so backend can verify
+                }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Submission failed');
             setStatus('done');
-            setName(''); setEmail(''); setMessage(''); setRecaptchaToken('');
+            setName(''); setEmail(''); setMessage(''); setRecaptchaToken(''); setMathValue('');
         } catch (err: any) {
             setStatus('error');
             setErrorMsg(err.message || 'Something went wrong. Please try again.');
@@ -137,6 +165,40 @@ export default function FeedbackPage() {
                                 className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
                             />
                         </div>
+
+                        {/* Honeypot - Invisible to humans */}
+                        <div style={{ display: 'none' }} aria-hidden="true">
+                            <input 
+                                type="text" 
+                                name="website" 
+                                value={honeypot} 
+                                onChange={e => setHoneypot(e.target.value)} 
+                                tabIndex={-1} 
+                                autoComplete="off" 
+                            />
+                        </div>
+
+                        {!RECAPTCHA_SITE_KEY && (
+                            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex align-center gap-2">
+                                    <i className="fa-solid fa-robot"></i> Security Check
+                                </label>
+                                <div className="flex items-center gap-4">
+                                    <span className="text-gray-700 font-bold bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                                        {mathProblem.a} + {mathProblem.b} =
+                                    </span>
+                                    <input
+                                        type="number"
+                                        required
+                                        value={mathValue}
+                                        onChange={e => setMathValue(e.target.value)}
+                                        placeholder="?"
+                                        className="w-20 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                    />
+                                    <span className="text-xs text-gray-400 italic">(Prove you're human)</span>
+                                </div>
+                            </div>
+                        )}
 
                         {RECAPTCHA_SITE_KEY && (
                             <div className="flex justify-center">
