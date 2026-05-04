@@ -682,12 +682,14 @@ app.get('/api/search', async (req, res) => {
 // Get unique categories from retailers and offers
 app.get('/api/search/filters', async (req, res) => {
     try {
-        const retailerCategories = await Retailer.distinct('category');
-        const offerCategories = await Offer.distinct('category');
-        const categories = [...new Set([...retailerCategories, ...offerCategories])].sort();
-        
-        const cities = await City.find().select('id name').lean();
-        const retailers = await Retailer.find().select('id name').lean();
+        const [dbCategories, cities, retailers] = await Promise.all([
+            Category.find().sort({ order: 1, name: 1 }).select('id name name_ar').lean(),
+            City.find().select('id name').lean(),
+            Retailer.find().select('id name cityId').lean(),
+        ]);
+        const categories = dbCategories.length
+            ? dbCategories.map(c => c.name)
+            : [...new Set([...(await Retailer.distinct('category')), ...(await Offer.distinct('category'))])].sort();
         
         res.json({ categories, cities, retailers });
     } catch (err) {
