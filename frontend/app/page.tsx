@@ -10,49 +10,77 @@ const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://12
 async function getCountries() {
   try {
     const res = await fetch(`${API}/api/countries`, { cache: 'no-store' });
-    if (!res.ok) throw new Error();
-    return res.json();
-  } catch { return null; }
+    if (!res.ok) return null;
+    const data = await res.json();
+    return Array.isArray(data) ? data : null;
+  } catch (err) { 
+    console.error("Fetch error (countries):", err);
+    return null; 
+  }
 }
 
 async function getTopRetailers() {
   try {
-    const [retailers, offerCounts] = await Promise.all([
-      fetch(`${API}/api/retailers?limit=10&sort=clicks`, { cache: 'no-store' }).then(r => r.json()),
-      fetch(`${API}/api/offer-counts`, { cache: 'no-store' }).then(r => r.json()),
+    const [retRes, countRes] = await Promise.all([
+      fetch(`${API}/api/retailers?limit=10&sort=clicks`, { cache: 'no-store' }),
+      fetch(`${API}/api/offer-counts`, { cache: 'no-store' })
     ]);
-    return retailers.map((r: any) => ({ ...r, offerCount: offerCounts[r.id] || 0 }));
-  } catch { return []; }
+    const retailers = retRes.ok ? await retRes.json() : [];
+    const offerCounts = countRes.ok ? await countRes.json() : {};
+    
+    if (!Array.isArray(retailers)) return [];
+    return retailers.map((r: any) => ({ ...r, offerCount: (offerCounts && offerCounts[r.id]) || 0 }));
+  } catch (err) {
+    console.error("Fetch error (top retailers):", err);
+    return [];
+  }
 }
 
 async function getLatestOffers() {
   try {
-    const [offers, retailers] = await Promise.all([
-      fetch(`${API}/api/offers?limit=8`, { cache: 'no-store' }).then(r => r.json()),
-      fetch(`${API}/api/retailers`, { cache: 'no-store' }).then(r => r.json()),
+    const [offRes, retRes] = await Promise.all([
+      fetch(`${API}/api/offers?limit=8`, { cache: 'no-store' }),
+      fetch(`${API}/api/retailers`, { cache: 'no-store' })
     ]);
-    const retailerMap = Object.fromEntries(retailers.map((r: any) => [r.id, r.name]));
+    const offers = offRes.ok ? await offRes.json() : [];
+    const retailers = retRes.ok ? await retRes.json() : [];
+    
+    if (!Array.isArray(offers)) return [];
+    const retailerMap = Object.fromEntries(Array.isArray(retailers) ? retailers.map((r: any) => [r.id, r.name]) : []);
     return offers.map((o: any) => ({ ...o, retailerName: retailerMap[o.retailerId] || o.retailerId }));
-  } catch { return []; }
+  } catch (err) {
+    console.error("Fetch error (latest offers):", err);
+    return [];
+  }
 }
 
 async function getExpiringSoon() {
   try {
-    const [offers, retailers] = await Promise.all([
-      fetch(`${API}/api/offers/expiring-soon`, { cache: 'no-store' }).then(r => r.json()),
-      fetch(`${API}/api/retailers`, { cache: 'no-store' }).then(r => r.json()),
+    const [offRes, retRes] = await Promise.all([
+      fetch(`${API}/api/offers/expiring-soon`, { cache: 'no-store' }),
+      fetch(`${API}/api/retailers`, { cache: 'no-store' })
     ]);
-    const retailerMap = Object.fromEntries(retailers.map((r: any) => [r.id, r.name]));
+    const offers = offRes.ok ? await offRes.json() : [];
+    const retailers = retRes.ok ? await retRes.json() : [];
+    
+    if (!Array.isArray(offers)) return [];
+    const retailerMap = Object.fromEntries(Array.isArray(retailers) ? retailers.map((r: any) => [r.id, r.name]) : []);
     return offers.map((o: any) => ({ ...o, retailerName: retailerMap[o.retailerId] || o.retailerId }));
-  } catch { return []; }
+  } catch (err) {
+    console.error("Fetch error (expiring soon):", err);
+    return [];
+  }
 }
 
 async function getSettings() {
   try {
     const res = await fetch(`${API}/api/settings`, { cache: 'no-store' });
-    if (!res.ok) throw new Error();
+    if (!res.ok) return {};
     return res.json();
-  } catch { return {}; }
+  } catch (err) {
+    console.error("Fetch error (settings):", err);
+    return {};
+  }
 }
 
 export default async function HomePage() {

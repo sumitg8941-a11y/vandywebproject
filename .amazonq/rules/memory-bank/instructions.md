@@ -75,4 +75,12 @@
 
 ---
 
+## 7. Version Control & Pushing
+
+- **NEVER PUSH TO GITHUB.** Under no circumstances should you run `git push`. The user will handle all pushes to the remote repository.
+- **Local Commits Only**: You may perform local `git add` and `git commit` to save progress, but do not interact with the remote `origin`.
+- **Inform the User**: Always inform the user when significant local changes are ready to be pushed.
+
+---
+
 *Last updated: 2026-05-04*
