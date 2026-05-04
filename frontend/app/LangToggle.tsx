@@ -406,11 +406,11 @@ export default function LangToggle() {
   const { lang, setLang } = useLang();
   const [open, setOpen] = useState(false);
 
-  const languages: { id: Lang; name: string; flag: string }[] = [
-    { id: 'en', name: 'English', flag: '🇺🇸' },
-    { id: 'ar', name: 'العربية', flag: '🇦🇪' },
-    { id: 'ur', name: 'اردو', flag: '🇵🇰' },
-    { id: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
+  const languages: { id: Lang; name: string }[] = [
+    { id: 'en', name: 'English' },
+    { id: 'ar', name: 'العربية' },
+    { id: 'ur', name: 'اردو' },
+    { id: 'hi', name: 'हिन्दी' },
   ];
 
   return (
@@ -435,11 +435,10 @@ export default function LangToggle() {
                   setLang(l.id);
                   setOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition ${
+                className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition ${
                   lang === l.id ? 'bg-red-50 text-red-600' : 'hover:bg-gray-50 text-gray-700'
                 }`}
               >
-                <span>{l.flag}</span>
                 <span>{l.name}</span>
                 {lang === l.id && <i className="fa-solid fa-check ml-auto text-[10px]"></i>}
               </button>
