@@ -11,15 +11,15 @@ function getDaysLeft(validUntil: string) {
   return Math.ceil((new Date(validUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
-function getUrgencyBadge(validUntil: string, createdAt?: string): { text: string; cls: string } | null {
+function getUrgencyBadge(validUntil: string, t: any, createdAt?: string): { text: string; cls: string } | null {
   const days = getDaysLeft(validUntil);
   if (days <= 0) return null;
-  if (days === 1) return { text: 'Expires today!', cls: 'bg-red-600 text-white' };
-  if (days <= 3) return { text: `${days} days left`, cls: 'bg-orange-500 text-white' };
-  if (days <= 7) return { text: `${days} days left`, cls: 'bg-yellow-500 text-gray-900' };
+  if (days === 1) return { text: t.expiresToday, cls: 'bg-red-600 text-white' };
+  if (days <= 3) return { text: `${days} ${t.daysLeft}`, cls: 'bg-orange-500 text-white' };
+  if (days <= 7) return { text: `${days} ${t.daysLeft}`, cls: 'bg-yellow-500 text-gray-900' };
   if (createdAt) {
     const addedDaysAgo = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24));
-    if (addedDaysAgo <= 7) return { text: 'New this week', cls: 'bg-green-500 text-white' };
+    if (addedDaysAgo <= 7) return { text: t.newThisWeek, cls: 'bg-green-500 text-white' };
   }
   return null;
 }
@@ -55,10 +55,10 @@ export default function HomeHero({
         </div>
         <div className="text-center mb-8">
           <span className="inline-block bg-red-100 text-red-600 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2">
-            Start Here
+            {t.startHere}
           </span>
           <h2 className="text-3xl font-black text-gray-900 mb-2">{t.selectCountry}</h2>
-          <p className="text-gray-600">Browse deals by location</p>
+          <p className="text-gray-600">{t.browseByLocation}</p>
         </div>
         {countries === null ? (
           <div className="text-center p-10 bg-red-50 text-red-700 rounded-xl border border-red-200">
@@ -92,10 +92,10 @@ export default function HomeHero({
       <div id="retailers" className="max-w-6xl mx-auto px-4 mt-20 scroll-mt-20">
         <div className="text-center mb-8">
           <span className="inline-block bg-orange-100 text-orange-600 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2">
-            Popular Stores
+            {t.popularStores}
           </span>
           <h2 className="text-3xl font-black text-gray-900 mb-2">{t.topRetailers}</h2>
-          <p className="text-gray-600">Shop from your favorite brands</p>
+          <p className="text-gray-600">{t.shopBrands}</p>
         </div>
         {topRetailers.length === 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
@@ -148,7 +148,7 @@ export default function HomeHero({
                 <Link href={`/view/${o.id || o._id}`} key={o.id || o._id}>
                   <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-orange-200 group relative">
                     <div className="absolute top-2 right-2 z-10 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded shadow">
-                      {days === 0 ? 'Today!' : `${days}d left`}
+                      {days === 0 ? t.expiresToday : `${days}${t.daysLeft.split(' ')[0]} ${t.daysLeft.split(' ')[1] || ''}`}
                     </div>
                     {o.badge && (
                       <div className="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow">
@@ -179,10 +179,10 @@ export default function HomeHero({
       <div id="coupons" className="max-w-6xl mx-auto px-4 mt-20 scroll-mt-20 mb-16">
         <div className="text-center mb-8">
           <span className="inline-block bg-green-100 text-green-600 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2">
-            Fresh Deals
+            {t.freshDeals}
           </span>
           <h2 className="text-3xl font-black text-gray-900 mb-2">{t.latestOffers}</h2>
-          <p className="text-gray-600">Just added to our collection</p>
+          <p className="text-gray-600">{t.justAdded}</p>
         </div>
         {latestOffers.length === 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
@@ -191,7 +191,7 @@ export default function HomeHero({
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
             {latestOffers.map((o: any) => {
-              const urgency = o.validUntil ? getUrgencyBadge(o.validUntil, o.createdAt) : null;
+              const urgency = o.validUntil ? getUrgencyBadge(o.validUntil, t, o.createdAt) : null;
               return (
                 <Link href={`/view/${o.id || o._id}`} key={o.id || o._id}>
                   <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 hover:border-red-200 group relative">

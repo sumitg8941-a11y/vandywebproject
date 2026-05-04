@@ -8,6 +8,7 @@ import { SkeletonCard, SkeletonOfferCard } from '../SkeletonLoader';
 import AdSlot from '../AdSlot';
 
 function SearchContent() {
+  const { t } = useLang();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -83,8 +84,8 @@ function SearchContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white text-center py-12 px-4 shadow-md">
-        <h1 className="text-4xl font-black mb-4">Search Deals</h1>
-        <p className="opacity-95">Find coupons, offers, and retailers</p>
+        <h1 className="text-4xl font-black mb-4">{t.search}</h1>
+        <p className="opacity-95">{t.findDeals}</p>
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
@@ -94,7 +95,7 @@ function SearchContent() {
               type="text"
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
-              placeholder="Search for electronics, groceries, fashion..."
+              placeholder={t.searchPlaceholder}
               className="w-full p-4 pr-12 text-lg border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none"
             />
             {loading && (
@@ -108,7 +109,7 @@ function SearchContent() {
             className="mt-4 w-full md:hidden flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-lg transition"
           >
             <i className="fa-solid fa-filter"></i>
-            Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+            {t.filters || 'Filters'} {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
         </div>
 
@@ -116,46 +117,46 @@ function SearchContent() {
           <div className={`${showFilters ? 'block' : 'hidden'} md:block w-full md:w-64 flex-shrink-0`}>
             <div className="bg-white rounded-xl shadow-md p-6 sticky top-20">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-800">Filters</h2>
+                <h2 className="text-xl font-bold text-gray-800">{t.filters || 'Filters'}</h2>
                 {activeFiltersCount > 0 && (
-                  <button onClick={clearFilters} className="text-sm text-red-600 hover:text-red-700 font-semibold">Clear All</button>
+                  <button onClick={clearFilters} className="text-sm text-red-600 hover:text-red-700 font-semibold">{t.clearAll || 'Clear All'}</button>
                 )}
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2"><i className="fa-solid fa-tag mr-2"></i>Category</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2"><i className="fa-solid fa-tag mr-2"></i>{t.category || 'Category'}</label>
                 <select value={category} onChange={(e) => handleCategoryChange(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none bg-white">
-                  <option value="all">All Categories</option>
+                  <option value="all">{t.allCategories || 'All Categories'}</option>
                   {filters.categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2"><i className="fa-solid fa-location-dot mr-2"></i>City</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2"><i className="fa-solid fa-location-dot mr-2"></i>{t.city || 'City'}</label>
                 <select value={cityId} onChange={(e) => handleCityChange(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none bg-white">
-                  <option value="all">All Cities</option>
+                  <option value="all">{t.allCities || 'All Cities'}</option>
                   {filters.cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}
                 </select>
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2"><i className="fa-solid fa-store mr-2"></i>Retailer</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2"><i className="fa-solid fa-store mr-2"></i>{t.retailer || 'Retailer'}</label>
                 <select value={retailerId} onChange={(e) => handleRetailerChange(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-red-500 focus:outline-none bg-white" disabled={filteredRetailers.length === 0}>
-                  <option value="all">All Retailers</option>
+                  <option value="all">{t.allRetailers || 'All Retailers'}</option>
                   {filteredRetailers.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
               </div>
 
               <div className="mb-6">
                 <label className="block text-sm font-bold text-gray-700 mb-3">
-                  <i className="fa-solid fa-clock mr-2 text-orange-500"></i>Expiry
+                  <i className="fa-solid fa-clock mr-2 text-orange-500"></i>{t.expiry || 'Expiry'}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { value: 'all', label: 'Any time', icon: '' },
-                    { value: 'today', label: 'Today', icon: '🔥' },
-                    { value: 'week', label: 'This week', icon: '⚡' },
-                    { value: 'month', label: 'This month', icon: '📅' },
+                    { value: 'all', label: t.anyTime || 'Any time', icon: '' },
+                    { value: 'today', label: t.today || 'Today', icon: '🔥' },
+                    { value: 'week', label: t.thisWeek || 'This week', icon: '⚡' },
+                    { value: 'month', label: t.thisMonth || 'This month', icon: '📅' },
                   ].map(opt => (
                     <button
                       key={opt.value}
@@ -174,22 +175,22 @@ function SearchContent() {
 
               {activeFiltersCount > 0 && (
                 <div className="pt-4 border-t border-gray-200 space-y-2">
-                  <p className="text-sm text-gray-600">Active Filters:</p>
+                  <p className="text-sm text-gray-600">{t.activeFilters || 'Active Filters'}:</p>
                   {category !== 'all' && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-700">Category: <strong>{category}</strong></span>
+                      <span className="text-gray-700">{t.category || 'Category'}: <strong>{category}</strong></span>
                       <button onClick={() => handleCategoryChange('all')} className="text-red-600"><i className="fa-solid fa-xmark"></i></button>
                     </div>
                   )}
                   {cityId !== 'all' && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-700">City: <strong>{filters.cities.find(c => c.id === cityId)?.name}</strong></span>
+                      <span className="text-gray-700">{t.city || 'City'}: <strong>{filters.cities.find(c => c.id === cityId)?.name}</strong></span>
                       <button onClick={() => handleCityChange('all')} className="text-red-600"><i className="fa-solid fa-xmark"></i></button>
                     </div>
                   )}
                   {retailerId !== 'all' && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-700">Retailer: <strong>{filters.retailers.find(r => r.id === retailerId)?.name}</strong></span>
+                      <span className="text-gray-700">{t.retailer || 'Retailer'}: <strong>{filters.retailers.find(r => r.id === retailerId)?.name}</strong></span>
                       <button onClick={() => handleRetailerChange('all')} className="text-red-600"><i className="fa-solid fa-xmark"></i></button>
                     </div>
                   )}
@@ -203,13 +204,13 @@ function SearchContent() {
 
             {(results.retailers.length > 0 || results.offers.length > 0) && (
               <div className="mb-4 text-gray-600">
-                Found <strong>{results.retailers.length}</strong> retailer(s) and <strong>{results.offers.length}</strong> offer(s)
+                {t.foundCount || 'Found'} <strong>{results.retailers.length}</strong> {t.retailers} {t.and || 'and'} <strong>{results.offers.length}</strong> {t.offers}
               </div>
             )}
 
             {results.retailers.length > 0 && (
               <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">Retailers</h2>
+                <h2 className="text-2xl font-bold mb-4 text-gray-800">{t.retailers}</h2>
                 {loading ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
@@ -232,7 +233,7 @@ function SearchContent() {
 
             {results.offers.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">Offers</h2>
+                <h2 className="text-2xl font-bold mb-4 text-gray-800">{t.offers}</h2>
                 {loading ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {[1, 2, 3, 4].map(i => <SkeletonOfferCard key={i} />)}
@@ -266,7 +267,7 @@ function SearchContent() {
                           {o.validUntil && (
                             <p className="text-xs text-gray-400 mt-1">
                               <i className="fa-regular fa-calendar mr-1"></i>
-                              Until {new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})}
+                              {t.until} {new Date(o.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})}
                             </p>
                           )}
                         </div>
@@ -280,8 +281,8 @@ function SearchContent() {
             {!loading && results.retailers.length === 0 && results.offers.length === 0 && (
               <div className="text-center py-12 bg-white rounded-xl shadow-md">
                 <i className="fa-solid fa-magnifying-glass text-6xl text-gray-300 mb-4"></i>
-                <p className="text-xl text-gray-600 mb-2">No results found</p>
-                <p className="text-gray-500">Try adjusting your search or filters</p>
+                <p className="text-xl text-gray-600 mb-2">{t.noResults || 'No results found'}</p>
+                <p className="text-gray-500">{t.tryAdjusting || 'Try adjusting your search or filters'}</p>
               </div>
             )}
           </div>
@@ -289,7 +290,7 @@ function SearchContent() {
 
         <div className="mt-8 text-center">
           <Link href="/" className="text-red-600 hover:underline font-semibold">
-            <i className="fa-solid fa-arrow-left mr-2"></i>Back to Home
+            <i className="fa-solid fa-arrow-left mr-2"></i>{t.backHome || 'Back to Home'}
           </Link>
         </div>
       </div>
