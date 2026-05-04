@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLang } from './LangToggle';
 
 export default function RatingWidget({ offerId, initialRating = 0, initialCount = 0 }: { offerId: string; initialRating: number; initialCount: number }) {
+  const { t } = useLang();
   const [rating, setRating] = useState(initialRating);
   const [count, setCount] = useState(initialCount);
   const [hover, setHover] = useState(0);
@@ -10,7 +12,6 @@ export default function RatingWidget({ offerId, initialRating = 0, initialCount 
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
-  // Load user's previous rating from localStorage
   useEffect(() => {
     const key = `dn_rating_${offerId}`;
     const stored = localStorage.getItem(key);
@@ -23,8 +24,6 @@ export default function RatingWidget({ offerId, initialRating = 0, initialCount 
   }, [offerId]);
 
   const handleRate = async (stars: number) => {
-    // If clicking the same rating, allow it (no undo for ratings - just update)
-    // If clicking different rating, update to new rating
     try {
       const res = await fetch(`${apiBaseUrl}/api/offer/${offerId}/rate`, {
         method: 'POST',
@@ -51,7 +50,6 @@ export default function RatingWidget({ offerId, initialRating = 0, initialCount 
             onMouseEnter={() => setHover(star)}
             onMouseLeave={() => setHover(0)}
             className="text-xl transition cursor-pointer hover:scale-110"
-            title={userRating ? 'Click to update your rating' : 'Rate this offer'}
           >
             <i className={`fa-${(hover || userRating || rating) >= star ? 'solid' : 'regular'} fa-star ${
               hover >= star ? 'text-yellow-500' : 
@@ -63,8 +61,8 @@ export default function RatingWidget({ offerId, initialRating = 0, initialCount 
         ))}
       </div>
       <span className="text-sm font-semibold text-gray-600">
-        {rating > 0 ? `${rating.toFixed(1)}★` : 'Rate this'} {count > 0 && `(${count})`}
-        {userRating && <span className="text-xs text-gray-400 ml-1">(You: {userRating}★)</span>}
+        {rating > 0 ? `${rating.toFixed(1)}★` : t.rateThis || 'Rate this'} {count > 0 && `(${count})`}
+        {userRating && <span className="text-xs text-gray-400 ml-1">({t.you || 'You'}: {userRating}★)</span>}
       </span>
     </div>
   );

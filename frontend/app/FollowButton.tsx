@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLang } from './LangToggle';
 
 const STORAGE_KEY = 'dn_followed_retailers';
 
@@ -12,6 +13,7 @@ export function getFollowedRetailers(): string[] {
 }
 
 export default function FollowButton({ retailerId, retailerName }: { retailerId: string; retailerName: string }) {
+  const { t } = useLang();
   const [following, setFollowing] = useState(false);
 
   useEffect(() => {
@@ -37,7 +39,6 @@ export default function FollowButton({ retailerId, retailerName }: { retailerId:
   return (
     <button
       onClick={toggle}
-      title={following ? `Unfollow ${retailerName}` : `Follow ${retailerName}`}
       className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${
         following
           ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
@@ -45,7 +46,7 @@ export default function FollowButton({ retailerId, retailerName }: { retailerId:
       }`}
     >
       <i className={`fa-${following ? 'solid' : 'regular'} fa-heart text-xs`}></i>
-      {following ? 'Following' : 'Follow'}
+      {following ? t.following || 'Following' : t.follow || 'Follow'}
     </button>
   );
 }

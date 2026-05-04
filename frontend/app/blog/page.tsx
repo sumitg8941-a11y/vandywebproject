@@ -1,39 +1,41 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import SafeImage from '../SafeImage';
 import Breadcrumbs from '../Breadcrumbs';
+import { useLang } from '../LangToggle';
 
-export const metadata = {
-  title: 'Blog | DealNamaa',
-  description: 'Read our latest blog posts about deals, shopping tips, and more.',
-};
+export default function BlogListingPage() {
+  const { t } = useLang();
+  const [blogs, setBlogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+  useEffect(() => {
+    const API = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000';
+    fetch(`${API}/api/blogs`)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        setBlogs(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
-async function getBlogs() {
-  try {
-    const res = await fetch(`${API}/api/blogs`, { cache: 'no-store' });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
-
-export default async function BlogListingPage() {
-  const blogs = await getBlogs();
+  if (loading) return <div className="p-20 text-center"><i className="fa-solid fa-spinner fa-spin text-4xl text-red-600"></i></div>;
 
   return (
     <div className="bg-gray-50 min-h-screen pb-12">
-      <Breadcrumbs items={[{ label: 'Blog' }]} />
+      <Breadcrumbs items={[{ label: t.blogTitle || 'Blog' }]} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Our Blog</h1>
-        <p className="text-lg text-gray-600 mb-10">Tips, tricks, and guides for smart shopping.</p>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">{t.blogTitle || 'Our Blog'}</h1>
+        <p className="text-lg text-gray-600 mb-10">{t.feedbackSub}</p>
 
         {blogs.length === 0 ? (
           <div className="bg-white p-10 rounded-xl shadow-sm text-center border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2"><i className="fa-regular fa-folder-open text-gray-400"></i> No posts yet</h2>
-            <p className="text-gray-500">Check back later for new updates.</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2"><i className="fa-regular fa-folder-open text-gray-400"></i> {t.noResults}</h2>
+            <p className="text-gray-500">{t.tryAdjusting}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -59,7 +61,7 @@ export default async function BlogListingPage() {
                     {blog.excerpt}
                   </p>
                   <div className="mt-auto text-sm font-semibold text-red-600 flex items-center">
-                    Read more <i className="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    {t.readMore} <i className="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
                   </div>
                 </div>
               </Link>

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useLang } from './LangToggle';
 
 export default function CouponReveal({ code }: { code: string }) {
+  const { t } = useLang();
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -33,7 +35,7 @@ export default function CouponReveal({ code }: { code: string }) {
             <span className="blur-[2px] select-none tracking-widest">{code}</span>
           </span>
           <span className="text-[10px] font-black text-white bg-red-600 px-2 py-1 rounded-md uppercase tracking-wider whitespace-nowrap group-hover:bg-red-700">
-            Reveal Code
+            {t.revealCode}
           </span>
         </button>
       ) : (
@@ -45,7 +47,7 @@ export default function CouponReveal({ code }: { code: string }) {
             {code}
           </span>
           <span className={`text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-1 rounded-md ${copied ? 'bg-green-600 text-white' : 'bg-green-700 text-white'}`}>
-            {copied ? <><i className="fa-solid fa-check mr-1"></i>Copied!</> : 'Copy'}
+            {copied ? <><i className="fa-solid fa-check mr-1"></i>{t.copied}</> : t.copy}
           </span>
         </button>
       )}

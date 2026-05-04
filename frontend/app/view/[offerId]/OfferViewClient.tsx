@@ -15,17 +15,18 @@ interface Props {
   offerId: string;
 }
 
-function getExpiryLabel(validUntil: string): { text: string; className: string } | null {
+function getExpiryLabel(validUntil: string, t: any): { text: string; className: string } | null {
   if (!validUntil) return null;
   const days = Math.ceil((new Date(validUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  if (days < 0) return { text: 'Expired', className: 'bg-gray-500 text-white' };
-  if (days === 0) return { text: 'Expires today!', className: 'bg-red-600 text-white' };
-  if (days <= 3) return { text: `Expires in ${days}d`, className: 'bg-orange-500 text-white' };
-  if (days <= 7) return { text: `${days} days left`, className: 'bg-yellow-500 text-gray-900' };
+  if (days < 0) return { text: t.expired || 'Expired', className: 'bg-gray-500 text-white' };
+  if (days === 0) return { text: t.expiresToday || 'Expires today!', className: 'bg-red-600 text-white' };
+  if (days <= 3) return { text: `${t.expiresIn || 'Expires in'} ${days}d`, className: 'bg-orange-500 text-white' };
+  if (days <= 7) return { text: `${days} ${t.daysLeft || 'days left'}`, className: 'bg-yellow-500 text-gray-900' };
   return null;
 }
 
 export default function OfferViewClient({ offer: initialOffer, retailer, offerId }: Props) {
+  const { t } = useLang();
   const [offer, setOffer] = useState(initialOffer);
   const [userFeedback, setUserFeedback] = useState<'like' | 'dislike' | null>(null);
   const [isFlipbookOpen, setIsFlipbookOpen] = useState(false);
@@ -150,7 +151,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
     }
   };
 
-  const expiryLabel = getExpiryLabel(offer.validUntil);
+  const expiryLabel = getExpiryLabel(offer.validUntil, t);
   const pdfSrc = offer.pdfUrl && offer.pdfUrl !== '#'
     ? (offer.pdfUrl.startsWith('http') ? offer.pdfUrl : `${apiBaseUrl}${offer.pdfUrl}`)
     : null;
@@ -161,8 +162,8 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
       <div className="bg-white shadow-sm border-b py-3 px-6 flex justify-between items-center">
         <Link href={`/offers/${offer.retailerId}`} className="text-gray-600 hover:text-gray-900 font-semibold transition flex items-center gap-2">
           <i className="fa-solid fa-arrow-left"></i>
-          <span className="hidden sm:inline">Back to {retailer?.name || 'Retailer'}</span>
-          <span className="sm:hidden">Back</span>
+          <span className="hidden sm:inline">{t.backTo} {retailer?.name || t.retailer}</span>
+          <span className="sm:hidden">{t.backTo}</span>
         </Link>
         <div className="flex items-center gap-3">
           {/* Share Button */}
@@ -172,10 +173,10 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
             aria-label="Share this offer"
           >
             <i className="fa-solid fa-share-nodes text-base"></i>
-            <span className="hidden sm:inline">Share</span>
+            <span className="hidden sm:inline">{t.share}</span>
           </button>
-          <div className="font-black text-red-600 tracking-tight hidden sm:block">
-            HOT DEAL <i className="fa-solid fa-fire text-orange-500"></i>
+          <div className="font-black text-red-600 tracking-tight hidden sm:block uppercase">
+            {t.hotDeal} <i className="fa-solid fa-fire text-orange-500"></i>
           </div>
         </div>
       </div>
@@ -199,7 +200,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
               )}
               {offer.isSponsored && (
                 <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full border border-yellow-200">
-                  Sponsored
+                  {t.sponsored}
                 </span>
               )}
             </div>
@@ -215,14 +216,13 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
 
             <p className="text-gray-500 text-sm mb-5">
               <i className="fa-regular fa-calendar mr-2"></i>
-              Valid: {offer.validFrom ? new Date(offer.validFrom).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '—'} &ndash; {offer.validUntil ? new Date(offer.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '—'}
+              {t.valid}: {offer.validFrom ? new Date(offer.validFrom).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '—'} &ndash; {offer.validUntil ? new Date(offer.validUntil).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '—'}
             </p>
 
             {/* Coupon Code */}
-            {/* Coupon Code - Tap to Copy */}
             {offer.couponCode && (
               <div className="mb-5">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Coupon Code</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t.couponCode}</p>
                 <button
                   onClick={handleCopyCode}
                   className="w-full group relative flex items-center gap-2 transition-all active:scale-95"
@@ -233,14 +233,14 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                   </div>
                   <div className={`px-4 py-3 rounded-lg font-bold text-sm shadow-sm transition-all duration-300 whitespace-nowrap ${copied ? 'bg-green-600 text-white scale-105' : 'bg-gray-900 text-white group-hover:bg-red-600'}`}>
                     {copied ? (
-                      <span className="flex items-center gap-1.5"><i className="fa-solid fa-check"></i> Copied!</span>
+                      <span className="flex items-center gap-1.5"><i className="fa-solid fa-check"></i> {t.copied}</span>
                     ) : (
-                      <span className="flex items-center gap-1.5"><i className="fa-regular fa-copy"></i> Copy</span>
+                      <span className="flex items-center gap-1.5"><i className="fa-regular fa-copy"></i> {t.copy}</span>
                     )}
                   </div>
                   {!copied && (
                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                      Tap to Copy
+                      {t.tapToCopy}
                     </div>
                   )}
                 </button>
@@ -252,7 +252,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
               <RatingWidget offerId={offerId} initialRating={offer.rating || 0} initialCount={offer.ratingCount || 0} />
             </div>
             <div className="flex flex-wrap items-center gap-3 text-sm font-semibold">
-              <span className="text-gray-500">Was this helpful?</span>
+              <span className="text-gray-500">{t.wasHelpful}</span>
               <button
                 onClick={() => handleFeedback('like')}
                 disabled={userFeedback === 'dislike'}
@@ -263,7 +263,6 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                     ? 'opacity-50 cursor-not-allowed text-green-600 border-green-200' 
                     : 'hover:bg-green-50 hover:border-green-300 text-green-600 border-green-200'
                 }`}
-                title={userFeedback === 'like' ? 'Click again to undo' : 'Mark as helpful'}
               >
                 <i className={userFeedback === 'like' ? 'fa-solid fa-thumbs-up' : 'fa-regular fa-thumbs-up'}></i> {offer.likes || 0}
               </button>
@@ -277,7 +276,6 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                     ? 'opacity-50 cursor-not-allowed text-red-500 border-red-200' 
                     : 'hover:bg-red-50 hover:border-red-300 text-red-500 border-red-200'
                 }`}
-                title={userFeedback === 'dislike' ? 'Click again to undo' : 'Mark as not helpful'}
               >
                 <i className={userFeedback === 'dislike' ? 'fa-solid fa-thumbs-down' : 'fa-regular fa-thumbs-down'}></i> {offer.dislikes || 0}
               </button>
@@ -294,8 +292,8 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                 rel="noopener noreferrer"
                 className="flex flex-col items-center justify-center gap-1 bg-gradient-to-r from-red-600 to-orange-500 text-white px-6 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
               >
-                <span className="font-black text-lg tracking-tight"><i className="fa-solid fa-bolt text-yellow-300"></i> Go to Deal</span>
-                <span className="text-xs font-medium opacity-90">at {retailer?.name || 'Retailer Website'}</span>
+                <span className="font-black text-lg tracking-tight"><i className="fa-solid fa-bolt text-yellow-300"></i> {t.goToDeal}</span>
+                <span className="text-xs font-medium opacity-90">{t.at} {retailer?.name || t.retailer}</span>
               </a>
             )}
             {pdfSrc && (
@@ -303,7 +301,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                 onClick={() => setIsFlipbookOpen(true)}
                 className="flex items-center justify-center gap-2 bg-yellow-400 text-gray-900 px-6 py-4 rounded-xl font-extrabold text-lg shadow-md hover:bg-yellow-500 hover:scale-105 transition-all border border-yellow-500"
               >
-                <i className="fa-solid fa-book-open"></i> View Catalog
+                <i className="fa-solid fa-book-open"></i> {t.viewCatalog}
               </button>
             )}
             {!offer.retailerUrl && offer.couponUrl && offer.couponUrl !== '#' && (
@@ -313,7 +311,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-red-700 transition"
               >
-                <i className="fa-solid fa-arrow-up-right-from-square"></i> Shop Now
+                <i className="fa-solid fa-arrow-up-right-from-square"></i> {t.shopNow}
               </a>
             )}
             {retailer?.websiteUrl && (
@@ -323,12 +321,12 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-200 transition border border-gray-200"
               >
-                <i className="fa-solid fa-globe"></i> Visit {retailer.name}
+                <i className="fa-solid fa-globe"></i> {t.visit} {retailer.name}
               </a>
             )}
             {/* Multi-platform Share */}
             <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 text-center">Share this deal</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 text-center">{t.shareThis}</p>
               <div className="grid grid-cols-3 gap-2">
                 <a
                   href={`https://wa.me/?text=${encodeURIComponent(`🔥 ${offer.title}\n${siteUrl}/view/${offerId}`)}`}
@@ -368,7 +366,7 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
                   onClick={handleShare}
                   className="flex flex-col items-center gap-1 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg transition text-xs font-bold"
                 >
-                  <i className="fa-solid fa-link text-lg"></i>Copy Link
+                  <i className="fa-solid fa-link text-lg"></i>{t.copy}
                 </button>
               </div>
             </div>
@@ -377,15 +375,11 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
 
         <AdSlot format="horizontal" className="my-6" />
 
-        {/* Flyer Image */}
-        {/* Flyer Image with Side Ads */}
         <div className="flex gap-6 items-start">
-          {/* Left Ad (desktop only) */}
           <div className="hidden lg:block flex-shrink-0 w-[300px]">
             <AdSlot format="vertical" className="sticky top-4" />
           </div>
 
-          {/* Flyer Image */}
           <div className="flex-1 bg-white rounded-2xl shadow-md border border-gray-100 p-4 md:p-8 flex justify-center">
             <div className="relative w-full max-w-2xl" style={{ aspectRatio: '3/4' }}>
               <SafeImage
@@ -399,19 +393,16 @@ export default function OfferViewClient({ offer: initialOffer, retailer, offerId
             </div>
           </div>
 
-          {/* Right Ad (desktop only) */}
           <div className="hidden lg:block flex-shrink-0 w-[300px]">
             <AdSlot format="vertical" className="sticky top-4" />
           </div>
         </div>
 
-        {/* Mobile ad below image */}
         <div className="lg:hidden mt-4">
           <AdSlot format="horizontal" />
         </div>
       </div>
 
-      {/* Flipbook Modal */}
       {isFlipbookOpen && pdfSrc && (
         <PDFFlipbook
           pdfUrl={pdfSrc}

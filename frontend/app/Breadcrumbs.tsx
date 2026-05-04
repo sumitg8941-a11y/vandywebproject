@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useLang } from './LangToggle';
 
 export default function Breadcrumbs({ type, id, items }: { type?: string, id?: string, items?: { label: string, href?: string }[] }) {
+  const { t } = useLang();
   const [breadcrumbs, setBreadcrumbs] = useState<any>(null);
 
   useEffect(() => {
@@ -21,14 +23,14 @@ export default function Breadcrumbs({ type, id, items }: { type?: string, id?: s
   if (items) {
     return (
       <nav className="flex text-sm text-gray-500 mb-6 bg-gray-50 p-3 rounded-lg overflow-x-auto whitespace-nowrap">
-        <ol className="flex items-center space-x-2">
+        <ol className="flex items-center gap-2">
           <li>
-            <Link href="/" className="hover:text-red-600 transition-colors">
-              <i className="fa-solid fa-home mr-1"></i> Home
+            <Link href="/" className="hover:text-red-600 transition-colors flex items-center gap-1">
+              <i className="fa-solid fa-home"></i> {t.home || 'Home'}
             </Link>
           </li>
           {items.map((item, idx) => (
-            <li key={idx} className="flex items-center space-x-2">
+            <li key={idx} className="flex items-center gap-2">
               <span className="text-gray-400">/</span>
               {item.href ? (
                 <Link href={item.href} className="hover:text-red-600 transition-colors">
@@ -46,10 +48,10 @@ export default function Breadcrumbs({ type, id, items }: { type?: string, id?: s
 
   return (
     <nav className="flex text-sm text-gray-500 mb-6 bg-gray-50 p-3 rounded-lg overflow-x-auto whitespace-nowrap">
-      <ol className="flex items-center space-x-2">
+      <ol className="flex items-center gap-2">
         <li>
-          <Link href="/" className="hover:text-red-600 transition-colors">
-            <i className="fa-solid fa-home mr-1"></i> Home
+          <Link href="/" className="hover:text-red-600 transition-colors flex items-center gap-1">
+            <i className="fa-solid fa-home"></i> {t.home || 'Home'}
           </Link>
         </li>
         

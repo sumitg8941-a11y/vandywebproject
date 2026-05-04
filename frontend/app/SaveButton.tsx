@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLang } from './LangToggle';
 
 export default function SaveButton({ offerId }: { offerId: string }) {
+  const { t } = useLang();
   const [saved, setSaved] = useState(false);
   const [count, setCount] = useState(0);
 
@@ -41,7 +43,7 @@ export default function SaveButton({ offerId }: { offerId: string }) {
       }`}
     >
       <i className={saved ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'}></i>
-      {saved ? 'Saved' : 'Save'}
+      {saved ? t.saved || 'Saved' : t.save || 'Save'}
     </button>
   );
 }

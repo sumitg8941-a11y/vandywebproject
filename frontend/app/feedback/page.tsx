@@ -2,10 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Script from 'next/script';
+import { useLang } from '../LangToggle';
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
 
 export default function FeedbackPage() {
+    const { t } = useLang();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
@@ -40,7 +42,7 @@ export default function FeedbackPage() {
         setErrorMsg('');
         if (!validateEmail(email)) return;
         if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
-            setErrorMsg('Please complete the "I\'m not a robot" verification.');
+            setErrorMsg('Please complete the verification.');
             return;
         }
         setStatus('sending');
@@ -81,39 +83,37 @@ export default function FeedbackPage() {
                 />
             )}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                <h1 className="text-2xl font-black text-gray-900 mb-1">Share your feedback</h1>
+                <h1 className="text-2xl font-black text-gray-900 mb-1">{t.feedbackTitle || 'Share your feedback'}</h1>
                 <p className="text-gray-500 text-sm mb-6">
-                    We read every message and use it to improve DealNamaa.{' '}
-                    <span className="text-green-600 font-semibold">We never spam — your email is only used to follow up if needed.</span>
+                    {t.feedbackSub || 'Help us improve DealNamaa. Share your thoughts or report an issue.'}
                 </p>
 
                 {status === 'done' ? (
                     <div className="text-center py-8">
                         <div className="text-4xl mb-3">🎉</div>
-                        <p className="text-gray-800 font-semibold text-lg">Thank you for your feedback!</p>
-                        <p className="text-gray-500 text-sm mt-1">We appreciate you taking the time to write to us.</p>
+                        <p className="text-gray-800 font-semibold text-lg">Thank you!</p>
                         <button
                             onClick={() => setStatus('idle')}
                             className="mt-6 text-red-600 font-semibold text-sm hover:underline"
                         >
-                            Submit another
+                            {t.submit || 'Submit'} another
                         </button>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">Your name</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">{t.name || 'Name'}</label>
                             <input
                                 type="text"
                                 required
                                 value={name}
                                 onChange={e => setName(e.target.value)}
-                                placeholder="e.g. Ahmed"
+                                placeholder="..."
                                 className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">Email address</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">{t.email || 'Email'}</label>
                             <input
                                 type="email"
                                 required
@@ -127,18 +127,17 @@ export default function FeedbackPage() {
                             {emailError && <p className="text-red-500 text-xs mt-1">{emailError}</p>}
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">Message</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">{t.message || 'Message'}</label>
                             <textarea
                                 required
                                 value={message}
                                 onChange={e => setMessage(e.target.value)}
-                                placeholder="Tell us what you think, what's missing, or what you love..."
+                                placeholder="..."
                                 rows={4}
                                 className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
                             />
                         </div>
 
-                        {/* reCAPTCHA widget */}
                         {RECAPTCHA_SITE_KEY && (
                             <div className="flex justify-center">
                                 <div ref={recaptchaRef}></div>
@@ -146,7 +145,7 @@ export default function FeedbackPage() {
                         )}
 
                         {(status === 'error' || errorMsg) && (
-                            <p className="text-red-500 text-sm">{errorMsg || 'Something went wrong. Please try again.'}</p>
+                            <p className="text-red-500 text-sm">{errorMsg || 'Error'}</p>
                         )}
 
                         <button
@@ -154,13 +153,8 @@ export default function FeedbackPage() {
                             disabled={status === 'sending'}
                             className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition text-sm disabled:opacity-60"
                         >
-                            {status === 'sending' ? 'Sending...' : 'Send Feedback'}
+                            {status === 'sending' ? '...' : t.submit || 'Submit'}
                         </button>
-
-                        <p className="text-center text-xs text-gray-400">
-                            <i className="fa-solid fa-lock mr-1"></i>
-                            Your email is private and will never be shared or used for marketing.
-                        </p>
                     </form>
                 )}
             </div>
